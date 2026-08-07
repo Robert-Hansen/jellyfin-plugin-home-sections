@@ -1,0 +1,108 @@
+# Analyzer + style configuration
+# Directory.Build.props sets TreatWarningsAsErrors — diagnostics at "warning"
+# severity fail the build; "suggestion" is IDE-only.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{csproj,props,targets,json,yml,yaml,md,sh}]
+indent_size = 2
+
+[*.cs]
+dotnet_sort_system_directives_first = true
+
+# --- Enforced (warning → error via TreatWarningsAsErrors) ---
+dotnet_style_null_propagation = true:warning
+dotnet_style_coalesce_expression = true:warning
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:warning
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
+csharp_style_pattern_matching_over_as_with_null_check = true:warning
+csharp_style_prefer_null_check_over_type_check = true:warning
+
+# --- Noise for this existing plugin (suggestion = not build-breaking) ---
+# Prefer LoggerMessage
+dotnet_diagnostic.CA1848.severity = suggestion
+# Culture / ToString
+dotnet_diagnostic.CA1305.severity = suggestion
+dotnet_diagnostic.CA1310.severity = suggestion
+# Default field initializers (= false, = 0, = null)
+dotnet_diagnostic.CA1805.severity = suggestion
+# Visible instance fields (plugin uses protected fields heavily)
+dotnet_diagnostic.CA1051.severity = suggestion
+# Seal internal types
+dotnet_diagnostic.CA1852.severity = suggestion
+# Prefer Length over Any()
+dotnet_diagnostic.CA1860.severity = suggestion
+# Prefer ContainsKey then index
+dotnet_diagnostic.CA1854.severity = suggestion
+# Mark members static
+dotnet_diagnostic.CA1822.severity = suggestion
+# Prefer concrete types
+dotnet_diagnostic.CA1859.severity = suggestion
+# Cache JsonSerializerOptions
+dotnet_diagnostic.CA1869.severity = suggestion
+# Prefer string.Contains(char)
+dotnet_diagnostic.CA1847.severity = suggestion
+# Prefer Dictionary.TryAdd
+dotnet_diagnostic.CA1864.severity = suggestion
+# Prefer Count over Count()
+dotnet_diagnostic.CA1826.severity = suggestion
+# Prefer nameof
+dotnet_diagnostic.CA1507.severity = suggestion
+# Exception type construction
+dotnet_diagnostic.CA2201.severity = suggestion
+# Naming *Delegate
+dotnet_diagnostic.CA1711.severity = suggestion
+# Logging templates
+dotnet_diagnostic.CA2254.severity = suggestion
+# ConfigureAwait / async
+dotnet_diagnostic.CA2007.severity = none
+dotnet_diagnostic.CA1849.severity = suggestion
+# Platform
+dotnet_diagnostic.CA1416.severity = none
+# Catch general Exception
+dotnet_diagnostic.CA1031.severity = suggestion
+# Underscores
+dotnet_diagnostic.CA1707.severity = none
+# ModuleInitializer intentional
+dotnet_diagnostic.CA2255.severity = none
+
+# IDE style not forced on this codebase yet
+dotnet_diagnostic.IDE0011.severity = suggestion
+dotnet_diagnostic.IDE0019.severity = suggestion
+dotnet_diagnostic.IDE0270.severity = suggestion
+dotnet_diagnostic.IDE0007.severity = none
+dotnet_diagnostic.IDE0008.severity = none
+
+# --- Meziantou: keep high-signal only as warning (build-breaking) ---
+# EqualityComparer on dictionaries — good long-term, huge churn now
+dotnet_diagnostic.MA0002.severity = suggestion
+# string.Equals / comparison
+dotnet_diagnostic.MA0006.severity = suggestion
+# Regex timeout
+dotnet_diagnostic.MA0009.severity = suggestion
+# Abstract type ctor visibility
+dotnet_diagnostic.MA0017.severity = suggestion
+# ConfigureAwait
+dotnet_diagnostic.MA0004.severity = none
+# IFormatProvider
+dotnet_diagnostic.MA0011.severity = suggestion
+# Return collection abstraction
+dotnet_diagnostic.MA0016.severity = suggestion
+# Regex compiled
+dotnet_diagnostic.MA0023.severity = suggestion
+# TODO comments
+dotnet_diagnostic.MA0026.severity = suggestion
+# File name matches type
+dotnet_diagnostic.MA0048.severity = none
+# Method too long
+dotnet_diagnostic.MA0051.severity = suggestion
+# Constant Regex.IsMatch
+dotnet_diagnostic.MA0074.severity = suggestion
