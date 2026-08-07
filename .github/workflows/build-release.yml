@@ -239,42 +239,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          REPO_URL="https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
           WORK="$(mktemp -d)"
-          git clone --depth 1 "$REPO_URL" "$WORK" || true
-
           cd "$WORK"
-          if git ls-remote --exit-code --heads origin plugin-repo >/dev/null 2>&1; then
-            git fetch origin plugin-repo
-            git checkout -B plugin-repo origin/plugin-repo
-          else
-            git checkout --orphan plugin-repo
-            git rm -rf . >/dev/null 2>&1 || true
-          fi
+          git init -b plugin-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           cp "${{ github.workspace }}/manifest.json" .
           cp "${{ github.workspace }}/logo.png" .
-          # Small README for humans
-          cat > README.md <<'EOF'
+          cat > README.md <<EOF
           # Jellyfin plugin repository (fork)
 
           Add this URL in Jellyfin:
 
-          `https://raw.githubusercontent.com/OWNER/REPO/plugin-repo/manifest.json`
-
-          Replace OWNER/REPO with this repository.
+          \`https://raw.githubusercontent.com/${{ github.repository }}/plugin-repo/manifest.json\`
           EOF
-          sed -i "s|OWNER/REPO|${{ github.repository }}|g" README.md
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add manifest.json logo.png README.md
-          if git diff --cached --quiet; then
-            echo "No manifest changes."
-          else
-            git commit -m "Update plugin repository manifest"
-            git push -u origin plugin-repo --force
-          fi
+          git commit -m "Update plugin repository manifest"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git push -u origin plugin-repo --force
 
           echo ""
           echo "=============================================="
