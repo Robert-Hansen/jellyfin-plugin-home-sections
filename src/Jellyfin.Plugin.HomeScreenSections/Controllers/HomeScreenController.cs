@@ -134,6 +134,90 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
             return Ok(new { newCounter });
         }
 
+        /// <summary>
+        /// Configuration health hints for empty/missing home sections (no user content scanning).
+        /// </summary>
+        [HttpGet("Diagnostics")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [Authorize(Roles = "Administrator")]
+        public ActionResult GetDiagnostics()
+        {
+            PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
+            List<object> checks = new List<object>();
+
+            void Add(string id, string severity, string message)
+            {
+                checks.Add(new { id, severity, message });
+            }
+
+            if (!config.Enabled)
+            {
+                Add("plugin-disabled", "warning", "Home Screen Sections is disabled globally.");
+            }
+
+            if (config.SectionSettings == null || config.SectionSettings.Length == 0)
+            {
+                Add("no-section-settings", "info", "No section settings are stored yet; defaults will be used until you save the Section Settings tab.");
+            }
+            else
+            {
+                int enabledCount = config.SectionSettings.Count(s => s.Enabled);
+                if (enabledCount == 0)
+                {
+                    Add("all-sections-disabled", "warning", "All configured sections are disabled in admin settings.");
+                }
+
+                Add("enabled-count", "info", $"{enabledCount} of {config.SectionSettings.Length} configured sections are enabled.");
+            }
+
+            bool sonarrOk = !string.IsNullOrWhiteSpace(config.Sonarr?.Url) && !string.IsNullOrWhiteSpace(config.Sonarr?.ApiKey);
+            bool radarrOk = !string.IsNullOrWhiteSpace(config.Radarr?.Url) && !string.IsNullOrWhiteSpace(config.Radarr?.ApiKey);
+            bool lidarrOk = !string.IsNullOrWhiteSpace(config.Lidarr?.Url) && !string.IsNullOrWhiteSpace(config.Lidarr?.ApiKey);
+            bool readarrOk = !string.IsNullOrWhiteSpace(config.Readarr?.Url) && !string.IsNullOrWhiteSpace(config.Readarr?.ApiKey);
+
+            if (!sonarrOk)
+            {
+                Add("sonarr", "info", "Sonarr URL/API key not configured — Upcoming Shows will be empty.");
+            }
+            if (!radarrOk)
+            {
+                Add("radarr", "info", "Radarr URL/API key not configured — Upcoming Movies will be empty.");
+            }
+            if (!lidarrOk)
+            {
+                Add("lidarr", "info", "Lidarr URL/API key not configured — Upcoming Music will be empty.");
+            }
+            if (!readarrOk)
+            {
+                Add("readarr", "info", "Readarr URL/API key not configured — Upcoming Books will be empty.");
+            }
+
+            bool jellyseerrOk = !string.IsNullOrWhiteSpace(config.JellyseerrUrl) && !string.IsNullOrWhiteSpace(config.JellyseerrApiKey);
+            if (!jellyseerrOk)
+            {
+                Add("jellyseerr", "info", "Jellyseerr not configured — Discover / My Requests sections will be empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(config.DefaultMoviesLibraryId))
+            {
+                Add("movies-library", "info", "No default movies library selected — movie section navigation may use the first available library.");
+            }
+            if (string.IsNullOrWhiteSpace(config.DefaultTVShowsLibraryId))
+            {
+                Add("tv-library", "info", "No default TV shows library selected — TV section navigation may use the first available library.");
+            }
+
+            int registeredTypes = m_homeScreenManager.GetSectionTypes().Count();
+            Add("registered-types", "info", $"{registeredTypes} section types are registered (built-in + plugins).");
+
+            return Ok(new
+            {
+                generatedAt = DateTime.UtcNow,
+                pluginEnabled = config.Enabled,
+                checks
+            });
+        }
+
         [HttpGet("CachedImage/{cacheKey}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -162,6 +162,13 @@
   "AdminOverrideStreamyfinHomeDesc": "Should requests for the Streamyfin config overwrite the home section with a Home Screen Sections generation.",
   "AdminExperimental": "Please Note: This functionality behind this setting is currently highly experimental and more work is likely needed before this is finalised.",
 
+  "AdminDiagnostics": "Section Diagnostics",
+  "AdminDiagnosticsDesc": "Quick checks for why home sections might be missing or empty. No library content is scanned.",
+  "AdminRunDiagnostics": "Run diagnostics",
+  "AdminDiagnosticsRunning": "Running…",
+  "AdminDiagnosticsEmpty": "No issues reported.",
+  "AdminDiagnosticsCount": "{0} checks",
+  "AdminDiagnosticsFailed": "Diagnostics failed.",
   "AdminDeveloperSettings": "Developer Settings",
   "AdminDeveloperMode": "Developer Mode",
   "AdminDeveloperModeDesc": "Disable browser caching for plugin resources during development.",

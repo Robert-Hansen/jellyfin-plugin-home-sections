@@ -304,6 +304,22 @@
                 </fieldset>
 
                 <fieldset class="verticalSection-extrabottompadding">
+                    <legend data-i18n="AdminDiagnostics" style="padding-bottom:10px; font-weight: bolder; font-size: 1.2em;">Section Diagnostics</legend>
+                    <div style="padding-left: .5em;">
+                        <p class="fieldDescription" data-i18n="AdminDiagnosticsDesc">
+                            Quick checks for why home sections might be missing or empty. No library content is scanned.
+                        </p>
+                        <div style="display: flex; gap: 1em; align-items: center; flex-wrap: wrap; margin-bottom: 0.75em;">
+                            <button type="button" id="btnRunDiagnostics" class="raised emby-button">
+                                <span data-i18n="AdminRunDiagnostics">Run diagnostics</span>
+                            </button>
+                            <span id="diagnosticsStatus" style="color: #ccc; font-size: 0.9em;"></span>
+                        </div>
+                        <ul id="diagnosticsList" style="margin: 0; padding-left: 1.25em;"></ul>
+                    </div>
+                </fieldset>
+
+                <fieldset class="verticalSection-extrabottompadding">
                     <legend data-i18n="AdminDeveloperSettings" style="padding-bottom:10px; font-weight: bolder; font-size: 1.2em;">Developer Settings</legend>
                     <div style="padding-left: .5em;">
                         <div class="checkboxContainer checkboxContainer-withDescription" style="margin-bottom: 1.5em;">
@@ -2101,6 +2117,45 @@
                 });
             }
 
+            function setupDiagnosticsPanel() {
+                const btn = document.querySelector('#btnRunDiagnostics');
+                const list = document.querySelector('#diagnosticsList');
+                const status = document.querySelector('#diagnosticsStatus');
+                if (!btn || !list || btn.dataset.bound === 'true') {
+                    return;
+                }
+                btn.dataset.bound = 'true';
+
+                btn.addEventListener('click', function () {
+                    status.textContent = t('AdminDiagnosticsRunning', 'Running…');
+                    list.innerHTML = '';
+                    window.ApiClient.ajax({
+                        url: window.ApiClient.getUrl('HomeScreen/Diagnostics'),
+                        type: 'GET',
+                        dataType: 'json',
+                        headers: { 'Accept': 'application/json' }
+                    }).then(function (result) {
+                        const checks = (result && result.checks) || [];
+                        if (!checks.length) {
+                            status.textContent = t('AdminDiagnosticsEmpty', 'No issues reported.');
+                            return;
+                        }
+                        status.textContent = t('AdminDiagnosticsCount', '{0} checks').replace('{0}', String(checks.length));
+                        checks.forEach(function (check) {
+                            const li = document.createElement('li');
+                            const severity = (check.severity || 'info').toLowerCase();
+                            li.style.margin = '0.4em 0';
+                            li.style.color = severity === 'warning' ? '#ffb74d' : (severity === 'error' ? '#ef5350' : '#ccc');
+                            li.textContent = '[' + severity + '] ' + (check.message || check.id || '');
+                            list.appendChild(li);
+                        });
+                    }).catch(function (error) {
+                        console.error(error);
+                        status.textContent = t('AdminDiagnosticsFailed', 'Diagnostics failed.');
+                    });
+                });
+            }
+
             document.querySelector('#homeScreenSectionsConfigurationPage').addEventListener("pageshow", function () {
                 setupTabs();
                 loadLibraries();
@@ -2108,6 +2163,7 @@
                 translatePage();
                 setupSectionListExtras();
                 setupAdvancedDetailsMemory();
+                setupDiagnosticsPanel();
                 document.querySelector('#btnSaveConfigGlobal').addEventListener("click", saveConfig);
                 document.querySelector('#btnSaveConfigSections').addEventListener("click", saveConfig);
 
