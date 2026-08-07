@@ -144,71 +144,15 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         {
             PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
             List<object> checks = new List<object>();
-
-            void Add(string id, string severity, string message)
+            AppendPluginAndSectionChecks(config, checks);
+            AppendIntegrationChecks(config, checks);
+            AppendLibraryChecks(config, checks);
+            checks.Add(new
             {
-                checks.Add(new { id, severity, message });
-            }
-
-            if (!config.Enabled)
-            {
-                Add("plugin-disabled", "warning", "Home Screen Sections is disabled globally.");
-            }
-
-            if (config.SectionSettings == null || config.SectionSettings.Length == 0)
-            {
-                Add("no-section-settings", "info", "No section settings are stored yet; defaults will be used until you save the Section Settings tab.");
-            }
-            else
-            {
-                int enabledCount = config.SectionSettings.Count(s => s.Enabled);
-                if (enabledCount == 0)
-                {
-                    Add("all-sections-disabled", "warning", "All configured sections are disabled in admin settings.");
-                }
-
-                Add("enabled-count", "info", $"{enabledCount} of {config.SectionSettings.Length} configured sections are enabled.");
-            }
-
-            bool sonarrOk = !string.IsNullOrWhiteSpace(config.Sonarr?.Url) && !string.IsNullOrWhiteSpace(config.Sonarr?.ApiKey);
-            bool radarrOk = !string.IsNullOrWhiteSpace(config.Radarr?.Url) && !string.IsNullOrWhiteSpace(config.Radarr?.ApiKey);
-            bool lidarrOk = !string.IsNullOrWhiteSpace(config.Lidarr?.Url) && !string.IsNullOrWhiteSpace(config.Lidarr?.ApiKey);
-            bool readarrOk = !string.IsNullOrWhiteSpace(config.Readarr?.Url) && !string.IsNullOrWhiteSpace(config.Readarr?.ApiKey);
-
-            if (!sonarrOk)
-            {
-                Add("sonarr", "info", "Sonarr URL/API key not configured — Upcoming Shows will be empty.");
-            }
-            if (!radarrOk)
-            {
-                Add("radarr", "info", "Radarr URL/API key not configured — Upcoming Movies will be empty.");
-            }
-            if (!lidarrOk)
-            {
-                Add("lidarr", "info", "Lidarr URL/API key not configured — Upcoming Music will be empty.");
-            }
-            if (!readarrOk)
-            {
-                Add("readarr", "info", "Readarr URL/API key not configured — Upcoming Books will be empty.");
-            }
-
-            bool jellyseerrOk = !string.IsNullOrWhiteSpace(config.JellyseerrUrl) && !string.IsNullOrWhiteSpace(config.JellyseerrApiKey);
-            if (!jellyseerrOk)
-            {
-                Add("jellyseerr", "info", "Jellyseerr not configured — Discover / My Requests sections will be empty.");
-            }
-
-            if (string.IsNullOrWhiteSpace(config.DefaultMoviesLibraryId))
-            {
-                Add("movies-library", "info", "No default movies library selected — movie section navigation may use the first available library.");
-            }
-            if (string.IsNullOrWhiteSpace(config.DefaultTVShowsLibraryId))
-            {
-                Add("tv-library", "info", "No default TV shows library selected — TV section navigation may use the first available library.");
-            }
-
-            int registeredTypes = m_homeScreenManager.GetSectionTypes().Count();
-            Add("registered-types", "info", $"{registeredTypes} section types are registered (built-in + plugins).");
+                id = "registered-types",
+                severity = "info",
+                message = $"{m_homeScreenManager.GetSectionTypes().Count()} section types are registered (built-in + plugins)."
+            });
 
             return Ok(new
             {
@@ -216,6 +160,84 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
                 pluginEnabled = config.Enabled,
                 checks
             });
+        }
+
+        private static void AppendPluginAndSectionChecks(PluginConfiguration config, List<object> checks)
+        {
+            if (!config.Enabled)
+            {
+                checks.Add(new { id = "plugin-disabled", severity = "warning", message = "Home Screen Sections is disabled globally." });
+            }
+
+            if (config.SectionSettings == null || config.SectionSettings.Length == 0)
+            {
+                checks.Add(new
+                {
+                    id = "no-section-settings",
+                    severity = "info",
+                    message = "No section settings are stored yet; defaults will be used until you save the Section Settings tab."
+                });
+                return;
+            }
+
+            int enabledCount = config.SectionSettings.Count(s => s.Enabled);
+            if (enabledCount == 0)
+            {
+                checks.Add(new { id = "all-sections-disabled", severity = "warning", message = "All configured sections are disabled in admin settings." });
+            }
+
+            checks.Add(new
+            {
+                id = "enabled-count",
+                severity = "info",
+                message = $"{enabledCount} of {config.SectionSettings.Length} configured sections are enabled."
+            });
+        }
+
+        private static void AppendIntegrationChecks(PluginConfiguration config, List<object> checks)
+        {
+            if (string.IsNullOrWhiteSpace(config.Sonarr?.Url) || string.IsNullOrWhiteSpace(config.Sonarr?.ApiKey))
+            {
+                checks.Add(new { id = "sonarr", severity = "info", message = "Sonarr URL/API key not configured — Upcoming Shows will be empty." });
+            }
+            if (string.IsNullOrWhiteSpace(config.Radarr?.Url) || string.IsNullOrWhiteSpace(config.Radarr?.ApiKey))
+            {
+                checks.Add(new { id = "radarr", severity = "info", message = "Radarr URL/API key not configured — Upcoming Movies will be empty." });
+            }
+            if (string.IsNullOrWhiteSpace(config.Lidarr?.Url) || string.IsNullOrWhiteSpace(config.Lidarr?.ApiKey))
+            {
+                checks.Add(new { id = "lidarr", severity = "info", message = "Lidarr URL/API key not configured — Upcoming Music will be empty." });
+            }
+            if (string.IsNullOrWhiteSpace(config.Readarr?.Url) || string.IsNullOrWhiteSpace(config.Readarr?.ApiKey))
+            {
+                checks.Add(new { id = "readarr", severity = "info", message = "Readarr URL/API key not configured — Upcoming Books will be empty." });
+            }
+            if (string.IsNullOrWhiteSpace(config.JellyseerrUrl) || string.IsNullOrWhiteSpace(config.JellyseerrApiKey))
+            {
+                checks.Add(new { id = "jellyseerr", severity = "info", message = "Jellyseerr not configured — Discover / My Requests sections will be empty." });
+            }
+        }
+
+        private static void AppendLibraryChecks(PluginConfiguration config, List<object> checks)
+        {
+            if (string.IsNullOrWhiteSpace(config.DefaultMoviesLibraryId))
+            {
+                checks.Add(new
+                {
+                    id = "movies-library",
+                    severity = "info",
+                    message = "No default movies library selected — movie section navigation may use the first available library."
+                });
+            }
+            if (string.IsNullOrWhiteSpace(config.DefaultTVShowsLibraryId))
+            {
+                checks.Add(new
+                {
+                    id = "tv-library",
+                    severity = "info",
+                    message = "No default TV shows library selected — TV section navigation may use the first available library."
+                });
+            }
         }
 
         [HttpGet("CachedImage/{cacheKey}")]
