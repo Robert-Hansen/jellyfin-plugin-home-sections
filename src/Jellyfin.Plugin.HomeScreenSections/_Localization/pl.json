@@ -189,6 +189,7 @@
   "AdminEnabled": "Włączone",
   "AdminUserOverride": "Nadpisanie użytkownika",
   "AdminHideWatched": "Ukryj obejrzane",
+  "AdminHideWatchedDesc": "Ukryj w tej sekcji elementy, które użytkownik już obejrzał",
   "AdminMin": "Min",
   "AdminMax": "Maks",
   "AdminViewMode": "Tryb widoku",

@@ -192,6 +192,7 @@
   "AdminEnabled": "Aktiveret",
   "AdminUserOverride": "Bruger-overskrivning",
   "AdminHideWatched": "Skjul sete",
+  "AdminHideWatchedDesc": "Skjul elementer, brugeren allerede har set, fra denne sektion",
   "AdminMin": "Min.",
   "AdminMax": "Maks.",
   "AdminViewMode": "Visningstilstand",

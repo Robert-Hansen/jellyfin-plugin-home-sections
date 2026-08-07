@@ -192,6 +192,7 @@
   "AdminEnabled": "Aktiviert",
   "AdminUserOverride": "Benutzer\u00ADüberschreibung",
   "AdminHideWatched": "Gesehene ausblenden",
+  "AdminHideWatchedDesc": "Bereits gesehene Elemente in diesem Abschnitt ausblenden",
   "AdminMin": "Min",
   "AdminMax": "Max",
   "AdminViewMode": "Ansichtsmodus",
