@@ -297,12 +297,15 @@
                             data: JSON.stringify(data),
                             contentType: 'application/json'
                         }).then(function () {
-                            Dashboard.alert(pageTranslations['AdminSettingsUpdated'] || 'Settings have been updated, reloading page in 2 seconds.');
-
-                            setTimeout(function () {
-                                location.reload(true);
-                            }, 2000);
-                        })
+                            var message = pageTranslations['AdminSettingsUpdatedToast']
+                                || pageTranslations['AdminSettingsUpdated']
+                                || 'Settings saved. Refresh home to see order changes.';
+                            // Dashboard.alert is the standard plugin-page feedback (no full reload).
+                            Dashboard.alert(message);
+                        }).catch(function (error) {
+                            console.error(error);
+                            Dashboard.alert(pageTranslations['AdminSettingsSaveFailed'] || 'Failed to save settings.');
+                        });
 
                         e.preventDefault();
                         return false;
