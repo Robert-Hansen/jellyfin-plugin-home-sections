@@ -54,21 +54,24 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 (string? url, string? apiKey) = GetServiceConfiguration(config);
                 if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(apiKey))
                 {
-                    Logger.LogWarning("{ServiceName} URL or API key not configured, skipping {SectionName}", GetServiceName(), GetSectionName());
+                    PluginLog.ArrServiceNotConfigured(Logger, GetServiceName(), GetSectionName());
                     return new QueryResult<BaseItemDto>();
                 }
 
                 DateTime startDate = DateTime.UtcNow;
                 (int timeframeValue, TimeframeUnit timeframeUnit) = GetTimeframeConfiguration(config);
                 DateTime endDate = ArrApiService.CalculateEndDate(startDate, timeframeValue, timeframeUnit);
+
+                string configuredSectionName = GetSectionName();
+                string configuredServiceName = GetServiceName();
                 
-                Logger.LogDebug("Fetching {SectionName} from {StartDate} to {EndDate}", GetSectionName(), startDate, endDate);
+                PluginLog.FetchingUpcomingSection(Logger, configuredSectionName, startDate, endDate);
 
                 T[] calendarItems = GetCalendarItems(startDate, endDate);
                 
                 if (calendarItems == null || calendarItems.Length == 0)
                 {
-                    Logger.LogDebug("No {SectionName} found from {ServiceName}", GetSectionName(), GetServiceName());
+                    PluginLog.NoUpcomingItems(Logger, configuredSectionName, configuredServiceName);
                     return new QueryResult<BaseItemDto>();
                 }
 
@@ -79,7 +82,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                     upcomingItems = FilterByLibraryAccess(upcomingItems, payload.UserId);
                 }
 
-                Logger.LogDebug("Found {Count} upcoming items after filtering", upcomingItems.Length);
+                PluginLog.FoundUpcomingItems(Logger, upcomingItems.Length);
 
                 BaseItemDto[] dtoItems = [.. upcomingItems.Select(item => CreateDto(item, config))];
 
@@ -87,7 +90,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error fetching {SectionName} from {ServiceName}", GetSectionName(), GetServiceName());
+                PluginLog.UpcomingSectionError(Logger, ex, GetSectionName(), GetServiceName());
                 return new QueryResult<BaseItemDto>();
             }
         }

@@ -16,7 +16,7 @@
     <!-- "Recommended" set, not maximum noise (All) -->
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <AnalysisMode>Default</AnalysisMode>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <!-- NetAnalyzers NuGet package supplies the analyzers; do not also set EnableNETAnalyzers -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
     <!-- Fail CI / local build on analyzer + compiler warnings -->
@@ -25,6 +25,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.302">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Meziantou.Analyzer" Version="3.0.140">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -31,7 +31,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             
             if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(apiKey))
             {
-                m_logger.LogWarning("{ServiceName} URL or API key not configured", serviceName);
+                PluginLog.ArrUrlOrKeyMissing(m_logger, serviceName);
                 return null;
             }
 
@@ -52,14 +52,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 using HttpRequestMessage request = new(HttpMethod.Get, requestUrl);
                 request.Headers.Add("X-API-KEY", apiKey);
 
-                m_logger.LogDebug("Fetching {ServiceName} calendar from {Url}", serviceName, requestUrl);
+                PluginLog.FetchingArrCalendar(m_logger, serviceName, requestUrl);
 
                 HttpResponseMessage response = await m_httpClient.SendAsync(request);
                 
                 if (!response.IsSuccessStatusCode)
                 {
-                    m_logger.LogError("Failed to fetch {ServiceName} calendar. Status: {StatusCode}, Reason: {ReasonPhrase}", 
-                        serviceName, response.StatusCode, response.ReasonPhrase);
+                    PluginLog.ArrCalendarHttpFailed(m_logger, serviceName, response.StatusCode, response.ReasonPhrase);
                     return null;
                 }
 
@@ -67,7 +66,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 
                 if (string.IsNullOrEmpty(jsonContent))
                 {
-                    m_logger.LogWarning("Empty response from {ServiceName} calendar API", serviceName);
+                    PluginLog.ArrCalendarEmpty(m_logger, serviceName);
                     return [];
                 }
 
@@ -76,22 +75,22 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     PropertyNameCaseInsensitive = true
                 });
 
-                m_logger.LogDebug("Successfully fetched {Count} calendar items from {ServiceName}", calendarItems?.Length ?? 0, serviceName);
+                PluginLog.ArrCalendarFetched(m_logger, calendarItems?.Length ?? 0, serviceName);
                 return calendarItems ?? [];
             }
             catch (HttpRequestException ex)
             {
-                m_logger.LogError(ex, "HTTP error while fetching {ServiceName} calendar", serviceName);
+                PluginLog.ArrCalendarHttpError(m_logger, ex, serviceName);
                 return null;
             }
             catch (JsonException ex)
             {
-                m_logger.LogError(ex, "JSON parsing error while processing {ServiceName} calendar response", serviceName);
+                PluginLog.ArrCalendarJsonError(m_logger, ex, serviceName);
                 return null;
             }
             catch (Exception ex)
             {
-                m_logger.LogError(ex, "Unexpected error while fetching {ServiceName} calendar", serviceName);
+                PluginLog.ArrCalendarUnexpectedError(m_logger, ex, serviceName);
                 return null;
             }
         }

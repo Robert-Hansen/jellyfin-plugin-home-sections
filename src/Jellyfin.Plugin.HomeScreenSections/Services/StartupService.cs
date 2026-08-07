@@ -65,7 +65,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     Regex r = new Regex(@"([^.]+)\.([^.]+)\.chunk.js");
                     
                     Guid guid = Guid.NewGuid();
-                    m_logger.LogInformation($"Found loadSections in `{fileName}` registering transformation for it with ID '{guid}'");
+                    PluginLog.FoundLoadSections(m_logger, fileName, guid);
                     
                     JObject payload = new JObject();
                     payload.Add("id", guid.ToString());

@@ -228,7 +228,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                         {
                             // Adding an error log here to stop issues like #128 from completely breaking the home screen.
                             // Whatever this section is won't work, but the rest of the home screen will still work.
-                            m_logger.LogError(e, $"An error occurred while creating section instances for user '{userId}' and section '{sectionType.Section}'.");
+                            PluginLog.SectionInstanceError(m_logger, e, userId, sectionType.Section);
                         }
                     }
                 });

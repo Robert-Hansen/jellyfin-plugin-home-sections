@@ -1,4 +1,4 @@
-﻿using Jellyfin.Plugin.HomeScreenSections.Helpers;
+using Jellyfin.Plugin.HomeScreenSections.Helpers;
 using Jellyfin.Plugin.HomeScreenSections.Library;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -18,7 +18,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         public void Initialize()
         {
             m_logger.LogTrace("Loading translation files");
-            m_logger.LogTrace($"Available resources: {string.Join(',', HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceNames())}");
+            if (m_logger.IsEnabled(LogLevel.Trace))
+            {
+                string resources = string.Join(
+                    ',',
+                    HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceNames());
+                PluginLog.AvailableResources(m_logger, resources);
+            }
             
             // Get all the json files from the embedded resources
             string[] locJsonFiles = HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceNames()
@@ -26,7 +32,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
             foreach (string locFile in locJsonFiles)
             {
-                m_logger.LogTrace($"Loading translation file: {locFile}");
+                PluginLog.LoadingTranslationFile(m_logger, locFile);
                 using Stream? locStream = HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceStream(locFile);
 
                 if (locStream != null)
@@ -38,11 +44,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     if (!m_translationPacks.ContainsKey(key))
                     {
                         m_translationPacks.Add(key, JObject.Parse(reader.ReadToEnd()));
-                        m_logger.LogTrace($"Loaded translation file: {locFile} with {m_translationPacks[key].Count} keys");
+                        PluginLog.LoadedTranslationFile(m_logger, locFile, m_translationPacks[key].Count);
                     }
                     else
                     {
-                        m_logger.LogTrace($"Translation file '{locFile}' already loaded, ignoring");
+                        PluginLog.TranslationFileAlreadyLoaded(m_logger, locFile);
                     }
                 }
             }
@@ -50,7 +56,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
         public string Translate(string key, string desiredLanguage, string fallbackText, TranslationMetadata? metadata = null)
         {
-            m_logger.LogTrace($"Translating key '{key}' to language '{desiredLanguage}'");
+            PluginLog.TranslatingKey(m_logger, key, desiredLanguage);
             
             bool languageFound = false;
             string languageKey = desiredLanguage;
@@ -61,19 +67,19 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 // have a blanket translation for that language.
                 if (!m_translationPacks.ContainsKey(languageKey) && languageKey.Contains("-"))
                 {
-                    m_logger.LogTrace($"Language '{languageKey}' doesn't exist, removing region and trying again");
+                    PluginLog.LanguageMissingRemoveRegion(m_logger, languageKey);
                     languageKey = languageKey.Split("-")[0];
                 }
                 // If we don't then fallback to english so we don't get keys being sent to the client
                 else if (!m_translationPacks.ContainsKey(languageKey))
                 {
-                    m_logger.LogTrace($"Language '{languageKey}' doesn't exist, falling back to english");
+                    PluginLog.LanguageMissingFallbackEnglish(m_logger, languageKey);
                     languageKey = "en";
                 }
                 // If we have it then we're done.
                 else if (m_translationPacks.ContainsKey(languageKey))
                 {
-                    m_logger.LogTrace($"Found translation pack for language '{languageKey}'");
+                    PluginLog.FoundTranslationPack(m_logger, languageKey);
                     languageFound = true;
                 }
             } while (!languageFound);
@@ -84,7 +90,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             string fullTextKey = fallbackText.Replace(" ", "").Replace("-", "");
             if (key != fullTextKey && translationPack.ContainsKey(fullTextKey))
             {
-                m_logger.LogTrace($"Found translation for key '{fullTextKey}' in language '{languageKey}'");
+                PluginLog.FoundFullTextTranslation(m_logger, fullTextKey, languageKey);
                 translatedText = translationPack.Value<string>(fullTextKey)!;
                 
                 // Since we've got a full translation we don't need the metadata
@@ -92,12 +98,12 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
             else if (translationPack.ContainsKey(key))
             {
-                m_logger.LogTrace($"Found translation for key '{key}' in language '{languageKey}'");
+                PluginLog.FoundKeyTranslation(m_logger, key, languageKey);
                 translatedText = translationPack.Value<string>(key)!;
             }
             else
             {
-                m_logger.LogWarning($"No translation found for key '{key}' in language '{languageKey}', falling back to previous routes");
+                PluginLog.NoTranslationFound(m_logger, key, languageKey);
                 // If Libre is disabled this will be null
                 string? libreTranslateVersion = LibreTranslateHelper.TranslateAsync(fallbackText, "en", desiredLanguage).GetAwaiter().GetResult();
                 
@@ -106,7 +112,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
             if (metadata != null)
             {
-                m_logger.LogTrace($"Applying metadata to translated text: {translatedText}");
+                PluginLog.ApplyingTranslationMetadata(m_logger, translatedText);
 
                 string? additionalContent = metadata.AdditionalContent;
                 if (metadata.TranslateAdditionalContent && !string.IsNullOrEmpty(additionalContent))
@@ -127,7 +133,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     translatedText = translatedText.Replace("{0}", additionalContent);
                 }
                 
-                m_logger.LogTrace($"Applied metadata to translated text: {translatedText}");
+                PluginLog.AppliedTranslationMetadata(m_logger, translatedText);
             }
             
             return translatedText;
