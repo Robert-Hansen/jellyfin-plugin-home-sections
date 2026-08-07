@@ -29,6 +29,8 @@ csharp_style_prefer_null_check_over_type_check = true:warning
 # --- Noise for this existing plugin (suggestion = not build-breaking) ---
 # Prefer LoggerMessage
 dotnet_diagnostic.CA1848.severity = suggestion
+# Avoid expensive args when logging is disabled (string interpolation in Log*)
+dotnet_diagnostic.CA1873.severity = suggestion
 # Culture / ToString
 dotnet_diagnostic.CA1305.severity = suggestion
 dotnet_diagnostic.CA1310.severity = suggestion
