@@ -337,43 +337,153 @@
                 </button>
             </div>
 
-            <div id="sections" class="jellyfin-tab-content" style="display: none; width: fit-content;">
+            <div id="sections" class="jellyfin-tab-content" style="display: none; max-width: 960px;">
                 <style>
-                    #sectionsTable tbody tr[data-id="section-config"] {
-                        transition: background-color 0.15s ease, opacity 0.15s ease;
+                    #sectionList {
+                        margin: 0.5em 0 1.25em;
+                        width: 100%;
                     }
-                    #sectionsTable tbody tr.section-dragging {
-                        opacity: 0.45;
-                        background-color: rgba(255, 255, 255, 0.06);
+                    #sectionWrapper {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                        width: 100%;
                     }
-                    #sectionsTable tbody tr.section-drag-over-above {
-                        box-shadow: inset 0 2px 0 0 var(--primary-accent-color, #00a4dc);
+                    #sectionList .section-card {
+                        display: flex;
+                        align-items: stretch;
+                        gap: 0;
+                        background: rgba(255, 255, 255, 0.04);
+                        border: 1px solid rgba(255, 255, 255, 0.10);
+                        border-radius: 12px;
+                        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+                        transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+                        overflow: hidden;
                     }
-                    #sectionsTable tbody tr.section-drag-over-below {
-                        box-shadow: inset 0 -2px 0 0 var(--primary-accent-color, #00a4dc);
+                    #sectionList .section-card:hover {
+                        background: rgba(255, 255, 255, 0.06);
+                        border-color: rgba(255, 255, 255, 0.16);
+                        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
                     }
-                    #sectionsTable .section-drag-handle {
+                    #sectionList .section-card.section-dragging {
+                        opacity: 0.5;
+                        transform: scale(0.99);
+                        border-color: var(--primary-accent-color, #00a4dc);
+                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+                    }
+                    #sectionList .section-card.section-drag-over-above {
+                        box-shadow: inset 0 3px 0 0 var(--primary-accent-color, #00a4dc), 0 2px 10px rgba(0, 0, 0, 0.18);
+                    }
+                    #sectionList .section-card.section-drag-over-below {
+                        box-shadow: inset 0 -3px 0 0 var(--primary-accent-color, #00a4dc), 0 2px 10px rgba(0, 0, 0, 0.18);
+                    }
+                    #sectionList .section-card-handle-col {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex: 0 0 48px;
+                        background: rgba(0, 0, 0, 0.18);
+                        border-right: 1px solid rgba(255, 255, 255, 0.08);
+                    }
+                    #sectionList .section-drag-handle {
                         display: inline-flex;
                         align-items: center;
                         justify-content: center;
-                        width: 28px;
-                        height: 28px;
+                        width: 36px;
+                        height: 36px;
                         cursor: grab;
-                        color: #999;
+                        color: #9aa0a6;
                         user-select: none;
                         touch-action: none;
-                        border-radius: 4px;
+                        border-radius: 8px;
                     }
-                    #sectionsTable .section-drag-handle:hover {
+                    #sectionList .section-drag-handle:hover {
                         color: #fff;
-                        background-color: rgba(255, 255, 255, 0.08);
+                        background-color: rgba(255, 255, 255, 0.10);
                     }
-                    #sectionsTable .section-drag-handle:active {
+                    #sectionList .section-drag-handle:active {
                         cursor: grabbing;
                     }
-                    #sectionsTable .section-drag-handle .material-icons {
-                        font-size: 22px;
+                    #sectionList .section-drag-handle .material-icons {
+                        font-size: 24px;
                         line-height: 1;
+                    }
+                    #sectionList .section-card-body {
+                        flex: 1 1 auto;
+                        min-width: 0;
+                        padding: 14px 16px 16px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 14px;
+                    }
+                    #sectionList .section-card-header {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        min-width: 0;
+                    }
+                    #sectionList .section-card-title {
+                        font-size: 1.05em;
+                        font-weight: 600;
+                        letter-spacing: 0.01em;
+                        color: #fff;
+                        line-height: 1.3;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+                    #sectionList .section-card-controls {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                        gap: 10px 12px;
+                        align-items: end;
+                    }
+                    #sectionList .section-field {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        min-width: 0;
+                        padding: 10px 12px;
+                        border-radius: 10px;
+                        background: rgba(0, 0, 0, 0.18);
+                        border: 1px solid rgba(255, 255, 255, 0.06);
+                    }
+                    #sectionList .section-field-label {
+                        font-size: 0.78em;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.04em;
+                        color: #a8b0b8;
+                        line-height: 1.2;
+                    }
+                    #sectionList .section-field-control {
+                        display: flex;
+                        align-items: center;
+                        min-height: 32px;
+                    }
+                    #sectionList .section-field-control .emby-checkbox-label {
+                        width: auto !important;
+                        margin: 0;
+                    }
+                    #sectionList .section-field input.emby-input,
+                    #sectionList .section-field input[type="number"] {
+                        width: 100% !important;
+                        max-width: 96px;
+                        text-align: center;
+                        display: block;
+                    }
+                    #sectionList .section-field select.emby-select,
+                    #sectionList .section-field select {
+                        width: 100%;
+                        max-width: 160px;
+                    }
+                    #sectionList .section-field.is-disabled {
+                        opacity: 0.55;
+                    }
+                    @media (max-width: 720px) {
+                        #sectionList .section-card-controls {
+                            grid-template-columns: repeat(2, minmax(0, 1fr));
+                        }
                     }
                 </style>
                 <fieldset class="verticalSection-extrabottompadding">
@@ -387,22 +497,10 @@
                         <li><strong data-i18n="AdminViewMode">View Mode</strong>: <span data-i18n="AdminViewModeDesc">Defines the card layout used when displaying results.</span> <i data-i18n="AdminViewModeNote">If disabled, the section only supports the displayed layout.</i></li>
                     </ul>
                 </fieldset>
-                <table id="sectionsTable" class="tblConnections" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px; text-align: center; vertical-align: middle; padding: 8px 4px; font-weight: bold;" aria-label="Reorder"></th>
-                            <th data-i18n="AdminSection" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">Section</th>
-                            <th data-i18n="AdminEnabled" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">Enabled</th>
-                            <th data-i18n="AdminUserOverride" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">User Override</th>
-                            <th data-i18n="AdminHideWatched" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">Hide Watched</th>
-                            <th data-i18n="AdminMin" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">Min</th>
-                            <th data-i18n="AdminMax" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">Max</th>
-                            <th data-i18n="AdminViewMode" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">View Mode</th>
-                        </tr>
-                    </thead>
-                    <tbody id="sectionWrapper">
-                    </tbody>
-                </table>
+
+                <div id="sectionList" class="section-list">
+                    <div id="sectionWrapper" class="section-list-items" role="list" aria-label="Sections"></div>
+                </div>
 
                 <br>
                 <button id="btnSaveConfigSections" is="emby-button" type="submit" class="raised button-submit block emby-button">
@@ -413,61 +511,83 @@
     </div>
 
     <template id="sectionConfigTemplate">
-        <tr data-id="section-config" draggable="true">
-            <td style="text-align: center; vertical-align: middle; padding: 8px 4px; width: 40px;">
+        <div data-id="section-config" class="section-card" draggable="true" role="listitem">
+            <div class="section-card-handle-col">
                 <span class="section-drag-handle" data-id="dragHandle" title="Drag to reorder" draggable="false">
                     <span class="material-icons" aria-hidden="true">drag_indicator</span>
                 </span>
-            </td>
-            <td style="text-align: left; vertical-align: middle; padding: 8px 12px;">
-                <input type="hidden" data-id="hiddenSectionId" />
-                <strong data-id="lblSectionName"></strong>
-            </td>
-            <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
-                <label style="width: 0;" class="emby-checkbox-label">
-                    <input data-id="chkSectionEnabled" type="checkbox" is="emby-checkbox" data-embycheckbox="true" class="emby-checkbox">
-                    <span class="checkboxLabel"></span>
-                    <span class="checkboxOutline">
-                        <span class="material-icons checkboxIcon checkboxIcon-checked check" aria-hidden="true"></span>
-                        <span class="material-icons checkboxIcon checkboxIcon-unchecked " aria-hidden="true"></span>
-                    </span>
-                </label>
-            </td>
-            <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
-                <label style="width: 0;" class="emby-checkbox-label">
-                    <input data-id="chkSectionUserOverrideAllowed" type="checkbox" is="emby-checkbox" data-embycheckbox="true" class="emby-checkbox">
-                    <span class="checkboxLabel"></span>
-                    <span class="checkboxOutline">
-                        <span class="material-icons checkboxIcon checkboxIcon-checked check" aria-hidden="true"></span>
-                        <span class="material-icons checkboxIcon checkboxIcon-unchecked " aria-hidden="true"></span>
-                    </span>
-                </label>
-            </td>
-            <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
-                <label style="width: 0;" class="emby-checkbox-label">
-                    <input data-id="chkHideWatchedItems" type="checkbox" is="emby-checkbox" data-embycheckbox="true" class="emby-checkbox">
-                    <span class="checkboxLabel"></span>
-                    <span class="checkboxOutline">
-                        <span class="material-icons checkboxIcon checkboxIcon-checked check" aria-hidden="true"></span>
-                        <span class="material-icons checkboxIcon checkboxIcon-unchecked " aria-hidden="true"></span>
-                    </span>
-                </label>
-            </td>
-            <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
-                <input data-id="txtSectionMinLimit" type="number" is="emby-input" min="0" class="emby-input" style="width: 60px; display: inline-table; text-align: center;">
-            </td>
-            <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
-                <input data-id="txtSectionMaxLimit" type="number" is="emby-input" min="0" class="emby-input" style="width: 60px; display: inline-table; text-align: center;">
-            </td>
-            <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
-                <select is="emby-select" class="emby-select-withcolor emby-select" data-id="viewModeSelect" style="width: fit-content; text-align: center;">
-                    <option value="Portrait" data-i18n="AdminPortrait">Portrait</option>
-                    <option value="Landscape" data-i18n="AdminLandscape">Landscape</option>
-                    <option value="Square" data-i18n="AdminSquare">Square</option>
-                    <option value="Small" data-i18n="AdminSmall">Small</option>
-                </select>
-            </td>
-        </tr>
+            </div>
+            <div class="section-card-body">
+                <div class="section-card-header">
+                    <input type="hidden" data-id="hiddenSectionId" />
+                    <strong class="section-card-title" data-id="lblSectionName"></strong>
+                </div>
+                <div class="section-card-controls">
+                    <div class="section-field">
+                        <span class="section-field-label" data-i18n="AdminEnabled">Enabled</span>
+                        <div class="section-field-control">
+                            <label class="emby-checkbox-label">
+                                <input data-id="chkSectionEnabled" type="checkbox" is="emby-checkbox" data-embycheckbox="true" class="emby-checkbox">
+                                <span class="checkboxLabel"></span>
+                                <span class="checkboxOutline">
+                                    <span class="material-icons checkboxIcon checkboxIcon-checked check" aria-hidden="true"></span>
+                                    <span class="material-icons checkboxIcon checkboxIcon-unchecked " aria-hidden="true"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="section-field">
+                        <span class="section-field-label" data-i18n="AdminUserOverride">User Override</span>
+                        <div class="section-field-control">
+                            <label class="emby-checkbox-label">
+                                <input data-id="chkSectionUserOverrideAllowed" type="checkbox" is="emby-checkbox" data-embycheckbox="true" class="emby-checkbox">
+                                <span class="checkboxLabel"></span>
+                                <span class="checkboxOutline">
+                                    <span class="material-icons checkboxIcon checkboxIcon-checked check" aria-hidden="true"></span>
+                                    <span class="material-icons checkboxIcon checkboxIcon-unchecked " aria-hidden="true"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="section-field" data-id="hideWatchedField">
+                        <span class="section-field-label" data-i18n="AdminHideWatched">Hide Watched</span>
+                        <div class="section-field-control">
+                            <label class="emby-checkbox-label">
+                                <input data-id="chkHideWatchedItems" type="checkbox" is="emby-checkbox" data-embycheckbox="true" class="emby-checkbox">
+                                <span class="checkboxLabel"></span>
+                                <span class="checkboxOutline">
+                                    <span class="material-icons checkboxIcon checkboxIcon-checked check" aria-hidden="true"></span>
+                                    <span class="material-icons checkboxIcon checkboxIcon-unchecked " aria-hidden="true"></span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="section-field">
+                        <span class="section-field-label" data-i18n="AdminMin">Min</span>
+                        <div class="section-field-control">
+                            <input data-id="txtSectionMinLimit" type="number" is="emby-input" min="0" class="emby-input">
+                        </div>
+                    </div>
+                    <div class="section-field">
+                        <span class="section-field-label" data-i18n="AdminMax">Max</span>
+                        <div class="section-field-control">
+                            <input data-id="txtSectionMaxLimit" type="number" is="emby-input" min="0" class="emby-input">
+                        </div>
+                    </div>
+                    <div class="section-field">
+                        <span class="section-field-label" data-i18n="AdminViewMode">View Mode</span>
+                        <div class="section-field-control">
+                            <select is="emby-select" class="emby-select-withcolor emby-select" data-id="viewModeSelect">
+                                <option value="Portrait" data-i18n="AdminPortrait">Portrait</option>
+                                <option value="Landscape" data-i18n="AdminLandscape">Landscape</option>
+                                <option value="Square" data-i18n="AdminSquare">Square</option>
+                                <option value="Small" data-i18n="AdminSmall">Small</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </template>
 
     <script type="text/javascript">
@@ -615,20 +735,24 @@
                 });
             }
 
+            function getSectionCards() {
+                return document.querySelectorAll('#sectionWrapper [data-id="section-config"]');
+            }
+
             function clearSectionDragOverClasses() {
-                document.querySelectorAll('#sectionWrapper tr.section-drag-over-above, #sectionWrapper tr.section-drag-over-below')
-                    .forEach(row => {
-                        row.classList.remove('section-drag-over-above', 'section-drag-over-below');
+                document.querySelectorAll('#sectionWrapper .section-drag-over-above, #sectionWrapper .section-drag-over-below')
+                    .forEach(card => {
+                        card.classList.remove('section-drag-over-above', 'section-drag-over-below');
                     });
             }
 
-            function setupSectionRowDrag(row) {
-                const handle = row.querySelector('[data-id=dragHandle]');
-                if (!handle || row.dataset.dragBound === 'true') {
+            function setupSectionRowDrag(card) {
+                const handle = card.querySelector('[data-id=dragHandle]');
+                if (!handle || card.dataset.dragBound === 'true') {
                     return;
                 }
-                row.dataset.dragBound = 'true';
-                row.setAttribute('draggable', 'true');
+                card.dataset.dragBound = 'true';
+                card.setAttribute('draggable', 'true');
 
                 // Only start a drag when the pointer went down on the handle,
                 // so checkboxes/inputs remain easy to use.
@@ -636,65 +760,65 @@
                     sectionDragState.allowDrag = true;
                 });
 
-                row.addEventListener('dragstart', function (e) {
+                card.addEventListener('dragstart', function (e) {
                     if (!sectionDragState.allowDrag) {
                         e.preventDefault();
                         return;
                     }
 
-                    sectionDragState.row = row;
-                    row.classList.add('section-dragging');
+                    sectionDragState.row = card;
+                    card.classList.add('section-dragging');
                     e.dataTransfer.effectAllowed = 'move';
                     try {
-                        e.dataTransfer.setData('text/plain', row.querySelector('[data-id=hiddenSectionId]')?.value || '');
+                        e.dataTransfer.setData('text/plain', card.querySelector('[data-id=hiddenSectionId]')?.value || '');
                     } catch (err) {
-                        // Some browsers are picky about setData during table-row drags.
+                        // Some browsers are picky about setData during drags.
                     }
                 });
 
-                row.addEventListener('dragend', function () {
-                    row.classList.remove('section-dragging');
+                card.addEventListener('dragend', function () {
+                    card.classList.remove('section-dragging');
                     sectionDragState.row = null;
                     sectionDragState.allowDrag = false;
                     clearSectionDragOverClasses();
                 });
 
-                row.addEventListener('dragover', function (e) {
-                    if (!sectionDragState.row || sectionDragState.row === row) {
+                card.addEventListener('dragover', function (e) {
+                    if (!sectionDragState.row || sectionDragState.row === card) {
                         return;
                     }
 
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
 
-                    const rect = row.getBoundingClientRect();
+                    const rect = card.getBoundingClientRect();
                     const insertBefore = e.clientY < rect.top + rect.height / 2;
                     clearSectionDragOverClasses();
-                    row.classList.add(insertBefore ? 'section-drag-over-above' : 'section-drag-over-below');
+                    card.classList.add(insertBefore ? 'section-drag-over-above' : 'section-drag-over-below');
                 });
 
-                row.addEventListener('dragleave', function (e) {
-                    if (!row.contains(e.relatedTarget)) {
-                        row.classList.remove('section-drag-over-above', 'section-drag-over-below');
+                card.addEventListener('dragleave', function (e) {
+                    if (!card.contains(e.relatedTarget)) {
+                        card.classList.remove('section-drag-over-above', 'section-drag-over-below');
                     }
                 });
 
-                row.addEventListener('drop', function (e) {
+                card.addEventListener('drop', function (e) {
                     e.preventDefault();
                     const dragged = sectionDragState.row;
-                    if (!dragged || dragged === row) {
+                    if (!dragged || dragged === card) {
                         clearSectionDragOverClasses();
                         return;
                     }
 
-                    const rect = row.getBoundingClientRect();
+                    const rect = card.getBoundingClientRect();
                     const insertBefore = e.clientY < rect.top + rect.height / 2;
                     const sectionWrapper = document.querySelector('#sectionWrapper');
 
                     if (insertBefore) {
-                        sectionWrapper.insertBefore(dragged, row);
+                        sectionWrapper.insertBefore(dragged, card);
                     } else {
-                        sectionWrapper.insertBefore(dragged, row.nextSibling);
+                        sectionWrapper.insertBefore(dragged, card.nextSibling);
                     }
 
                     clearSectionDragOverClasses();
@@ -717,15 +841,17 @@
                 if (!sectionInfo.AllowViewModeChange) {
                     viewModeSelect.value = sectionInfo.ViewMode;
                     viewModeSelect.setAttribute('disabled', true);
+                    viewModeSelect.closest('.section-field')?.classList.add('is-disabled');
                 }
 
                 const hideWatchedCheckbox = template.querySelector('[data-id=chkHideWatchedItems]');
-                const hideWatchedLabel = hideWatchedCheckbox.closest('.emby-checkbox-label');
-                hideWatchedCheckbox.checked = sectionConfig.HideWatchedItems
-                if (!sectionInfo.AllowHideWatched && hideWatchedLabel) {
+                const hideWatchedField = template.querySelector('[data-id=hideWatchedField]');
+                hideWatchedCheckbox.checked = sectionConfig.HideWatchedItems;
+                if (!sectionInfo.AllowHideWatched) {
                     hideWatchedCheckbox.setAttribute('disabled', true);
-                    hideWatchedLabel.style.opacity = '0.5';
-                    hideWatchedLabel.style.cursor = 'default';
+                    if (hideWatchedField) {
+                        hideWatchedField.classList.add('is-disabled');
+                    }
                 }
 
                 const dragTitle = pageTranslations['AdminOrderDragHint'] || 'Drag to reorder';
@@ -736,9 +862,9 @@
                 }
 
                 sectionWrapper.appendChild(template);
-                const appendedRow = sectionWrapper.lastElementChild;
-                if (appendedRow) {
-                    setupSectionRowDrag(appendedRow);
+                const appendedCard = sectionWrapper.lastElementChild;
+                if (appendedCard) {
+                    setupSectionRowDrag(appendedCard);
                 }
             }
 
@@ -791,17 +917,17 @@
             }
 
             function snapshotSectionsFromDom() {
-                return Array.from(document.querySelectorAll('#sectionWrapper tr')).map(function (row, index) {
+                return Array.from(getSectionCards()).map(function (card, index) {
                     return {
-                        SectionId: row.querySelector('[data-id=hiddenSectionId]').value,
-                        DisplayName: (row.querySelector('[data-id=lblSectionName]')?.textContent || '').trim(),
-                        Enabled: row.querySelector('[data-id=chkSectionEnabled]').checked,
-                        AllowUserOverride: row.querySelector('[data-id=chkSectionUserOverrideAllowed]').checked,
-                        LowerLimit: parseInt(row.querySelector('[data-id=txtSectionMinLimit]').value, 10) || 0,
-                        UpperLimit: parseInt(row.querySelector('[data-id=txtSectionMaxLimit]').value, 10) || 0,
+                        SectionId: card.querySelector('[data-id=hiddenSectionId]').value,
+                        DisplayName: (card.querySelector('[data-id=lblSectionName]')?.textContent || '').trim(),
+                        Enabled: card.querySelector('[data-id=chkSectionEnabled]').checked,
+                        AllowUserOverride: card.querySelector('[data-id=chkSectionUserOverrideAllowed]').checked,
+                        LowerLimit: parseInt(card.querySelector('[data-id=txtSectionMinLimit]').value, 10) || 0,
+                        UpperLimit: parseInt(card.querySelector('[data-id=txtSectionMaxLimit]').value, 10) || 0,
                         OrderIndex: index,
-                        ViewMode: row.querySelector('[data-id=viewModeSelect]').value,
-                        HideWatchedItems: row.querySelector('[data-id=chkHideWatchedItems]').checked
+                        ViewMode: card.querySelector('[data-id=viewModeSelect]').value,
+                        HideWatchedItems: card.querySelector('[data-id=chkHideWatchedItems]').checked
                     };
                 });
             }
