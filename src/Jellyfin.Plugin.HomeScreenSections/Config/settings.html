@@ -16,6 +16,14 @@
             </p>
             <div id="enabledSections" class="user-section-list">
             </div>
+            <div style="margin-top: 1em;">
+                <button type="button" id="btnResetUserSections" class="raised emby-button">
+                    <span data-i18n="AdminResetToDefaults">Reset to server defaults</span>
+                </button>
+                <div class="fieldDescription" data-i18n="AdminResetToDefaultsDesc" style="margin-top: 0.5em;">
+                    Restore enabled sections and order to the values configured by your server admin. You still need to click Save.
+                </div>
+            </div>
         </div>
 
     </div>
@@ -84,9 +92,49 @@
             setup: function () {
                 var uiLanguage = document.documentElement.lang || navigator.language || 'en';
                 var pageTranslations = {};
+                var lastUserSettings = null;
+                var lastSectionsResponse = null;
+                var lastHssMeta = null;
 
                 function t(key, fallback) {
                     return pageTranslations[key] || fallback;
+                }
+
+                function applyDefaultUserSections() {
+                    if (!lastUserSettings || !lastSectionsResponse) {
+                        return;
+                    }
+
+                    var defaults = lastUserSettings.DefaultEnabledSections || [];
+                    var list = document.querySelector('#enabledSections .user-section-list');
+                    if (!list) {
+                        return;
+                    }
+
+                    // Restore DOM order to API/catalog order (admin default order).
+                    var defaultOrder = (lastSectionsResponse.Items || []).map(function (s) { return s.Section; });
+                    defaultOrder.forEach(function (sectionId) {
+                        var row = list.querySelector('.user-section-row[data-section="' + sectionId + '"]');
+                        if (row) {
+                            list.appendChild(row);
+                        }
+                    });
+
+                    // Restore enable checkboxes from server defaults (locked rows stay as defaults).
+                    list.querySelectorAll('.user-section-row').forEach(function (row) {
+                        var sectionId = row.getAttribute('data-section');
+                        var checkbox = row.querySelector('.sectionEnabledCheckbox');
+                        if (!checkbox || checkbox.disabled) {
+                            return;
+                        }
+                        checkbox.checked = defaults.indexOf(sectionId) !== -1;
+                    });
+
+                    if (typeof updateUserSectionMoveButtons === 'function') {
+                        updateUserSectionMoveButtons();
+                    }
+
+                    Dashboard.alert(t('AdminResetToDefaultsDone', 'Restored server defaults. Click Save to apply.'));
                 }
 
                 function updateUserSectionMoveButtons() {
@@ -171,6 +219,8 @@
                             accept: 'application/json'
                         }
                     }).then(function (settings) {
+                        lastUserSettings = settings;
+                        lastHssMeta = hssMeta;
                         ApiClient.fetch({
                             url: ApiClient.getUrl('ModularHomeViews/Sections') + '?language=' + encodeURIComponent(uiLanguage),
                             type: 'GET',
@@ -179,6 +229,7 @@
                                 accept: 'application/json'
                             }
                         }).then(function (response) {
+                            lastSectionsResponse = response;
                             if (response.TotalRecordCount > 0) {
                                 var items = response.Items.slice();
                                 var savedOrder = Array.isArray(settings.SectionOrder) ? settings.SectionOrder : [];
@@ -265,6 +316,13 @@
                         });
                     });
                 });
+
+                var resetBtn = document.querySelector('#btnResetUserSections');
+                if (resetBtn) {
+                    resetBtn.addEventListener('click', function () {
+                        applyDefaultUserSections();
+                    });
+                }
 
                 document.querySelector('.configForm')
                     .addEventListener('submit', function (e) {
