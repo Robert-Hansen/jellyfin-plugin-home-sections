@@ -338,10 +338,48 @@
             </div>
 
             <div id="sections" class="jellyfin-tab-content" style="display: none; width: fit-content;">
+                <style>
+                    #sectionsTable tbody tr[data-id="section-config"] {
+                        transition: background-color 0.15s ease, opacity 0.15s ease;
+                    }
+                    #sectionsTable tbody tr.section-dragging {
+                        opacity: 0.45;
+                        background-color: rgba(255, 255, 255, 0.06);
+                    }
+                    #sectionsTable tbody tr.section-drag-over-above {
+                        box-shadow: inset 0 2px 0 0 var(--primary-accent-color, #00a4dc);
+                    }
+                    #sectionsTable tbody tr.section-drag-over-below {
+                        box-shadow: inset 0 -2px 0 0 var(--primary-accent-color, #00a4dc);
+                    }
+                    #sectionsTable .section-drag-handle {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 28px;
+                        height: 28px;
+                        cursor: grab;
+                        color: #999;
+                        user-select: none;
+                        touch-action: none;
+                        border-radius: 4px;
+                    }
+                    #sectionsTable .section-drag-handle:hover {
+                        color: #fff;
+                        background-color: rgba(255, 255, 255, 0.08);
+                    }
+                    #sectionsTable .section-drag-handle:active {
+                        cursor: grabbing;
+                    }
+                    #sectionsTable .section-drag-handle .material-icons {
+                        font-size: 22px;
+                        line-height: 1;
+                    }
+                </style>
                 <fieldset class="verticalSection-extrabottompadding">
                      <legend data-i18n="AdminFieldDescriptions" style="padding-bottom:10px; font-weight: bolder; font-size: 1.2em;">Field Descriptions</legend>
                     <ul id="fieldDescriptionsList" style="margin: 0; padding-left: 1.5em;">
-                        <li><strong data-i18n="AdminOrder">Order</strong>: <span data-i18n="AdminOrderDesc">Sets the display order for this section in Jellyfin. Lower numbers appear first.</span> <i data-i18n="AdminOrderNote">Note: Sections with the same number are shown in random order among themselves</i></li>
+                        <li><strong data-i18n="AdminOrder">Order</strong>: <span data-i18n="AdminOrderDesc">Drag sections using the handle on the left to set display order. Top items appear first on the home screen.</span></li>
                         <li><strong data-i18n="AdminEnabled">Enabled</strong>: <span data-i18n="AdminEnabledDesc">Enable this section by default</span></li>
                         <li><strong data-i18n="AdminUserOverride">User Override</strong>: <span data-i18n="AdminUserOverrideDesc">Let the user override this section</span></li>
                         <li><strong data-i18n="AdminMin">Min</strong>: <span data-i18n="AdminLowerLimitDesc">The minimum number of times this section should appear</span></li>
@@ -352,8 +390,8 @@
                 <table id="sectionsTable" class="tblConnections" style="width: 100%;">
                     <thead>
                         <tr>
+                            <th style="width: 40px; text-align: center; vertical-align: middle; padding: 8px 4px; font-weight: bold;" aria-label="Reorder"></th>
                             <th data-i18n="AdminSection" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">Section</th>
-                            <th data-i18n="AdminOrder" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">Order</th>
                             <th data-i18n="AdminEnabled" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">Enabled</th>
                             <th data-i18n="AdminUserOverride" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">User Override</th>
                             <th data-i18n="AdminHideWatched" style="text-align: center; vertical-align: middle; padding: 8px 12px; font-weight: bold;">Hide Watched</th>
@@ -375,13 +413,15 @@
     </div>
 
     <template id="sectionConfigTemplate">
-        <tr data-id="section-config">
+        <tr data-id="section-config" draggable="true">
+            <td style="text-align: center; vertical-align: middle; padding: 8px 4px; width: 40px;">
+                <span class="section-drag-handle" data-id="dragHandle" title="Drag to reorder" draggable="false">
+                    <span class="material-icons" aria-hidden="true">drag_indicator</span>
+                </span>
+            </td>
             <td style="text-align: left; vertical-align: middle; padding: 8px 12px;">
                 <input type="hidden" data-id="hiddenSectionId" />
                 <strong data-id="lblSectionName"></strong>
-            </td>
-            <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
-                <input data-id="txtOrderIndex" type="number" is="emby-input" min="0" class="emby-input" style="width: 60px; display: inline-table; text-align: center;">
             </td>
             <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
                 <label style="width: 0;" class="emby-checkbox-label">
@@ -403,7 +443,7 @@
                     </span>
                 </label>
             </td>
-                        <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
+            <td style="text-align: center; vertical-align: middle; padding: 8px 12px;">
                 <label style="width: 0;" class="emby-checkbox-label">
                     <input data-id="chkHideWatchedItems" type="checkbox" is="emby-checkbox" data-embycheckbox="true" class="emby-checkbox">
                     <span class="checkboxLabel"></span>
@@ -450,6 +490,12 @@
 
             // Stored after translatePage() fetches them, used by saveConfig() and applyTranslations()
             var pageTranslations = {};
+
+            // Active drag-and-drop state for the section settings table
+            var sectionDragState = { row: null, allowDrag: false };
+
+            // Snapshot of section settings after load (and after a successful save)
+            var originalSectionSnapshot = [];
 
             // Applies stored translations to data-i18n and data-i18n-label attributes
             // within the given root element. Safe to call before translations are loaded
@@ -569,6 +615,92 @@
                 });
             }
 
+            function clearSectionDragOverClasses() {
+                document.querySelectorAll('#sectionWrapper tr.section-drag-over-above, #sectionWrapper tr.section-drag-over-below')
+                    .forEach(row => {
+                        row.classList.remove('section-drag-over-above', 'section-drag-over-below');
+                    });
+            }
+
+            function setupSectionRowDrag(row) {
+                const handle = row.querySelector('[data-id=dragHandle]');
+                if (!handle || row.dataset.dragBound === 'true') {
+                    return;
+                }
+                row.dataset.dragBound = 'true';
+                row.setAttribute('draggable', 'true');
+
+                // Only start a drag when the pointer went down on the handle,
+                // so checkboxes/inputs remain easy to use.
+                handle.addEventListener('pointerdown', function () {
+                    sectionDragState.allowDrag = true;
+                });
+
+                row.addEventListener('dragstart', function (e) {
+                    if (!sectionDragState.allowDrag) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    sectionDragState.row = row;
+                    row.classList.add('section-dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    try {
+                        e.dataTransfer.setData('text/plain', row.querySelector('[data-id=hiddenSectionId]')?.value || '');
+                    } catch (err) {
+                        // Some browsers are picky about setData during table-row drags.
+                    }
+                });
+
+                row.addEventListener('dragend', function () {
+                    row.classList.remove('section-dragging');
+                    sectionDragState.row = null;
+                    sectionDragState.allowDrag = false;
+                    clearSectionDragOverClasses();
+                });
+
+                row.addEventListener('dragover', function (e) {
+                    if (!sectionDragState.row || sectionDragState.row === row) {
+                        return;
+                    }
+
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+
+                    const rect = row.getBoundingClientRect();
+                    const insertBefore = e.clientY < rect.top + rect.height / 2;
+                    clearSectionDragOverClasses();
+                    row.classList.add(insertBefore ? 'section-drag-over-above' : 'section-drag-over-below');
+                });
+
+                row.addEventListener('dragleave', function (e) {
+                    if (!row.contains(e.relatedTarget)) {
+                        row.classList.remove('section-drag-over-above', 'section-drag-over-below');
+                    }
+                });
+
+                row.addEventListener('drop', function (e) {
+                    e.preventDefault();
+                    const dragged = sectionDragState.row;
+                    if (!dragged || dragged === row) {
+                        clearSectionDragOverClasses();
+                        return;
+                    }
+
+                    const rect = row.getBoundingClientRect();
+                    const insertBefore = e.clientY < rect.top + rect.height / 2;
+                    const sectionWrapper = document.querySelector('#sectionWrapper');
+
+                    if (insertBefore) {
+                        sectionWrapper.insertBefore(dragged, row);
+                    } else {
+                        sectionWrapper.insertBefore(dragged, row.nextSibling);
+                    }
+
+                    clearSectionDragOverClasses();
+                });
+            }
+
             function addSectionSetting(sectionConfig, sectionInfo) {
                 const sectionWrapper = document.querySelector('#sectionWrapper');
                 const template = document.querySelector('#sectionConfigTemplate').content.cloneNode(true);
@@ -579,7 +711,6 @@
                 template.querySelector('[data-id=chkSectionUserOverrideAllowed]').checked = sectionConfig.AllowUserOverride;
                 template.querySelector('[data-id=txtSectionMinLimit]').value = sectionConfig.LowerLimit;
                 template.querySelector('[data-id=txtSectionMaxLimit]').value = sectionConfig.UpperLimit;
-                template.querySelector('[data-id=txtOrderIndex]').value = sectionConfig.OrderIndex;
 
                 const viewModeSelect = template.querySelector('[data-id=viewModeSelect]');
                 viewModeSelect.value = sectionConfig.ViewMode;
@@ -597,7 +728,18 @@
                     hideWatchedLabel.style.cursor = 'default';
                 }
 
+                const dragTitle = pageTranslations['AdminOrderDragHint'] || 'Drag to reorder';
+                const dragHandle = template.querySelector('[data-id=dragHandle]');
+                if (dragHandle) {
+                    dragHandle.setAttribute('title', dragTitle);
+                    dragHandle.setAttribute('aria-label', dragTitle);
+                }
+
                 sectionWrapper.appendChild(template);
+                const appendedRow = sectionWrapper.lastElementChild;
+                if (appendedRow) {
+                    setupSectionRowDrag(appendedRow);
+                }
             }
 
             function loadLibraries() {
@@ -638,21 +780,252 @@
                 });
             }
 
-            function saveConfig(e) {
-                e.preventDefault();
+            function t(key, fallback) {
+                return pageTranslations[key] || fallback;
+            }
 
-                const hasReleaseCheck =
-                    document.querySelector('#radarrConsiderCinemaRelease').checked ||
-                    document.querySelector('#radarrConsiderPhysicalRelease').checked ||
-                    document.querySelector('#radarrConsiderDigitalRelease').checked;
+            function formatBool(value) {
+                return value
+                    ? t('AdminYes', 'Yes')
+                    : t('AdminNo', 'No');
+            }
 
-                if (!hasReleaseCheck) {
-                    Dashboard.alert(pageTranslations['AdminReleaseTypeRequired'] || 'At least one release type must be selected for upcoming movies.');
-                    return;
+            function snapshotSectionsFromDom() {
+                return Array.from(document.querySelectorAll('#sectionWrapper tr')).map(function (row, index) {
+                    return {
+                        SectionId: row.querySelector('[data-id=hiddenSectionId]').value,
+                        DisplayName: (row.querySelector('[data-id=lblSectionName]')?.textContent || '').trim(),
+                        Enabled: row.querySelector('[data-id=chkSectionEnabled]').checked,
+                        AllowUserOverride: row.querySelector('[data-id=chkSectionUserOverrideAllowed]').checked,
+                        LowerLimit: parseInt(row.querySelector('[data-id=txtSectionMinLimit]').value, 10) || 0,
+                        UpperLimit: parseInt(row.querySelector('[data-id=txtSectionMaxLimit]').value, 10) || 0,
+                        OrderIndex: index,
+                        ViewMode: row.querySelector('[data-id=viewModeSelect]').value,
+                        HideWatchedItems: row.querySelector('[data-id=chkHideWatchedItems]').checked
+                    };
+                });
+            }
+
+            function collectSectionSettingsForSave() {
+                return snapshotSectionsFromDom().map(function (section) {
+                    return {
+                        SectionId: section.SectionId,
+                        Enabled: section.Enabled,
+                        AllowUserOverride: section.AllowUserOverride,
+                        LowerLimit: section.LowerLimit,
+                        UpperLimit: section.UpperLimit,
+                        OrderIndex: section.OrderIndex,
+                        ViewMode: section.ViewMode,
+                        HideWatchedItems: section.HideWatchedItems
+                    };
+                });
+            }
+
+            function buildSectionChangeLines(originalList, currentList) {
+                const changes = [];
+                const originalById = {};
+                (originalList || []).forEach(function (section) {
+                    originalById[section.SectionId] = section;
+                });
+
+                const currentIds = new Set();
+                (currentList || []).forEach(function (current) {
+                    currentIds.add(current.SectionId);
+                    const name = current.DisplayName || current.SectionId;
+                    const original = originalById[current.SectionId];
+
+                    if (!original) {
+                        changes.push(t('AdminChangeSectionAdded', '"{0}" was added').replace('{0}', name));
+                        return;
+                    }
+
+                    if (original.OrderIndex !== current.OrderIndex) {
+                        changes.push(
+                            t('AdminChangeSectionOrder', '"{0}": position {1} → {2}')
+                                .replace('{0}', name)
+                                .replace('{1}', String(original.OrderIndex + 1))
+                                .replace('{2}', String(current.OrderIndex + 1))
+                        );
+                    }
+                    if (Boolean(original.Enabled) !== Boolean(current.Enabled)) {
+                        changes.push(
+                            t('AdminChangeSectionField', '"{0}": {1} {2} → {3}')
+                                .replace('{0}', name)
+                                .replace('{1}', t('AdminEnabled', 'Enabled'))
+                                .replace('{2}', formatBool(original.Enabled))
+                                .replace('{3}', formatBool(current.Enabled))
+                        );
+                    }
+                    if (Boolean(original.AllowUserOverride) !== Boolean(current.AllowUserOverride)) {
+                        changes.push(
+                            t('AdminChangeSectionField', '"{0}": {1} {2} → {3}')
+                                .replace('{0}', name)
+                                .replace('{1}', t('AdminUserOverride', 'User Override'))
+                                .replace('{2}', formatBool(original.AllowUserOverride))
+                                .replace('{3}', formatBool(current.AllowUserOverride))
+                        );
+                    }
+                    if (Boolean(original.HideWatchedItems) !== Boolean(current.HideWatchedItems)) {
+                        changes.push(
+                            t('AdminChangeSectionField', '"{0}": {1} {2} → {3}')
+                                .replace('{0}', name)
+                                .replace('{1}', t('AdminHideWatched', 'Hide Watched'))
+                                .replace('{2}', formatBool(original.HideWatchedItems))
+                                .replace('{3}', formatBool(current.HideWatchedItems))
+                        );
+                    }
+                    if (Number(original.LowerLimit) !== Number(current.LowerLimit)) {
+                        changes.push(
+                            t('AdminChangeSectionField', '"{0}": {1} {2} → {3}')
+                                .replace('{0}', name)
+                                .replace('{1}', t('AdminMin', 'Min'))
+                                .replace('{2}', String(original.LowerLimit))
+                                .replace('{3}', String(current.LowerLimit))
+                        );
+                    }
+                    if (Number(original.UpperLimit) !== Number(current.UpperLimit)) {
+                        changes.push(
+                            t('AdminChangeSectionField', '"{0}": {1} {2} → {3}')
+                                .replace('{0}', name)
+                                .replace('{1}', t('AdminMax', 'Max'))
+                                .replace('{2}', String(original.UpperLimit))
+                                .replace('{3}', String(current.UpperLimit))
+                        );
+                    }
+                    if (String(original.ViewMode || '') !== String(current.ViewMode || '')) {
+                        changes.push(
+                            t('AdminChangeSectionField', '"{0}": {1} {2} → {3}')
+                                .replace('{0}', name)
+                                .replace('{1}', t('AdminViewMode', 'View Mode'))
+                                .replace('{2}', String(original.ViewMode))
+                                .replace('{3}', String(current.ViewMode))
+                        );
+                    }
+                });
+
+                (originalList || []).forEach(function (original) {
+                    if (!currentIds.has(original.SectionId)) {
+                        const name = original.DisplayName || original.SectionId;
+                        changes.push(t('AdminChangeSectionRemoved', '"{0}" was removed').replace('{0}', name));
+                    }
+                });
+
+                return changes;
+            }
+
+            function ensureChangesDialog() {
+                var dialog = document.getElementById('sectionChangesDialog');
+                if (dialog) {
+                    return dialog;
                 }
 
-                Dashboard.showLoadingMsg();
-                const config = {
+                dialog = document.createElement('div');
+                dialog.id = 'sectionChangesDialog';
+                dialog.setAttribute('role', 'dialog');
+                dialog.setAttribute('aria-modal', 'true');
+                dialog.innerHTML =
+                    '<div class="section-changes-dialog-backdrop" data-id="changesDialogBackdrop"></div>' +
+                    '<div class="section-changes-dialog-panel">' +
+                        '<h2 class="section-changes-dialog-title" data-id="changesDialogTitle"></h2>' +
+                        '<p class="section-changes-dialog-subtitle" data-id="changesDialogSubtitle"></p>' +
+                        '<ul class="section-changes-dialog-list" data-id="changesDialogList"></ul>' +
+                        '<div class="section-changes-dialog-actions">' +
+                            '<button type="button" class="raised emby-button" data-id="changesDialogCancel"></button>' +
+                            '<button type="button" class="raised button-submit emby-button" data-id="changesDialogConfirm"></button>' +
+                        '</div>' +
+                    '</div>';
+
+                var style = document.createElement('style');
+                style.textContent =
+                    '#sectionChangesDialog {' +
+                        'display: none; position: fixed; inset: 0; z-index: 10000;' +
+                        'align-items: center; justify-content: center; padding: 1.5em;' +
+                    '}' +
+                    '#sectionChangesDialog.is-open { display: flex; }' +
+                    '#sectionChangesDialog .section-changes-dialog-backdrop {' +
+                        'position: absolute; inset: 0; background: rgba(0, 0, 0, 0.65);' +
+                    '}' +
+                    '#sectionChangesDialog .section-changes-dialog-panel {' +
+                        'position: relative; z-index: 1; width: min(560px, 100%);' +
+                        'max-height: min(80vh, 720px); overflow: auto;' +
+                        'background: #202020; color: #fff; border-radius: 8px;' +
+                        'box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); padding: 1.25em 1.4em 1.1em;' +
+                        'border: 1px solid rgba(255, 255, 255, 0.08);' +
+                    '}' +
+                    '#sectionChangesDialog .section-changes-dialog-title {' +
+                        'margin: 0 0 0.35em; font-size: 1.25em;' +
+                    '}' +
+                    '#sectionChangesDialog .section-changes-dialog-subtitle {' +
+                        'margin: 0 0 0.9em; color: #bbb; font-size: 0.95em;' +
+                    '}' +
+                    '#sectionChangesDialog .section-changes-dialog-list {' +
+                        'margin: 0 0 1.1em; padding-left: 1.25em; max-height: 45vh; overflow: auto;' +
+                    '}' +
+                    '#sectionChangesDialog .section-changes-dialog-list li {' +
+                        'margin: 0.35em 0; line-height: 1.4;' +
+                    '}' +
+                    '#sectionChangesDialog .section-changes-dialog-actions {' +
+                        'display: flex; justify-content: flex-end; gap: 0.75em; flex-wrap: wrap;' +
+                    '}';
+                document.head.appendChild(style);
+                document.body.appendChild(dialog);
+                return dialog;
+            }
+
+            function showSectionChangesDialog(changeLines) {
+                return new Promise(function (resolve) {
+                    var dialog = ensureChangesDialog();
+                    var list = dialog.querySelector('[data-id=changesDialogList]');
+                    var title = dialog.querySelector('[data-id=changesDialogTitle]');
+                    var subtitle = dialog.querySelector('[data-id=changesDialogSubtitle]');
+                    var btnConfirm = dialog.querySelector('[data-id=changesDialogConfirm]');
+                    var btnCancel = dialog.querySelector('[data-id=changesDialogCancel]');
+                    var backdrop = dialog.querySelector('[data-id=changesDialogBackdrop]');
+
+                    title.textContent = t('AdminConfirmChangesTitle', 'Confirm changes');
+                    subtitle.textContent = t(
+                        'AdminConfirmChangesSubtitle',
+                        'The following section settings will be saved:'
+                    );
+                    btnConfirm.textContent = t('AdminSave', 'Save');
+                    btnCancel.textContent = t('AdminCancel', 'Cancel');
+
+                    list.innerHTML = '';
+                    changeLines.forEach(function (line) {
+                        var item = document.createElement('li');
+                        item.textContent = line;
+                        list.appendChild(item);
+                    });
+
+                    function cleanup(result) {
+                        dialog.classList.remove('is-open');
+                        btnConfirm.removeEventListener('click', onConfirm);
+                        btnCancel.removeEventListener('click', onCancel);
+                        backdrop.removeEventListener('click', onCancel);
+                        document.removeEventListener('keydown', onKeyDown);
+                        resolve(result);
+                    }
+
+                    function onConfirm() { cleanup(true); }
+                    function onCancel() { cleanup(false); }
+                    function onKeyDown(e) {
+                        if (e.key === 'Escape') {
+                            onCancel();
+                        }
+                    }
+
+                    btnConfirm.addEventListener('click', onConfirm);
+                    btnCancel.addEventListener('click', onCancel);
+                    backdrop.addEventListener('click', onCancel);
+                    document.addEventListener('keydown', onKeyDown);
+
+                    dialog.classList.add('is-open');
+                    btnConfirm.focus();
+                });
+            }
+
+            function buildConfigPayload() {
+                return {
                     Enabled: document.querySelector('#globalEnabledDefault').checked,
                     LazyLoadEnabled: document.querySelector('#chkLazyLoadEnabled').checked,
                     NumSectionsPerPage: parseInt(document.querySelector('[data-id=numLazyLoadSections]').value),
@@ -681,27 +1054,46 @@
                     MaxImageWidth: parseInt(document.querySelector('[data-id=txtMaxImageWidth]').value) || 600,
                     ImageJpegQuality: parseInt(document.querySelector('[data-id=txtImageJpegQuality]').value) || 85,
                     OverrideStreamyfinHome: document.querySelector('#globalStreamyfinHomeOverride').checked,
-                    SectionSettings: []
+                    // List order is the display order (top = first = lowest OrderIndex).
+                    SectionSettings: collectSectionSettingsForSave()
                 };
+            }
 
-                document.querySelectorAll('#sectionWrapper tr').forEach(row => {
-                    const sectionConfig = {
-                        SectionId: row.querySelector('[data-id=hiddenSectionId]').value,
-                        Enabled: row.querySelector('[data-id=chkSectionEnabled]').checked,
-                        AllowUserOverride: row.querySelector('[data-id=chkSectionUserOverrideAllowed]').checked,
-                        LowerLimit: row.querySelector('[data-id=txtSectionMinLimit]').value,
-                        UpperLimit: row.querySelector('[data-id=txtSectionMaxLimit]').value,
-                        OrderIndex: row.querySelector('[data-id=txtOrderIndex]').value,
-                        ViewMode: row.querySelector('[data-id=viewModeSelect]').value,
-                        HideWatchedItems: row.querySelector('[data-id=chkHideWatchedItems]').checked,
-                    };
-                    config.SectionSettings.push(sectionConfig);
-                });
-
+            function persistConfig(config) {
+                Dashboard.showLoadingMsg();
                 window.ApiClient.updatePluginConfiguration(pluginId, config)
-                    .then(Dashboard.processPluginConfigurationUpdateResult)
+                    .then(function (result) {
+                        originalSectionSnapshot = snapshotSectionsFromDom();
+                        return Dashboard.processPluginConfigurationUpdateResult(result);
+                    })
                     .catch(e => console.error(e))
                     .finally(() => Dashboard.hideLoadingMsg());
+            }
+
+            async function saveConfig(e) {
+                e.preventDefault();
+
+                const hasReleaseCheck =
+                    document.querySelector('#radarrConsiderCinemaRelease').checked ||
+                    document.querySelector('#radarrConsiderPhysicalRelease').checked ||
+                    document.querySelector('#radarrConsiderDigitalRelease').checked;
+
+                if (!hasReleaseCheck) {
+                    Dashboard.alert(pageTranslations['AdminReleaseTypeRequired'] || 'At least one release type must be selected for upcoming movies.');
+                    return;
+                }
+
+                const currentSections = snapshotSectionsFromDom();
+                const changeLines = buildSectionChangeLines(originalSectionSnapshot, currentSections);
+
+                if (changeLines.length > 0) {
+                    const confirmed = await showSectionChangesDialog(changeLines);
+                    if (!confirmed) {
+                        return;
+                    }
+                }
+
+                persistConfig(buildConfigPayload());
             }
 
             function loadConfig() {
@@ -755,7 +1147,7 @@
                             url: ApiClient.getUrl('ModularHomeViews/Sections') + '?language=' + encodeURIComponent(uiLanguage),
                             type: 'GET'
                         }).then(response => response.json()).then(function (json) {
-                            json.Items.forEach(sectionType => {
+                            const sectionEntries = json.Items.map(sectionType => {
                                 let sectionConfig = config.SectionSettings.find(s => s.SectionId === sectionType.Section);
                                 if (!sectionConfig) {
                                     sectionConfig = {
@@ -769,11 +1161,29 @@
                                         HideWatchedItems: false
                                     };
                                 }
+                                return { sectionConfig, sectionType };
+                            });
+
+                            // Render in saved display order so the list matches home screen order.
+                            sectionEntries.sort((a, b) => {
+                                const orderA = a.sectionConfig.OrderIndex ?? 999;
+                                const orderB = b.sectionConfig.OrderIndex ?? 999;
+                                if (orderA !== orderB) {
+                                    return orderA - orderB;
+                                }
+                                return String(a.sectionType.DisplayText || '').localeCompare(String(b.sectionType.DisplayText || ''));
+                            });
+
+                            sectionEntries.forEach(({ sectionConfig, sectionType }) => {
                                 addSectionSetting(sectionConfig, sectionType);
                             });
+
                             // Translate dynamically added section rows in case
                             // translatePage() finished before sections were rendered
                             applyTranslations(document.querySelector('#sectionWrapper'));
+
+                            // Baseline for the save-time change summary dialog
+                            originalSectionSnapshot = snapshotSectionsFromDom();
                         }).finally(() => Dashboard.hideLoadingMsg());
                     });
             }
@@ -785,6 +1195,16 @@
                 translatePage();
                 document.querySelector('#btnSaveConfigGlobal').addEventListener("click", saveConfig);
                 document.querySelector('#btnSaveConfigSections').addEventListener("click", saveConfig);
+
+                // Clear handle-drag flag if the pointer is released without a drag.
+                document.addEventListener('pointerup', function () {
+                    if (!sectionDragState.row) {
+                        sectionDragState.allowDrag = false;
+                    }
+                });
+                document.addEventListener('pointercancel', function () {
+                    sectionDragState.allowDrag = false;
+                });
 
                 // Cache bust functionality
                 const btnBustHomeSectionsCache = document.querySelector('#btnBustHomeSectionsCache');
