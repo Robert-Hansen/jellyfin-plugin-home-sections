@@ -1287,7 +1287,26 @@
                             }
                         });
 
-                        // Apply field values first.
+                        const localIds = Array.from(getSectionCards()).map(function (card) {
+                            return card.querySelector('[data-id=hiddenSectionId]').value;
+                        });
+                        const localIdSet = {};
+                        localIds.forEach(function (id) { localIdSet[id] = true; });
+
+                        const matched = [];
+                        const unknownInFile = [];
+                        Object.keys(byId).forEach(function (id) {
+                            if (localIdSet[id]) {
+                                matched.push(id);
+                            } else {
+                                unknownInFile.push(id);
+                            }
+                        });
+                        const missingInFile = localIds.filter(function (id) {
+                            return !byId[id];
+                        });
+
+                        // Apply field values for matched IDs only.
                         Array.from(getSectionCards()).forEach(function (card) {
                             const id = card.querySelector('[data-id=hiddenSectionId]').value;
                             const section = byId[id];
@@ -1321,18 +1340,22 @@
                             }
                         });
 
-                        // Reorder cards by imported OrderIndex when present.
+                        // Reorder cards by imported OrderIndex when present (matched IDs only).
                         const orderedIds = imported
                             .slice()
                             .sort(function (a, b) {
                                 return (Number(a.OrderIndex) || 0) - (Number(b.OrderIndex) || 0);
                             })
                             .map(function (s) { return s.SectionId; })
-                            .filter(Boolean);
+                            .filter(function (id) { return !!id && localIdSet[id]; });
 
                         if (orderedIds.length) {
                             const beforeIds = captureSectionOrderIds();
-                            applySectionOrderIds(orderedIds);
+                            // Keep local-only sections after imported order.
+                            const remainder = localIds.filter(function (id) {
+                                return orderedIds.indexOf(id) === -1;
+                            });
+                            applySectionOrderIds(orderedIds.concat(remainder));
                             if (beforeIds.join('|') !== captureSectionOrderIds().join('|')) {
                                 rememberReorderForUndo(beforeIds);
                             }
@@ -1340,7 +1363,18 @@
 
                         updateSectionMoveButtons();
                         refreshSectionDirtyState();
-                        Dashboard.alert(t('AdminImportSectionsDone', 'Section settings imported. Review changes and click Save.'));
+
+                        var summary = t('AdminImportSectionsDone', 'Section settings imported. Review changes and click Save.');
+                        summary += '\n\n' + t('AdminImportMatched', 'Matched: {0}').replace('{0}', String(matched.length));
+                        if (unknownInFile.length) {
+                            summary += '\n' + t('AdminImportUnknown', 'Unknown in this server (skipped): {0}')
+                                .replace('{0}', unknownInFile.slice(0, 8).join(', ') + (unknownInFile.length > 8 ? '…' : ''));
+                        }
+                        if (missingInFile.length) {
+                            summary += '\n' + t('AdminImportMissing', 'Not in file (unchanged): {0}')
+                                .replace('{0}', String(missingInFile.length));
+                        }
+                        Dashboard.alert(summary);
                     } catch (err) {
                         console.error(err);
                         Dashboard.alert(t('AdminImportSectionsFailed', 'Failed to import section settings. Check the JSON file.'));
