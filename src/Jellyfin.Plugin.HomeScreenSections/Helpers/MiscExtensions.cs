@@ -1,6 +1,7 @@
 using System.Reflection;
 using Jellyfin.Data;
-using Jellyfin.Database.Implementations.Enums;
+// PreferenceKind comes from version-specific global usings:
+// 10.10.7 -> Jellyfin.Data.Enums, 10.11+ -> Jellyfin.Database.Implementations.Enums
 using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
