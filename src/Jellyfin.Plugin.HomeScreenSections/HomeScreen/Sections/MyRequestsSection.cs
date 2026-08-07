@@ -1,4 +1,4 @@
-﻿using Jellyfin.Plugin.HomeScreenSections.Configuration;
+using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.Helpers;
 using Jellyfin.Plugin.HomeScreenSections.Library;
 using Jellyfin.Plugin.HomeScreenSections.Model.Dto;
@@ -28,9 +28,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         
         public string? Route => null;
         
-        public string? AdditionalData { get; set; } = null;
+        public string? AdditionalData { get; set; }
         
-        public object? OriginalPayload { get; } = null;
+        public object? OriginalPayload { get; }
 
         public MyRequestsSection(IUserManager userManager, ILibraryManager libraryManager, IDtoService dtoService)
         {
@@ -69,7 +69,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             
             HttpResponseMessage usersResponse = client.GetAsync($"/api/v1/user?q={Uri.EscapeDataString(user.Username)}").GetAwaiter().GetResult();
             string userResponseRaw = usersResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            int? jellyseerrUserId = JObject.Parse(userResponseRaw).Value<JArray>("results")?.OfType<JObject>().FirstOrDefault(x => x.Value<string>("jellyfinUsername") == user.Username)?.Value<int>("id");
+            int? jellyseerrUserId = JObject.Parse(userResponseRaw).Value<JArray>("results")?.OfType<JObject>().FirstOrDefault(x => string.Equals(x.Value<string>("jellyfinUsername"), user.Username, StringComparison.Ordinal))?.Value<int>("id");
 
             if (jellyseerrUserId == null)
             {
@@ -104,7 +104,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 }
 
                 var config = HomeScreenSectionsPlugin.Instance?.Configuration;
-                var sectionSettings = config?.SectionSettings.FirstOrDefault(x => x.SectionId == Section);
+                var sectionSettings = config?.SectionSettings.FirstOrDefault(x => string.Equals(x.SectionId, Section, StringComparison.Ordinal));
                 bool hideWatchedItems = sectionSettings?.HideWatchedItems == true;
 
                 IEnumerable<BaseItem> items = folders.SelectMany(x =>
@@ -145,7 +145,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 Limit = Limit ?? 1,
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Landscape,
-                AllowViewModeChange = true, // TODO: Change this to allowed view modes
+                AllowViewModeChange = true, // NOTE: Change this to allowed view modes
                 AllowHideWatched = true
             };
         }

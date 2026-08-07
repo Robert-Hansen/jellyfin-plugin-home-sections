@@ -65,7 +65,7 @@ public class GenreSection : IHomeScreenSection
         };
 
         var config = HomeScreenSectionsPlugin.Instance?.Configuration;
-        var sectionSettings = config?.SectionSettings.FirstOrDefault(x => x.SectionId == Section);
+        var sectionSettings = config?.SectionSettings.FirstOrDefault(x => string.Equals(x.SectionId, Section, StringComparison.Ordinal));
         // If HideWatchedItems is enabled for this section, set isPlayed to false to hide watched items; otherwise, include all.
         bool? isPlayed = sectionSettings?.HideWatchedItems == true ? false : null;
 
@@ -105,14 +105,10 @@ public class GenreSection : IHomeScreenSection
 
     public IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
     {
-        User? user = userId is null || userId.Value.Equals(default)
+        User user = (userId is null || userId.Value.Equals(default)
             ? null
-            : m_userManager.GetUserById(userId.Value);
-
-        if (user == null)
-        {
-            throw new Exception();
-        }
+            : m_userManager.GetUserById(userId.Value))
+            ?? throw new InvalidOperationException("User not found for genre section.");
 
         // Do the heavy lifting before we add into the cache
         (string Genre, int Score)[] userGenreScores = GetGenresForUser(user);
@@ -244,10 +240,11 @@ public class GenreSection : IHomeScreenSection
                 Genre = genre,
                 PlayCount = userDataCache.TryGetValue(movie.Id, out var ud) ? ud?.PlayCount ?? 0 : 0
             }))
-            .GroupBy(x => x.Genre)
+            .GroupBy(x => x.Genre, StringComparer.Ordinal)
             .ToDictionary(
                 g => g.Key,
-                g => g.Sum(x => x.PlayCount) * scorePerPlay
+                g => g.Sum(x => x.PlayCount) * scorePerPlay,
+                StringComparer.Ordinal
             );
 
         // === Calculate recently watched scores (last 14 days) ===
@@ -262,10 +259,11 @@ public class GenreSection : IHomeScreenSection
                 return false;
             })
             .SelectMany(movie => movie.Genres)
-            .GroupBy(genre => genre)
+            .GroupBy(genre => genre, StringComparer.Ordinal)
             .ToDictionary(
                 g => g.Key,
-                g => g.Count() * recentlyWatchedScore
+                g => g.Count() * recentlyWatchedScore,
+                StringComparer.Ordinal
             );
 
         // === QUERY 2: Get favorited/liked movies ===
@@ -290,17 +288,18 @@ public class GenreSection : IHomeScreenSection
 
         var likedByGenre = likedOrFavoritedMovies
             .SelectMany(movie => movie.Genres)
-            .GroupBy(genre => genre)
+            .GroupBy(genre => genre, StringComparer.Ordinal)
             .ToDictionary(
                 g => g.Key,
-                g => g.Count() * likedOrFavouriteScore
+                g => g.Count() * likedOrFavouriteScore,
+                StringComparer.Ordinal
             );
 
         // === Combine all genre scores ===
         var allGenreNames = playCountByGenre.Keys
             .Concat(recentlyWatchedByGenre.Keys)
             .Concat(likedByGenre.Keys)
-            .Distinct();
+            .Distinct(StringComparer.Ordinal);
 
         var result = allGenreNames.Select(genre =>
         {

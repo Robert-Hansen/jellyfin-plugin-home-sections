@@ -7,7 +7,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 {
     public class TranslationManager : ITranslationManager
     {
-        private Dictionary<string, JObject> m_translationPacks = new Dictionary<string, JObject>();
+        private Dictionary<string, JObject> m_translationPacks = new Dictionary<string, JObject>(StringComparer.Ordinal);
         private readonly ILogger<ITranslationManager> m_logger;
 
         public TranslationManager(ILogger<ITranslationManager> logger)
@@ -17,7 +17,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
         public void Initialize()
         {
-            m_logger.LogTrace("Loading translation files");
+            PluginLog.LoadingTranslationFiles(m_logger);
             if (m_logger.IsEnabled(LogLevel.Trace))
             {
                 string resources = string.Join(
@@ -28,7 +28,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             
             // Get all the json files from the embedded resources
             string[] locJsonFiles = HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceNames()
-                .Where(x => x.EndsWith(".json") && x.Contains("_Localization.")).ToArray();
+                .Where(x => x.EndsWith(".json", StringComparison.Ordinal) && x.Contains("_Localization.", StringComparison.Ordinal)).ToArray();
 
             foreach (string locFile in locJsonFiles)
             {
@@ -65,7 +65,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 // If we don't have the language, but it has a region remove the region and just grab the language and see if we 
                 // have a blanket translation for that language.
-                if (!m_translationPacks.ContainsKey(languageKey) && languageKey.Contains("-"))
+                if (!m_translationPacks.ContainsKey(languageKey) && languageKey.Contains('-'))
                 {
                     PluginLog.LanguageMissingRemoveRegion(m_logger, languageKey);
                     languageKey = languageKey.Split("-")[0];
@@ -88,7 +88,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
             string translatedText = "";
             string fullTextKey = fallbackText.Replace(" ", "").Replace("-", "");
-            if (key != fullTextKey && translationPack.ContainsKey(fullTextKey))
+            if (!string.Equals(key, fullTextKey, StringComparison.Ordinal) && translationPack.ContainsKey(fullTextKey))
             {
                 PluginLog.FoundFullTextTranslation(m_logger, fullTextKey, languageKey);
                 translatedText = translationPack.Value<string>(fullTextKey)!;
@@ -148,7 +148,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         {
             string languageKey = language;
 
-            if (!m_translationPacks.ContainsKey(languageKey) && languageKey.Contains("-"))
+            if (!m_translationPacks.ContainsKey(languageKey) && languageKey.Contains('-'))
             {
                 languageKey = languageKey.Split("-")[0];
             }

@@ -1,4 +1,4 @@
-﻿using Jellyfin.Plugin.HomeScreenSections.Configuration;
+using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.Helpers;
 using Jellyfin.Plugin.HomeScreenSections.Library;
 using Jellyfin.Plugin.HomeScreenSections.Model.Dto;
@@ -18,9 +18,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public abstract string? Section { get; }
         public abstract string? DisplayText { get; set; }
         public virtual int? Limit => 1;
-        public virtual string? Route { get; } = null;
+        public virtual string? Route { get; }
         public virtual string? AdditionalData { get; set; }
-        public virtual object? OriginalPayload { get; set; } = null;
+        public virtual object? OriginalPayload { get; set; }
         public abstract SectionViewMode DefaultViewMode { get; }
         
         protected abstract BaseItemKind SectionItemKind { get; }
@@ -37,7 +37,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         protected readonly IDtoService m_dtoService;
         protected readonly IServiceProvider m_serviceProvider;
         
-        public LatestSectionBase(IUserViewManager userViewManager,
+        protected LatestSectionBase(IUserViewManager userViewManager,
             IUserManager userManager,
             ILibraryManager libraryManager,
             IDtoService dtoService,
@@ -74,7 +74,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             User? user = m_userManager.GetUserById(payload.UserId);
 
             var config = HomeScreenSectionsPlugin.Instance?.Configuration;
-            var sectionSettings = config?.SectionSettings.FirstOrDefault(x => x.SectionId == Section);
+            var sectionSettings = config?.SectionSettings.FirstOrDefault(x => string.Equals(x.SectionId, Section, StringComparison.Ordinal));
             // If HideWatchedItems is enabled for this section, set isPlayed to false to hide watched items; otherwise, include all.
             bool? isPlayed = sectionSettings?.HideWatchedItems == true ? false : null;
 
@@ -85,7 +85,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             List<(BaseItem Item, DateTime? PremiereDate)> selectedItems = new List<(BaseItem, DateTime?)>();
             int dayIncrement = 30;
             DateTime currentDate = DateTime.Now;
-            DateTime stopDate = DateTime.Parse("01/01/1887"); // The first movie ever was 1888 so this should be safe, we never expect to get as far back as this but we need an escape.
+            DateTime stopDate = DateTime.Parse("01/01/1887", System.Globalization.CultureInfo.InvariantCulture); // The first movie ever was 1888 so this should be safe, we never expect to get as far back as this but we need an escape.
             bool continueSearching = true;
 
             do
@@ -161,7 +161,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             
             // Check if there's a configured default library, otherwise use first available
             var folder = !string.IsNullOrEmpty(LibraryId)
-                ? libraryFolders.FirstOrDefault(x => x.Id.ToString() == LibraryId)
+                ? libraryFolders.FirstOrDefault(x => string.Equals(x.Id.ToString(), LibraryId, StringComparison.Ordinal))
                 : null;
             
             // Fall back to first movies library if no configured library found

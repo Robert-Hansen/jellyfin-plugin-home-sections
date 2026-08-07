@@ -119,7 +119,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         [HttpGet("Configuration")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [Authorize(Roles = "Administrator")]
-        public ActionResult<PluginConfiguration> GetHomeScreenConfiguration()
+        public static ActionResult<PluginConfiguration> GetHomeScreenConfiguration()
         {
             return HomeScreenSectionsPlugin.Instance.Configuration;
         }
@@ -217,16 +217,22 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
             {
                 // Check plugin initialization
                 if (HomeScreenSectionsPlugin.Instance?.Configuration == null)
+                {
                     return StatusCode(503, "Plugin not initialized");
+                }
 
                 // Check HomeScreenManager availability
                 if (m_homeScreenManager == null)
+                {
                     return StatusCode(503, "HomeScreenManager not available");
+                }
 
                 // Check section types are registered
                 var sectionTypes = m_homeScreenManager.GetSectionTypes();
                 if (!sectionTypes.Any())
+                {
                     return StatusCode(503, "No section types registered");
+                }
 
                 // All good - ready for external registrations
                 return Ok();
@@ -329,17 +335,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
             
             HttpResponseMessage usersResponse = client.GetAsync($"/api/v1/user?q={Uri.EscapeDataString(user.Username)}").GetAwaiter().GetResult();
             string userResponseRaw = usersResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            int? jellyseerrUserId = JObject.Parse(userResponseRaw).Value<JArray>("results")!.OfType<JObject>().FirstOrDefault(x => x.Value<string>("jellyfinUsername") == user.Username)?.Value<int>("id");
+            int? jellyseerrUserId = JObject.Parse(userResponseRaw).Value<JArray>("results")!.OfType<JObject>().FirstOrDefault(x => string.Equals(x.Value<string>("jellyfinUsername"), user.Username, StringComparison.Ordinal))?.Value<int>("id");
 
             if (jellyseerrUserId == null)
             {
                 return BadRequest();
             }
             
-            client.DefaultRequestHeaders.Add("X-Api-User", jellyseerrUserId.ToString());
+            client.DefaultRequestHeaders.Add("X-Api-User", jellyseerrUserId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
             HttpResponseMessage requestResponse;
-            if (payload.MediaType == "tv")
+            if (string.Equals(payload.MediaType, "tv", StringComparison.Ordinal))
             {
                 requestResponse = await client.PostAsync("/api/v1/request", JsonContent.Create(new JellyseerrTvShowRequestPayload
                 {

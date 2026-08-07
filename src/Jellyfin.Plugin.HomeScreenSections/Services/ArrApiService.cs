@@ -14,6 +14,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
     public class ArrApiService
     {
+        private static readonly System.Text.Json.JsonSerializerOptions s_calendarJsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         private readonly ILogger<ArrApiService> m_logger;
         private readonly HttpClient m_httpClient;
 
@@ -37,8 +42,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
             try
             {
-                string startParam = startDate.ToString("yyyy-MM-ddTHH:mm:ssZ");
-                string endParam = endDate.ToString("yyyy-MM-ddTHH:mm:ssZ");
+                string startParam = startDate.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
+                string endParam = endDate.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
                 (string? queryParams, string? apiVersion) = serviceType switch
                 {
                     ArrServiceType.Sonarr => ($"includeSeries=true&start={startParam}&end={endParam}", "v3"),
@@ -70,10 +75,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     return [];
                 }
 
-                T[]? calendarItems = JsonSerializer.Deserialize<T[]>(jsonContent, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                T[]? calendarItems = JsonSerializer.Deserialize<T[]>(jsonContent, s_calendarJsonOptions);
 
                 PluginLog.ArrCalendarFetched(m_logger, calendarItems?.Length ?? 0, serviceName);
                 return calendarItems ?? [];
@@ -121,14 +123,15 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
         public static string FormatDate(DateTime date, string format, string delimiter)
         {
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
             return format.ToUpperInvariant() switch
             {
-                "YYYY/MM/DD" => date.ToString($"yyyy{delimiter}MM{delimiter}dd"),
-                "DD/MM/YYYY" => date.ToString($"dd{delimiter}MM{delimiter}yyyy"),
-                "MM/DD/YYYY" => date.ToString($"MM{delimiter}dd{delimiter}yyyy"),
-                "DD/MM" => date.ToString($"dd{delimiter}MM"),
-                "MM/DD" => date.ToString($"MM{delimiter}dd"),
-                _ => date.ToString($"yyyy{delimiter}MM{delimiter}dd")
+                "YYYY/MM/DD" => date.ToString($"yyyy{delimiter}MM{delimiter}dd", culture),
+                "DD/MM/YYYY" => date.ToString($"dd{delimiter}MM{delimiter}yyyy", culture),
+                "MM/DD/YYYY" => date.ToString($"MM{delimiter}dd{delimiter}yyyy", culture),
+                "DD/MM" => date.ToString($"dd{delimiter}MM", culture),
+                "MM/DD" => date.ToString($"MM{delimiter}dd", culture),
+                _ => date.ToString($"yyyy{delimiter}MM{delimiter}dd", culture)
             };
         }
     }

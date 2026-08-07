@@ -15,7 +15,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers;
 public class PatchHelpers
 {
     private static Harmony s_harmony = new Harmony("dev.iamparadox.jellyfin.hss");
-    private static bool s_patched = false;
+    private static bool s_patched;
 
     public static void SetupPatches()
     {
@@ -27,9 +27,9 @@ public class PatchHelpers
         HarmonyMethod streamyfinConfigurationPatch = new HarmonyMethod(typeof(PatchHelpers).GetMethod(nameof(PatchHelpers.Patch_Streamyfin_Configuration), BindingFlags.NonPublic | BindingFlags.Static));
 
         Type? streamyfinControllerType = AssemblyLoadContext.All.SelectMany(x => x.Assemblies)
-            .FirstOrDefault(x => x.FullName?.Contains("Jellyfin.Plugin.Streamyfin") ?? false)?
+            .FirstOrDefault(x => x.FullName?.Contains("Jellyfin.Plugin.Streamyfin", StringComparison.Ordinal) ?? false)?
             .GetTypes()
-            .FirstOrDefault(x => x.Name == "StreamyfinController");
+            .FirstOrDefault(x => string.Equals(x.Name, "StreamyfinController", StringComparison.Ordinal));
 
         // If the type couldn't be found the user probably doesn't have Streamyfin plugin, so there's nothing
         // we can do about that.
@@ -82,9 +82,9 @@ public class PatchHelpers
 
                 foreach (HomeScreenSectionInfo info in sections)
                 {
-                    if ((info.Section?.StartsWith("Discover") ?? false) || 
-                        (info.Section?.StartsWith("Upcoming") ?? false) ||
-                        info.Section == "MyMedia")
+                    if ((info.Section?.StartsWith("Discover", StringComparison.Ordinal) ?? false) || 
+                        (info.Section?.StartsWith("Upcoming", StringComparison.Ordinal) ?? false) ||
+                        string.Equals(info.Section, "MyMedia", StringComparison.Ordinal))
                     {
                         continue;
                     }

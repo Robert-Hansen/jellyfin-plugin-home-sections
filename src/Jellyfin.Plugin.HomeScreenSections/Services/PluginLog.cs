@@ -79,6 +79,12 @@ internal static partial class PluginLog
     [LoggerMessage(EventId = 1109, Level = LogLevel.Information, Message = "Content of written settings json: {SettingsJson}")]
     public static partial void WrittenSettingsContent(ILogger logger, string settingsJson);
 
+    [LoggerMessage(EventId = 1110, Level = LogLevel.Information, Message = "User settings file exists.")]
+    public static partial void UserSettingsFileExists(ILogger logger);
+
+    [LoggerMessage(EventId = 1111, Level = LogLevel.Information, Message = "User settings updated.")]
+    public static partial void UserSettingsUpdated(ILogger logger);
+
     // --- StartupService ---
     [LoggerMessage(EventId = 1200, Level = LogLevel.Information, Message = "Found loadSections in `{FileName}` registering transformation for it with ID '{TransformationId}'")]
     public static partial void FoundLoadSections(ILogger logger, string fileName, Guid transformationId);
@@ -186,4 +192,48 @@ internal static partial class PluginLog
 
     [LoggerMessage(EventId = 1716, Level = LogLevel.Information, Message = "Loaded {Count} cached images from index")]
     public static partial void LoadedCacheIndex(ILogger logger, int count);
+
+    [LoggerMessage(EventId = 1717, Level = LogLevel.Information, Message = "Cleared all cache entries")]
+    public static partial void ClearedAllCacheEntries(ILogger logger);
+
+    [LoggerMessage(EventId = 1718, Level = LogLevel.Warning, Message = "Failed to decode image for processing")]
+    public static partial void ImageDecodeFailed(ILogger logger);
+
+    [LoggerMessage(EventId = 1719, Level = LogLevel.Error, Message = "Error processing image")]
+    public static partial void ImageProcessError(ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 1720, Level = LogLevel.Error, Message = "Error loading cache index")]
+    public static partial void CacheIndexLoadError(ILogger logger, Exception exception);
+
+    [LoggerMessage(EventId = 1721, Level = LogLevel.Error, Message = "Error saving cache index")]
+    public static partial void CacheIndexSaveError(ILogger logger, Exception exception);
+
+    // --- ImageCacheHelper ---
+    [LoggerMessage(EventId = 1800, Level = LogLevel.Warning, Message = "Failed to cache image from {SourceUrl}, using original URL")]
+    public static partial void ImageCacheFallback(ILogger logger, string sourceUrl);
+
+    [LoggerMessage(EventId = 1801, Level = LogLevel.Error, Message = "Error caching image from {SourceUrl}")]
+    public static partial void ImageCacheHelperError(ILogger logger, Exception exception, string sourceUrl);
+
+    // --- ImageCacheCleanupTask ---
+    [LoggerMessage(EventId = 1900, Level = LogLevel.Information, Message = "Starting image cache cleanup")]
+    public static partial void ImageCacheCleanupStarted(ILogger logger);
+
+    [LoggerMessage(EventId = 1901, Level = LogLevel.Information, Message = "Image cache cleanup completed")]
+    public static partial void ImageCacheCleanupCompleted(ILogger logger);
+
+    [LoggerMessage(EventId = 1902, Level = LogLevel.Error, Message = "Error during image cache cleanup")]
+    public static partial void ImageCacheCleanupError(ILogger logger, Exception exception);
+
+    // --- ModularHomeViewsController ---
+    [LoggerMessage(EventId = 2000, Level = LogLevel.Error, Message = "Failed to get resource {Resource}")]
+    public static partial void FailedGetResource(ILogger logger, string? resource);
+
+    // --- TranslationManager ---
+    [LoggerMessage(EventId = 1013, Level = LogLevel.Trace, Message = "Loading translation files")]
+    public static partial void LoadingTranslationFiles(ILogger logger);
+
+    // --- UpcomingSectionBase ---
+    [LoggerMessage(EventId = 1505, Level = LogLevel.Warning, Message = "Plugin configuration not available")]
+    public static partial void PluginConfigurationMissing(ILogger logger);
 }

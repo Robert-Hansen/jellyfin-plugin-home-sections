@@ -18,7 +18,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 {
-    internal class WatchAgainSection : IHomeScreenSection
+    internal sealed class WatchAgainSection : IHomeScreenSection
     {
         public string? Section => "WatchAgain";
 
@@ -251,7 +251,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                     }
 
                     if (results.Count >= 16)
+                    {
                         break;
+                    }
                 }
             }
 

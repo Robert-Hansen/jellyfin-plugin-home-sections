@@ -24,7 +24,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
     /// </summary>
     public class HomeScreenManager : IHomeScreenManager
     {
-        private Dictionary<string, IHomeScreenSection> m_delegates = new Dictionary<string, IHomeScreenSection>();
+        private Dictionary<string, IHomeScreenSection> m_delegates = new Dictionary<string, IHomeScreenSection>(StringComparer.Ordinal);
         private Dictionary<Guid, bool> m_userFeatureEnabledStates = new Dictionary<Guid, bool>();
 
         private readonly IServiceProvider m_serviceProvider;
@@ -112,9 +112,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
         /// <inheritdoc/>
         public QueryResult<BaseItemDto> InvokeResultsDelegate(string key, HomeScreenSectionPayload payload, IQueryCollection queryCollection)
         {
-            if (m_delegates.ContainsKey(key))
+            if (m_delegates.TryGetValue(key, out IHomeScreenSection? section))
             {
-                return m_delegates[key].GetResults(payload, queryCollection);
+                return section.GetResults(payload, queryCollection);
             }
 
             return new QueryResult<BaseItemDto>(Array.Empty<BaseItemDto>());
@@ -142,13 +142,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
 
             if (handler.Section != null)
             {
-                if (!m_delegates.ContainsKey(handler.Section))
+                if (!m_delegates.TryAdd(handler.Section, handler))
                 {
-                    m_delegates.Add(handler.Section, handler);
-                }
-                else
-                {
-                    throw new Exception($"Section type '{handler.Section}' has already been registered to type '{m_delegates[handler.Section].GetType().FullName}'.");
+                    throw new InvalidOperationException($"Section type '{handler.Section}' has already been registered to type '{m_delegates[handler.Section].GetType().FullName}'.");
                 }
             }
         }
@@ -156,12 +152,12 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
         /// <inheritdoc/>
         public bool GetUserFeatureEnabled(Guid userId)
         {
-            if (m_userFeatureEnabledStates.ContainsKey(userId))
+            if (m_userFeatureEnabledStates.TryGetValue(userId, out bool enabled))
             {
-                return m_userFeatureEnabledStates[userId];
+                return enabled;
             }
 
-            m_userFeatureEnabledStates.Add(userId, false);
+            m_userFeatureEnabledStates[userId] = false;
 
             return false;
         }
@@ -169,11 +165,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
         /// <inheritdoc/>
         public void SetUserFeatureEnabled(Guid userId, bool enabled)
         {
-            if (!m_userFeatureEnabledStates.ContainsKey(userId))
-            {
-                m_userFeatureEnabledStates.Add(userId, enabled);
-            }
-
             m_userFeatureEnabledStates[userId] = enabled;
 
             string userFeatureEnabledPath = Path.Combine(m_applicationPaths.PluginConfigurationsPath, typeof(HomeScreenSectionsPlugin).Namespace!, "userFeatureEnabled.json");
@@ -257,7 +248,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
             PluginLog.CheckingExistingUserSettings(m_logger, userId);
             if (File.Exists(pluginSettings))
             {
-                m_logger.LogInformation("User settings file exists.");
+                PluginLog.UserSettingsFileExists(m_logger);
                 settings = JArray.Parse(File.ReadAllText(pluginSettings));
                 
                 if (m_logger.IsEnabled(LogLevel.Information))
@@ -291,7 +282,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
                 PluginLog.WrittenSettingsContent(m_logger, writtenJson);
             }
             
-            m_logger.LogInformation("User settings updated.");
+            PluginLog.UserSettingsUpdated(m_logger);
             return true;
         }
     }

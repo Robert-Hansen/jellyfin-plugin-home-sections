@@ -73,7 +73,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
             
             sectionsToReturn = sectionsToReturn.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-            if ((isComplete && !userSectionsData.SectionsInProgress.Any()) || sectionsToReturn.Count == pageSize)
+            if ((isComplete && userSectionsData.SectionsInProgress.IsEmpty) || sectionsToReturn.Count == pageSize)
             {
                 return sectionsToReturn
                     .Select(x => SectionToInfo(x.Section, x.ConfiguredOrder, language))
@@ -110,7 +110,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             spinWait.Reset();
 
             // If there's no data at all then we wait until its started.
-            while (!m_dataCache.Cache[pageHash.Value].SectionsInProgress.Any() && !m_dataCache.Cache[pageHash.Value].OrderedSections.Any())
+            while (m_dataCache.Cache[pageHash.Value].SectionsInProgress.IsEmpty && m_dataCache.Cache[pageHash.Value].OrderedSections.IsEmpty)
             {
                 spinWait.SpinOnce();
             }
@@ -119,10 +119,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             // If its still in progress then we'll wait for it to finish.
             UserSectionsData cache = m_dataCache.Cache[pageHash.Value];
             int lowestSectionIndex = Math.Min(
-                m_dataCache.Cache[pageHash.Value].OrderedSections.Any() 
+                !m_dataCache.Cache[pageHash.Value].OrderedSections.IsEmpty
                     ? m_dataCache.Cache[pageHash.Value].OrderedSections.Min(x => x.Key) 
                     : int.MaxValue,
-                m_dataCache.Cache[pageHash.Value].SectionsInProgress.Any() 
+                !m_dataCache.Cache[pageHash.Value].SectionsInProgress.IsEmpty
                     ? m_dataCache.Cache[pageHash.Value].SectionsInProgress.Min(x => x.Key) 
                     : int.MaxValue);
 
@@ -204,7 +204,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 Parallel.ForEach(orderedSections, sectionSettings =>
                 {
                     IHomeScreenSection? sectionType =
-                        sectionTypes.FirstOrDefault(x => x.Section == sectionSettings.SectionId);
+                        sectionTypes.FirstOrDefault(x => string.Equals(x.Section, sectionSettings.SectionId, StringComparison.Ordinal));
 
                     if (sectionType != null)
                     {
@@ -249,7 +249,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             HomeScreenSectionInfo info = section.AsInfo();
 
             info.OrderIndex = configuredOrder;
-            info.ViewMode = HomeScreenSectionsPlugin.Instance.Configuration.SectionSettings.FirstOrDefault(y => y.SectionId == info.Section)?.ViewMode ?? info.ViewMode ?? SectionViewMode.Landscape;
+            info.ViewMode = HomeScreenSectionsPlugin.Instance.Configuration.SectionSettings.FirstOrDefault(y => string.Equals(y.SectionId, info.Section, StringComparison.Ordinal))?.ViewMode ?? info.ViewMode ?? SectionViewMode.Landscape;
             
             if (info.DisplayText != null)
             {

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.Loader;
 using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.Library;
@@ -61,10 +61,8 @@ namespace Jellyfin.Plugin.HomeScreenSections
                 config.Add("pages", new JArray());
             }
 
-            JObject? hssPageConfig = config.Value<JArray>("pages")!.FirstOrDefault(x =>
-                x.Value<string>("Id") == typeof(HomeScreenSectionsPlugin).Namespace) as JObject;
-
-            if (hssPageConfig != null)
+            if (config.Value<JArray>("pages")!.FirstOrDefault(x =>
+                    string.Equals(x.Value<string>("Id"), typeof(HomeScreenSectionsPlugin).Namespace, StringComparison.Ordinal)) is JObject hssPageConfig)
             {
                 if ((hssPageConfig.Value<int?>("Version") ?? 0) < pluginPageConfigVersion)
                 {
@@ -72,9 +70,9 @@ namespace Jellyfin.Plugin.HomeScreenSections
                 }
             }
             
-            if (!config.Value<JArray>("pages")!.Any(x => x.Value<string>("Id") == typeof(HomeScreenSectionsPlugin).Namespace))
+            if (!config.Value<JArray>("pages")!.Any(x => string.Equals(x.Value<string>("Id"), typeof(HomeScreenSectionsPlugin).Namespace, StringComparison.Ordinal)))
             {
-                Assembly? pluginPagesAssembly = AssemblyLoadContext.All.SelectMany(x => x.Assemblies).FirstOrDefault(x => x.FullName?.Contains("Jellyfin.Plugin.PluginPages") ?? false);
+                Assembly? pluginPagesAssembly = AssemblyLoadContext.All.SelectMany(x => x.Assemblies).FirstOrDefault(x => x.FullName?.Contains("Jellyfin.Plugin.PluginPages", StringComparison.Ordinal) ?? false);
                 
                 Version earliestVersionWithSubUrls = new Version("2.4.1.0");
                 bool supportsSubUrls = pluginPagesAssembly != null && pluginPagesAssembly.GetName().Version >= earliestVersionWithSubUrls;

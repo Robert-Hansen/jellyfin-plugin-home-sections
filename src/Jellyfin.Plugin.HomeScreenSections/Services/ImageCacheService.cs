@@ -15,7 +15,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         private readonly HttpClient m_httpClient;
         private readonly string m_cacheDirectory;
         // In-memory cache for quick lookups
-        private readonly ConcurrentDictionary<string, CachedImageDto> m_imageCache = new();
+        private readonly ConcurrentDictionary<string, CachedImageDto> m_imageCache = new(StringComparer.Ordinal);
 
         public ImageCacheService(
             ILogger<ImageCacheService> logger,
@@ -245,7 +245,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
             m_imageCache.Clear();
             SaveCacheIndex();
-            m_logger.LogInformation("Cleared all cache entries");
+            PluginLog.ClearedAllCacheEntries(m_logger);
         }
 
         private static string GenerateCacheKey(string sourceUrl)
@@ -260,7 +260,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 using SKBitmap? originalBitmap = SKBitmap.Decode(imageData);
                 if (originalBitmap == null)
                 {
-                    m_logger.LogWarning("Failed to decode image for processing");
+                    PluginLog.ImageDecodeFailed(m_logger);
                     return Array.Empty<byte>();
                 }
 
@@ -291,7 +291,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
             catch (Exception ex)
             {
-                m_logger.LogError(ex, "Error processing image");
+                PluginLog.ImageProcessError(m_logger, ex);
                 return Array.Empty<byte>();
             }
         }
@@ -373,9 +373,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
             catch (Exception ex)
             {
-                m_logger.LogError(ex, "Error loading cache index");
+                PluginLog.CacheIndexLoadError(m_logger, ex);
             }
         }
+
+        private static readonly System.Text.Json.JsonSerializerOptions s_cacheIndexJsonOptions = new()
+        {
+            WriteIndented = true
+        };
 
         private void SaveCacheIndex()
         {
@@ -384,16 +389,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             try
             {
                 CachedImageDto[] entries = m_imageCache.Values.ToArray();
-                string json = System.Text.Json.JsonSerializer.Serialize(entries, new System.Text.Json.JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
+                string json = System.Text.Json.JsonSerializer.Serialize(entries, s_cacheIndexJsonOptions);
                 
                 File.WriteAllText(indexPath, json);
             }
             catch (Exception ex)
             {
-                m_logger.LogError(ex, "Error saving cache index");
+                PluginLog.CacheIndexSaveError(m_logger, ex);
             }
         }
     }

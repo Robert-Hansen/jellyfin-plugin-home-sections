@@ -20,7 +20,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public virtual int? Limit => 1;
         public virtual string? Route => null;
         public string? AdditionalData { get; set; }
-        public object? OriginalPayload { get; set; } = null;
+        public object? OriginalPayload { get; set; }
         
         protected IUserManager UserManager { get; }
         protected ILibraryManager LibraryManager { get; }
@@ -46,7 +46,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 PluginConfiguration? config = HomeScreenSectionsPlugin.Instance?.Configuration;
                 if (config == null)
                 {
-                    Logger.LogWarning("Plugin configuration not available");
+                    PluginLog.PluginConfigurationMissing(Logger);
                     return new QueryResult<BaseItemDto>();
                 }
 

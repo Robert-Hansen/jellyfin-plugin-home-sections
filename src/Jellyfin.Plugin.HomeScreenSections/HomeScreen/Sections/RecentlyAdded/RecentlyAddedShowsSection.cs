@@ -99,14 +99,15 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.RecentlyAdded
                     Limit = 1
                 };
 
-                BaseItem? latestItemAddedForShow = m_libraryManager.GetItemList(query).FirstOrDefault();
+                var latestItems = m_libraryManager.GetItemList(query);
+                BaseItem? latestItemAddedForShow = latestItems.Count > 0 ? latestItems[0] : null;
 
                 dateCreated = latestItemAddedForShow?.DateCreated;
             }
             else if (item is Season season)
             {
                 List<BaseItem>? seasonEpisodes = season.GetEpisodes(user, dtoOptions, false);
-                dateCreated = (seasonEpisodes?.Any() ?? false) ? seasonEpisodes.Max(x => x.DateCreated) : null;
+                dateCreated = (seasonEpisodes is { Count: > 0 }) ? seasonEpisodes.Max(x => x.DateCreated) : null;
                 
                 PluginLog.SeasonSortedByEpisodeDate(m_logger, season.Name, dateCreated);
             }

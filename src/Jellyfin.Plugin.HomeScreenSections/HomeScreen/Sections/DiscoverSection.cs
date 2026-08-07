@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+using System.Net.Http.Json;
 using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.Helpers;
 using Jellyfin.Plugin.HomeScreenSections.Library;
@@ -23,7 +23,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public int? Limit => 1;
         public string? Route => null;
         public string? AdditionalData { get; set; }
-        public object? OriginalPayload { get; } = null;
+        public object? OriginalPayload { get; }
 
         protected virtual string JellyseerEndpoint => "/api/v1/discover/trending";
         
@@ -37,7 +37,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         {
             List<BaseItemDto> returnItems = new List<BaseItemDto>();
             
-            // TODO: Get Jellyseerr Url
+            // NOTE: Get Jellyseerr Url
             string? jellyseerrUrl = HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrUrl;
             string? jellyseerrExternalUrl = HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrExternalUrl;
             
@@ -63,14 +63,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             
             HttpResponseMessage usersResponse = client.GetAsync($"/api/v1/user?q={Uri.EscapeDataString(user.Username)}").GetAwaiter().GetResult();
             string userResponseRaw = usersResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            int? jellyseerrUserId = JObject.Parse(userResponseRaw).Value<JArray>("results")!.OfType<JObject>().FirstOrDefault(x => x.Value<string>("jellyfinUsername") == user.Username)?.Value<int>("id");
+            int? jellyseerrUserId = JObject.Parse(userResponseRaw).Value<JArray>("results")!.OfType<JObject>().FirstOrDefault(x => string.Equals(x.Value<string>("jellyfinUsername"), user.Username, StringComparison.Ordinal))?.Value<int>("id");
 
             if (jellyseerrUserId == null)
             {
                 return new QueryResult<BaseItemDto>();
             }
             
-            client.DefaultRequestHeaders.Add("X-Api-User", jellyseerrUserId.ToString());
+            client.DefaultRequestHeaders.Add("X-Api-User", jellyseerrUserId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
 
             // Make the API call to discover and get the 20 results
             int page = 1;
@@ -87,9 +87,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                     {
                         foreach (JObject item in jsonResponse.Value<JArray>("results")!.OfType<JObject>().Where(x => !x.Value<bool>("adult")))
                         {
-                            if (!string.IsNullOrEmpty(HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrPreferredLanguages) && 
+                            if (!string.IsNullOrEmpty(HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrPreferredLanguages) &&
                                 !HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrPreferredLanguages.Split(',')
-                                    .Select(x => x.Trim()).Contains(item.Value<string>("originalLanguage")))
+                                    .Select(x => x.Trim())
+                                    .Contains(item.Value<string>("originalLanguage"), StringComparer.Ordinal))
                             {
                                 continue;
                             }
@@ -114,13 +115,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                                     OriginalTitle = item.Value<string>("originalTitle") ?? item.Value<string>("originalName"),
                                     SourceType = item.Value<string>("mediaType"),
                                     CommunityRating = rating > 0 ? rating : null,
-                                    ProviderIds = new Dictionary<string, string>()
+                                    ProviderIds = new Dictionary<string, string>(StringComparer.Ordinal)
                                     {
                                         { "JellyseerrRoot", jellyseerrDisplayUrlNonNull },
-                                        { "Jellyseerr", item.Value<int>("id").ToString() },
+                                        { "Jellyseerr", item.Value<int>("id").ToString(System.Globalization.CultureInfo.InvariantCulture) },
                                         { "JellyseerrPoster", cachedImageUrl }
                                     },
-                                    PremiereDate = DateTime.Parse(dateTimeString)
+                                    PremiereDate = DateTime.Parse(dateTimeString, System.Globalization.CultureInfo.InvariantCulture)
                                 });
                             }
                         }

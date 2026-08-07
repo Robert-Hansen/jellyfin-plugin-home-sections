@@ -27,7 +27,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
         public abstract string? AdditionalData { get; set; }
 
-        public virtual object? OriginalPayload { get; set; } = null;
+        public virtual object? OriginalPayload { get; set; }
 
         protected abstract BaseItemKind SectionItemKind { get; }
 
@@ -80,7 +80,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             };
             
             PluginConfiguration? config = HomeScreenSectionsPlugin.Instance?.Configuration;
-            SectionSettings? sectionSettings = config?.SectionSettings.FirstOrDefault(x => x.SectionId == Section);
+            SectionSettings? sectionSettings = config?.SectionSettings.FirstOrDefault(x => string.Equals(x.SectionId, Section, StringComparison.Ordinal));
             // If HideWatchedItems is enabled for this section, set isPlayed to false to hide watched items; otherwise, include all.
             bool? isPlayed = sectionSettings?.HideWatchedItems == true ? false : null;
             
@@ -107,7 +107,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 .ToArray();
             
             Folder? folder = !string.IsNullOrEmpty(LibraryId)
-                ? itemFolders.FirstOrDefault(x => x.Id.ToString() == LibraryId)
+                ? itemFolders.FirstOrDefault(x => string.Equals(x.Id.ToString(), LibraryId, StringComparison.Ordinal))
                 : null;
             
             folder ??= itemFolders.FirstOrDefault();

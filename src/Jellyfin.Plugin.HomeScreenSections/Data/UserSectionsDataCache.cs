@@ -11,7 +11,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Data
 
     public class UserSectionsData
     {
-        public DateTime? LastAccessed { get; set; } = null;
+        public DateTime? LastAccessed { get; set; }
         
         public required Guid UserId { get; set; }
         
