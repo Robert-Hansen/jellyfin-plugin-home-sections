@@ -129,16 +129,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         [Authorize(Roles = "Administrator")]
         public ActionResult BustCache()
         {
-            try
-            {
-                HomeScreenSectionsPlugin.Instance.BustCache();
-                var newCounter = HomeScreenSectionsPlugin.Instance.Configuration.CacheBustCounter;
-                return Ok(new { newCounter });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Error busting cache: {ex.Message}");
-            }
+            HomeScreenSectionsPlugin.Instance.BustCache();
+            var newCounter = HomeScreenSectionsPlugin.Instance.Configuration.CacheBustCounter;
+            return Ok(new { newCounter });
         }
 
         [HttpGet("CachedImage/{cacheKey}")]
@@ -169,23 +162,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         [Authorize(Roles = "Administrator")]
         public ActionResult ClearImageCache([FromQuery] bool clearAll = false)
         {
-            try
+            if (clearAll)
             {
-                if (clearAll)
-                {
-                    m_imageCacheService.ClearAllCache();
-                    return Ok(new { message = "All cached images cleared" });
-                }
-                else
-                {
-                    m_imageCacheService.ClearExpiredCache();
-                    return Ok(new { message = "Expired cached images cleared" });
-                }
+                m_imageCacheService.ClearAllCache();
+                return Ok(new { message = "All cached images cleared" });
             }
-            catch (Exception ex)
-            {
-                return BadRequest($"Error clearing image cache: {ex.Message}");
-            }
+
+            m_imageCacheService.ClearExpiredCache();
+            return Ok(new { message = "Expired cached images cleared" });
         }
 
         [HttpGet("Meta")]
@@ -213,34 +197,27 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
         public ActionResult GetReady()
         {
-            try
+            // Check plugin initialization
+            if (HomeScreenSectionsPlugin.Instance?.Configuration == null)
             {
-                // Check plugin initialization
-                if (HomeScreenSectionsPlugin.Instance?.Configuration == null)
-                {
-                    return StatusCode(503, "Plugin not initialized");
-                }
-
-                // Check HomeScreenManager availability
-                if (m_homeScreenManager == null)
-                {
-                    return StatusCode(503, "HomeScreenManager not available");
-                }
-
-                // Check section types are registered
-                var sectionTypes = m_homeScreenManager.GetSectionTypes();
-                if (!sectionTypes.Any())
-                {
-                    return StatusCode(503, "No section types registered");
-                }
-
-                // All good - ready for external registrations
-                return Ok();
+                return StatusCode(503, "Plugin not initialized");
             }
-            catch (Exception ex)
+
+            // Check HomeScreenManager availability
+            if (m_homeScreenManager == null)
             {
-                return StatusCode(503, $"Plugin error: {ex.Message}");
+                return StatusCode(503, "HomeScreenManager not available");
             }
+
+            // Check section types are registered
+            var sectionTypes = m_homeScreenManager.GetSectionTypes();
+            if (!sectionTypes.Any())
+            {
+                return StatusCode(503, "No section types registered");
+            }
+
+            // All good - ready for external registrations
+            return Ok();
         }
 
         [HttpGet("Sections")]
@@ -253,8 +230,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
             [FromQuery] int? numResultsPerPage = null,
             [FromQuery] Guid? pageHash = null)
         {
-            List<HomeScreenSectionInfo> sections = m_homeScreenSectionService.MonitorLiveUpdatedSectionsForUser(userId ?? Guid.Empty, language, 
-                page ?? 1, numResultsPerPage, pageHash) ?? new List<HomeScreenSectionInfo>();
+            IReadOnlyList<HomeScreenSectionInfo> sections = m_homeScreenSectionService.MonitorLiveUpdatedSectionsForUser(userId ?? Guid.Empty, language, 
+                page ?? 1, numResultsPerPage, pageHash) ?? Array.Empty<HomeScreenSectionInfo>();
 
             return new QueryResult<HomeScreenSectionInfo>(
                 0,

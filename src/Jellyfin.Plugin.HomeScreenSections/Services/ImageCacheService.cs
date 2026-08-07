@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
+using Jellyfin.Plugin.HomeScreenSections.Helpers;
 using Jellyfin.Plugin.HomeScreenSections.Model.Dto;
 using MediaBrowser.Common.Configuration;
 using Microsoft.Extensions.Logging;
@@ -73,14 +74,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
             if (File.Exists(cachedInfo.FilePath))
             {
-                try
-                {
-                    File.Delete(cachedInfo.FilePath);
-                }
-                catch (Exception ex)
-                {
-                    PluginLog.FailedDeleteExpiredCacheFile(m_logger, ex, cachedInfo.FilePath);
-                }
+                BestEffortIO.TryDeleteFile(
+                    cachedInfo.FilePath,
+                    ex => PluginLog.FailedDeleteExpiredCacheFile(m_logger, ex, cachedInfo.FilePath));
             }
         }
 
@@ -131,7 +127,27 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 PluginLog.CachedImage(m_logger, cacheKey, sourceUrl);
                 return cacheKey;
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
+            {
+                PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
+                return null;
+            }
+            catch (TaskCanceledException ex)
+            {
+                PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
+                return null;
+            }
+            catch (IOException ex)
+            {
+                PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
+                return null;
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
+                return null;
+            }
+            catch (InvalidOperationException ex)
             {
                 PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
                 return null;
@@ -181,16 +197,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 return (null, null);
             }
 
-            try
-            {
-                byte[] data = File.ReadAllBytes(cachedInfo.FilePath);
-                return (data, cachedInfo.ContentType);
-            }
-            catch (Exception ex)
-            {
-                PluginLog.CacheReadError(m_logger, ex, cacheKey);
-                return (null, null);
-            }
+            byte[]? data = BestEffortIO.TryReadAllBytes(
+                cachedInfo.FilePath,
+                ex => PluginLog.CacheReadError(m_logger, ex, cacheKey));
+            return data == null ? (null, null) : (data, cachedInfo.ContentType);
         }
 
         public void ClearExpiredCache()
@@ -206,14 +216,12 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 {
                     if (File.Exists(cachedInfo.FilePath))
                     {
-                        try
+                        BestEffortIO.TryDeleteFile(
+                            cachedInfo.FilePath,
+                            ex => PluginLog.FailedDeleteExpiredCacheFile(m_logger, ex, cachedInfo.FilePath));
+                        if (!File.Exists(cachedInfo.FilePath))
                         {
-                            File.Delete(cachedInfo.FilePath);
                             PluginLog.DeletedExpiredCacheFile(m_logger, cachedInfo.FilePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            PluginLog.FailedDeleteExpiredCacheFile(m_logger, ex, cachedInfo.FilePath);
                         }
                     }
                 }
@@ -232,14 +240,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 if (File.Exists(cachedInfo.FilePath))
                 {
-                    try
-                    {
-                        File.Delete(cachedInfo.FilePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        PluginLog.FailedDeleteCacheFile(m_logger, ex, cachedInfo.FilePath);
-                    }
+                    BestEffortIO.TryDeleteFile(
+                        cachedInfo.FilePath,
+                        ex => PluginLog.FailedDeleteCacheFile(m_logger, ex, cachedInfo.FilePath));
                 }
             }
 
@@ -289,7 +292,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     }
                 }
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
+            {
+                PluginLog.ImageProcessError(m_logger, ex);
+                return Array.Empty<byte>();
+            }
+            catch (InvalidOperationException ex)
+            {
+                PluginLog.ImageProcessError(m_logger, ex);
+                return Array.Empty<byte>();
+            }
+            catch (NullReferenceException ex)
             {
                 PluginLog.ImageProcessError(m_logger, ex);
                 return Array.Empty<byte>();
@@ -343,9 +356,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 return;
             }
+
+            string? json = BestEffortIO.TryReadAllText(
+                indexPath,
+                ex => PluginLog.CacheIndexLoadError(m_logger, ex));
+            if (json == null)
+            {
+                return;
+            }
+
             try
             {
-                string json = File.ReadAllText(indexPath);
                 CachedImageDto[]? entries = System.Text.Json.JsonSerializer.Deserialize<CachedImageDto[]>(json);
                 
                 if (entries != null)
@@ -358,20 +379,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                         }
                         else if (File.Exists(entry.FilePath))
                         {
-                            try
-                            {
-                                File.Delete(entry.FilePath);
-                            }
-                            catch
-                            {
-                                // Ignore cleanup errors
-                            }
+                            BestEffortIO.TryDeleteFile(entry.FilePath);
                         }
                     }
                     PluginLog.LoadedCacheIndex(m_logger, m_imageCache.Count);
                 }
             }
-            catch (Exception ex)
+            catch (System.Text.Json.JsonException ex)
+            {
+                PluginLog.CacheIndexLoadError(m_logger, ex);
+            }
+            catch (NotSupportedException ex)
             {
                 PluginLog.CacheIndexLoadError(m_logger, ex);
             }
@@ -390,10 +408,16 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 CachedImageDto[] entries = m_imageCache.Values.ToArray();
                 string json = System.Text.Json.JsonSerializer.Serialize(entries, s_cacheIndexJsonOptions);
-                
-                File.WriteAllText(indexPath, json);
+                BestEffortIO.TryWriteAllText(
+                    indexPath,
+                    json,
+                    ex => PluginLog.CacheIndexSaveError(m_logger, ex));
             }
-            catch (Exception ex)
+            catch (System.Text.Json.JsonException ex)
+            {
+                PluginLog.CacheIndexSaveError(m_logger, ex);
+            }
+            catch (NotSupportedException ex)
             {
                 PluginLog.CacheIndexSaveError(m_logger, ex);
             }

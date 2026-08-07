@@ -60,11 +60,11 @@ dotnet_diagnostic.IDE0270.severity = warning
 # JSON interop keys (external config shape, not C# symbols)
 dotnet_diagnostic.CA1507.severity = suggestion
 
-# Structural / intentional — leave as suggestion or off
-dotnet_diagnostic.MA0051.severity = suggestion
-dotnet_diagnostic.CA1051.severity = suggestion
-dotnet_diagnostic.CA1031.severity = suggestion
-dotnet_diagnostic.MA0016.severity = suggestion
+# --- Structural (fixed) ---
+dotnet_diagnostic.MA0051.severity = warning
+dotnet_diagnostic.CA1051.severity = warning
+dotnet_diagnostic.CA1031.severity = warning
+dotnet_diagnostic.MA0016.severity = warning
 dotnet_diagnostic.CA2007.severity = none
 dotnet_diagnostic.CA1416.severity = none
 dotnet_diagnostic.CA1707.severity = none

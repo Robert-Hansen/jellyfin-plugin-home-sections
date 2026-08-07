@@ -34,9 +34,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
 
         public virtual TranslationMetadata? TranslationMetadata { get; protected set; }
         
-        protected readonly ILibraryManager m_libraryManager;
-        protected readonly IDtoService m_dtoService;
-        protected readonly IUserManager m_userManager;
+        protected ILibraryManager m_libraryManager { get; }
+        protected IDtoService m_dtoService { get; }
+        protected IUserManager m_userManager { get; }
 
         protected PersonsSectionBase(ILibraryManager libraryManager, IDtoService dtoService, IUserManager userManager)
         {

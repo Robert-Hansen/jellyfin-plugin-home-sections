@@ -47,7 +47,44 @@ public class PatchHelpers
         {
             return;
         }
-        
+
+        if (__result is not ContentResult contentResult || contentResult.Content == null ||
+            __instance is not ControllerBase controller)
+        {
+            return;
+        }
+
+        contentResult.Content = RewriteStreamyfinHomeSections(contentResult.Content, controller);
+    }
+
+    private static string RewriteStreamyfinHomeSections(string content, ControllerBase controller)
+    {
+        JObject parsedOutput = JObject.Parse(content);
+        string? userIdString = controller.User.Claims
+            .FirstOrDefault(x => x.Type.Equals("Jellyfin-UserId", StringComparison.OrdinalIgnoreCase))
+            ?.Value;
+        Guid userId = string.IsNullOrEmpty(userIdString) ? Guid.Empty : Guid.Parse(userIdString);
+
+        HomeScreenSectionService hssService = HomeScreenSectionsPlugin.Instance.ServiceProvider
+            .GetRequiredService<HomeScreenSectionService>();
+        IReadOnlyList<HomeScreenSectionInfo> sections =
+            hssService.MonitorLiveUpdatedSectionsForUser(userId, "en", 1) ?? Array.Empty<HomeScreenSectionInfo>();
+
+        JArray? sectionsArr = parsedOutput.Value<JObject>("settings")
+            ?.Value<JObject>("home")
+            ?.Value<JObject>("value")
+            ?.Value<JArray>("sections");
+
+        if (sectionsArr != null)
+        {
+            ReplaceStreamyfinSections(sectionsArr, sections);
+        }
+
+        return parsedOutput.ToString();
+    }
+
+    private static void ReplaceStreamyfinSections(JArray sectionsArr, IReadOnlyList<HomeScreenSectionInfo> sections)
+    {
         JObject sectionTemplate = new JObject
         {
             { "title", "" },
@@ -60,51 +97,27 @@ public class PatchHelpers
                 }
             }
         };
-        
-        if (__result is ContentResult contentResult && contentResult.Content != null &&
-            __instance is ControllerBase controller)
+
+        sectionsArr.Clear();
+        foreach (HomeScreenSectionInfo info in sections)
         {
-            JObject parsedOutput = JObject.Parse(contentResult.Content);
-            
-            // Mutate and set back
-            // Find the user ID from the authorization
-            string? userIdString = controller.User.Claims.FirstOrDefault(x => x.Type.Equals("Jellyfin-UserId", StringComparison.OrdinalIgnoreCase))?.Value;
-            Guid userId = string.IsNullOrEmpty(userIdString) ? Guid.Empty : Guid.Parse(userIdString);
-            
-            HomeScreenSectionService hssService = HomeScreenSectionsPlugin.Instance.ServiceProvider.GetRequiredService<HomeScreenSectionService>();
-            List<HomeScreenSectionInfo> sections = hssService.MonitorLiveUpdatedSectionsForUser(userId, "en", 1) ?? new List<HomeScreenSectionInfo>();
-
-            JArray? sectionsArr = parsedOutput.Value<JObject>("settings")?.Value<JObject>("home")?.Value<JObject>("value")?.Value<JArray>("sections");
-
-            if (sectionsArr != null)
+            if ((info.Section?.StartsWith("Discover", StringComparison.Ordinal) ?? false) ||
+                (info.Section?.StartsWith("Upcoming", StringComparison.Ordinal) ?? false) ||
+                string.Equals(info.Section, "MyMedia", StringComparison.Ordinal))
             {
-                sectionsArr.Clear();
-
-                foreach (HomeScreenSectionInfo info in sections)
-                {
-                    if ((info.Section?.StartsWith("Discover", StringComparison.Ordinal) ?? false) || 
-                        (info.Section?.StartsWith("Upcoming", StringComparison.Ordinal) ?? false) ||
-                        string.Equals(info.Section, "MyMedia", StringComparison.Ordinal))
-                    {
-                        continue;
-                    }
-                    
-                    JObject sectionObj = (sectionTemplate.DeepClone() as JObject)!;
-
-                    sectionObj["title"] = info.DisplayText;
-                    sectionObj["orientation"] = info.ViewMode == SectionViewMode.Portrait ? "vertical" : "horizontal";
-                    sectionObj["custom"]!["endpoint"] = $"/HomeScreen/Section/{info.Section}";
-                    sectionObj["custom"]!["query"] = new JObject()
-                    {
-                        { "additionalData", info.AdditionalData },
-                        { "language", "en" }
-                    };
-                    
-                    sectionsArr.Add(sectionObj);
-                }
+                continue;
             }
 
-            contentResult.Content = parsedOutput.ToString();
+            JObject sectionObj = (sectionTemplate.DeepClone() as JObject)!;
+            sectionObj["title"] = info.DisplayText;
+            sectionObj["orientation"] = info.ViewMode == SectionViewMode.Portrait ? "vertical" : "horizontal";
+            sectionObj["custom"]!["endpoint"] = $"/HomeScreen/Section/{info.Section}";
+            sectionObj["custom"]!["query"] = new JObject()
+            {
+                { "additionalData", info.AdditionalData },
+                { "language", "en" }
+            };
+            sectionsArr.Add(sectionObj);
         }
     }
 }

@@ -57,85 +57,92 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         public string Translate(string key, string desiredLanguage, string fallbackText, TranslationMetadata? metadata = null)
         {
             PluginLog.TranslatingKey(m_logger, key, desiredLanguage);
-            
-            bool languageFound = false;
-            string languageKey = desiredLanguage;
+            string languageKey = ResolveLanguageKey(desiredLanguage);
+            JObject translationPack = m_translationPacks[languageKey];
 
-            do
+            string translatedText = LookupTranslation(key, fallbackText, desiredLanguage, languageKey, translationPack, ref metadata);
+            if (metadata != null)
             {
-                // If we don't have the language, but it has a region remove the region and just grab the language and see if we 
-                // have a blanket translation for that language.
-                if (!m_translationPacks.ContainsKey(languageKey) && languageKey.Contains('-'))
+                translatedText = ApplyTranslationMetadata(translatedText, desiredLanguage, metadata);
+            }
+
+            return translatedText;
+        }
+
+        private string ResolveLanguageKey(string desiredLanguage)
+        {
+            string languageKey = desiredLanguage;
+            while (true)
+            {
+                if (m_translationPacks.ContainsKey(languageKey))
+                {
+                    PluginLog.FoundTranslationPack(m_logger, languageKey);
+                    return languageKey;
+                }
+
+                if (languageKey.Contains('-'))
                 {
                     PluginLog.LanguageMissingRemoveRegion(m_logger, languageKey);
                     languageKey = languageKey.Split("-")[0];
+                    continue;
                 }
-                // If we don't then fallback to english so we don't get keys being sent to the client
-                else if (!m_translationPacks.ContainsKey(languageKey))
-                {
-                    PluginLog.LanguageMissingFallbackEnglish(m_logger, languageKey);
-                    languageKey = "en";
-                }
-                // If we have it then we're done.
-                else if (m_translationPacks.ContainsKey(languageKey))
-                {
-                    PluginLog.FoundTranslationPack(m_logger, languageKey);
-                    languageFound = true;
-                }
-            } while (!languageFound);
 
-            JObject translationPack = m_translationPacks[languageKey];
+                PluginLog.LanguageMissingFallbackEnglish(m_logger, languageKey);
+                return "en";
+            }
+        }
 
-            string translatedText = "";
+        private string LookupTranslation(
+            string key,
+            string fallbackText,
+            string desiredLanguage,
+            string languageKey,
+            JObject translationPack,
+            ref TranslationMetadata? metadata)
+        {
             string fullTextKey = fallbackText.Replace(" ", "").Replace("-", "");
             if (!string.Equals(key, fullTextKey, StringComparison.Ordinal) && translationPack.ContainsKey(fullTextKey))
             {
                 PluginLog.FoundFullTextTranslation(m_logger, fullTextKey, languageKey);
-                translatedText = translationPack.Value<string>(fullTextKey)!;
-                
-                // Since we've got a full translation we don't need the metadata
                 metadata = null;
+                return translationPack.Value<string>(fullTextKey)!;
             }
-            else if (translationPack.ContainsKey(key))
+
+            if (translationPack.ContainsKey(key))
             {
                 PluginLog.FoundKeyTranslation(m_logger, key, languageKey);
-                translatedText = translationPack.Value<string>(key)!;
-            }
-            else
-            {
-                PluginLog.NoTranslationFound(m_logger, key, languageKey);
-                // If Libre is disabled this will be null
-                string? libreTranslateVersion = LibreTranslateHelper.TranslateAsync(fallbackText, "en", desiredLanguage).GetAwaiter().GetResult();
-                
-                translatedText = libreTranslateVersion ?? m_translationPacks["en"].Value<string>(key) ?? fallbackText;
+                return translationPack.Value<string>(key)!;
             }
 
-            if (metadata != null)
-            {
-                PluginLog.ApplyingTranslationMetadata(m_logger, translatedText);
+            PluginLog.NoTranslationFound(m_logger, key, languageKey);
+            string? libreTranslateVersion = LibreTranslateHelper.TranslateAsync(fallbackText, "en", desiredLanguage).GetAwaiter().GetResult();
+            return libreTranslateVersion ?? m_translationPacks["en"].Value<string>(key) ?? fallbackText;
+        }
 
-                string? additionalContent = metadata.AdditionalContent;
-                if (metadata.TranslateAdditionalContent && !string.IsNullOrEmpty(additionalContent))
-                {
-                    additionalContent = Translate(additionalContent.Replace(" ", "").Replace("-", ""), desiredLanguage, additionalContent);
-                }
-                
-                if (metadata.Type == TranslationType.Prefix)
-                {
-                    translatedText = $"{translatedText} {additionalContent}".Trim();
-                }
-                else if (metadata.Type == TranslationType.Suffix)
-                {
-                    translatedText = $"{additionalContent} {translatedText}".Trim();
-                }
-                else if (metadata.Type == TranslationType.Pattern)
-                {
-                    translatedText = translatedText.Replace("{0}", additionalContent);
-                }
-                
-                PluginLog.AppliedTranslationMetadata(m_logger, translatedText);
+        private string ApplyTranslationMetadata(string translatedText, string desiredLanguage, TranslationMetadata metadata)
+        {
+            PluginLog.ApplyingTranslationMetadata(m_logger, translatedText);
+
+            string? additionalContent = metadata.AdditionalContent;
+            if (metadata.TranslateAdditionalContent && !string.IsNullOrEmpty(additionalContent))
+            {
+                additionalContent = Translate(additionalContent.Replace(" ", "").Replace("-", ""), desiredLanguage, additionalContent);
             }
-            
+
+            if (metadata.Type == TranslationType.Prefix)
+            {
+                translatedText = $"{translatedText} {additionalContent}".Trim();
+            }
+            else if (metadata.Type == TranslationType.Suffix)
+            {
+                translatedText = $"{additionalContent} {translatedText}".Trim();
+            }
+            else if (metadata.Type == TranslationType.Pattern)
+            {
+                translatedText = translatedText.Replace("{0}", additionalContent);
+            }
+
+            PluginLog.AppliedTranslationMetadata(m_logger, translatedText);
             return translatedText;
         }
 

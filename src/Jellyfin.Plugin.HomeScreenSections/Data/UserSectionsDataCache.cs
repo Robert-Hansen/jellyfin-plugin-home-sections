@@ -21,7 +21,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Data
         public ConcurrentDictionary<int, IEnumerable<IHomeScreenSection>> OrderedSections { get; set; } = new ConcurrentDictionary<int, IEnumerable<IHomeScreenSection>>();
         
         // This list represents a collection of index numbers that don't have any sections assigned to them
-        public HashSet<IntRange> OrderIndicesWithoutSections { get; set; } = new HashSet<IntRange>();
+        public ISet<IntRange> OrderIndicesWithoutSections { get; set; } = new HashSet<IntRange>();
         
         // This list represents a collection of index numbers that are currently being processed
         public ConcurrentDictionary<int, bool> SectionsInProgress { get; set; } = new ConcurrentDictionary<int, bool>();

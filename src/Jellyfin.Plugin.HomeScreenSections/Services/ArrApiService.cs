@@ -42,47 +42,16 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
             try
             {
-                string startParam = startDate.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
-                string endParam = endDate.ToString("yyyy-MM-ddTHH:mm:ssZ", System.Globalization.CultureInfo.InvariantCulture);
-                (string? queryParams, string? apiVersion) = serviceType switch
-                {
-                    ArrServiceType.Sonarr => ($"includeSeries=true&start={startParam}&end={endParam}", "v3"),
-                    ArrServiceType.Radarr => ($"start={startParam}&end={endParam}", "v3"),
-                    ArrServiceType.Lidarr => ($"start={startParam}&end={endParam}", "v1"),
-                    ArrServiceType.Readarr => ($"includeAuthor=true&start={startParam}&end={endParam}", "v1"),
-                    _ => ($"start={startParam}&end={endParam}", "v3")
-                };
-                string requestUrl = $"{url.TrimEnd('/')}/api/{apiVersion}/calendar?{queryParams}";
-
-                using HttpRequestMessage request = new(HttpMethod.Get, requestUrl);
-                request.Headers.Add("X-API-KEY", apiKey);
-
-                PluginLog.FetchingArrCalendar(m_logger, serviceName, requestUrl);
-
-                HttpResponseMessage response = await m_httpClient.SendAsync(request);
-                
-                if (!response.IsSuccessStatusCode)
-                {
-                    PluginLog.ArrCalendarHttpFailed(m_logger, serviceName, response.StatusCode, response.ReasonPhrase);
-                    return null;
-                }
-
-                string jsonContent = await response.Content.ReadAsStringAsync();
-                
-                if (string.IsNullOrEmpty(jsonContent))
-                {
-                    PluginLog.ArrCalendarEmpty(m_logger, serviceName);
-                    return [];
-                }
-
-                T[]? calendarItems = JsonSerializer.Deserialize<T[]>(jsonContent, s_calendarJsonOptions);
-
-                PluginLog.ArrCalendarFetched(m_logger, calendarItems?.Length ?? 0, serviceName);
-                return calendarItems ?? [];
+                return await FetchCalendarItemsAsync<T>(serviceType, url, apiKey, serviceName, startDate, endDate);
             }
             catch (HttpRequestException ex)
             {
                 PluginLog.ArrCalendarHttpError(m_logger, ex, serviceName);
+                return null;
+            }
+            catch (TaskCanceledException ex)
+            {
+                PluginLog.ArrCalendarUnexpectedError(m_logger, ex, serviceName);
                 return null;
             }
             catch (JsonException ex)
@@ -90,11 +59,66 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 PluginLog.ArrCalendarJsonError(m_logger, ex, serviceName);
                 return null;
             }
-            catch (Exception ex)
+            catch (NotSupportedException ex)
             {
                 PluginLog.ArrCalendarUnexpectedError(m_logger, ex, serviceName);
                 return null;
             }
+            catch (InvalidOperationException ex)
+            {
+                PluginLog.ArrCalendarUnexpectedError(m_logger, ex, serviceName);
+                return null;
+            }
+        }
+
+        private async Task<T[]?> FetchCalendarItemsAsync<T>(
+            ArrServiceType serviceType,
+            string url,
+            string apiKey,
+            string? serviceName,
+            DateTime startDate,
+            DateTime endDate)
+        {
+            string requestUrl = BuildCalendarRequestUrl(serviceType, url, startDate, endDate);
+
+            using HttpRequestMessage request = new(HttpMethod.Get, requestUrl);
+            request.Headers.Add("X-API-KEY", apiKey);
+
+            PluginLog.FetchingArrCalendar(m_logger, serviceName, requestUrl);
+
+            HttpResponseMessage response = await m_httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                PluginLog.ArrCalendarHttpFailed(m_logger, serviceName, response.StatusCode, response.ReasonPhrase);
+                return null;
+            }
+
+            string jsonContent = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(jsonContent))
+            {
+                PluginLog.ArrCalendarEmpty(m_logger, serviceName);
+                return [];
+            }
+
+            T[]? calendarItems = JsonSerializer.Deserialize<T[]>(jsonContent, s_calendarJsonOptions);
+            PluginLog.ArrCalendarFetched(m_logger, calendarItems?.Length ?? 0, serviceName);
+            return calendarItems ?? [];
+        }
+
+        private static string BuildCalendarRequestUrl(ArrServiceType serviceType, string url, DateTime startDate, DateTime endDate)
+        {
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+            string startParam = startDate.ToString("yyyy-MM-ddTHH:mm:ssZ", culture);
+            string endParam = endDate.ToString("yyyy-MM-ddTHH:mm:ssZ", culture);
+            (string queryParams, string apiVersion) = serviceType switch
+            {
+                ArrServiceType.Sonarr => ($"includeSeries=true&start={startParam}&end={endParam}", "v3"),
+                ArrServiceType.Radarr => ($"start={startParam}&end={endParam}", "v3"),
+                ArrServiceType.Lidarr => ($"start={startParam}&end={endParam}", "v1"),
+                ArrServiceType.Readarr => ($"includeAuthor=true&start={startParam}&end={endParam}", "v1"),
+                _ => ($"start={startParam}&end={endParam}", "v3")
+            };
+            return $"{url.TrimEnd('/')}/api/{apiVersion}/calendar?{queryParams}";
         }
 
         private static (string? url, string? apiKey, string serviceName) GetServiceConfig(ArrServiceType serviceType)

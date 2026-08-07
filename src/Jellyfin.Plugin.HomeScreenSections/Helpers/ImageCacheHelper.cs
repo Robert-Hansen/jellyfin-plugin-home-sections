@@ -36,7 +36,31 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers
                 }
                 return sourceUrl;
             }
-            catch (Exception ex)
+            catch (HttpRequestException ex)
+            {
+                if (logger != null)
+                {
+                    PluginLog.ImageCacheHelperError(logger, ex, sourceUrl);
+                }
+                return sourceUrl;
+            }
+            catch (IOException ex)
+            {
+                if (logger != null)
+                {
+                    PluginLog.ImageCacheHelperError(logger, ex, sourceUrl);
+                }
+                return sourceUrl;
+            }
+            catch (TaskCanceledException ex)
+            {
+                if (logger != null)
+                {
+                    PluginLog.ImageCacheHelperError(logger, ex, sourceUrl);
+                }
+                return sourceUrl;
+            }
+            catch (InvalidOperationException ex)
             {
                 if (logger != null)
                 {

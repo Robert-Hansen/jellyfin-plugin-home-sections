@@ -43,56 +43,79 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         {
             try
             {
-                PluginConfiguration? config = HomeScreenSectionsPlugin.Instance?.Configuration;
-                if (config == null)
-                {
-                    PluginLog.PluginConfigurationMissing(Logger);
-                    return new QueryResult<BaseItemDto>();
-                }
-
-                // Check if service is configured
-                (string? url, string? apiKey) = GetServiceConfiguration(config);
-                if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(apiKey))
-                {
-                    PluginLog.ArrServiceNotConfigured(Logger, GetServiceName(), GetSectionName());
-                    return new QueryResult<BaseItemDto>();
-                }
-
-                DateTime startDate = DateTime.UtcNow;
-                (int timeframeValue, TimeframeUnit timeframeUnit) = GetTimeframeConfiguration(config);
-                DateTime endDate = ArrApiService.CalculateEndDate(startDate, timeframeValue, timeframeUnit);
-
-                string configuredSectionName = GetSectionName();
-                string configuredServiceName = GetServiceName();
-                
-                PluginLog.FetchingUpcomingSection(Logger, configuredSectionName, startDate, endDate);
-
-                T[] calendarItems = GetCalendarItems(startDate, endDate);
-                
-                if (calendarItems == null || calendarItems.Length == 0)
-                {
-                    PluginLog.NoUpcomingItems(Logger, configuredSectionName, configuredServiceName);
-                    return new QueryResult<BaseItemDto>();
-                }
-
-                T[] upcomingItems = [.. FilterAndSortItems(calendarItems).Take(16)];
-
-                if (config.FilterUpcomingByLibraryAccess)
-                {
-                    upcomingItems = FilterByLibraryAccess(upcomingItems, payload.UserId);
-                }
-
-                PluginLog.FoundUpcomingItems(Logger, upcomingItems.Length);
-
-                BaseItemDto[] dtoItems = [.. upcomingItems.Select(item => CreateDto(item, config))];
-
-                return new QueryResult<BaseItemDto>(dtoItems);
+                return TryGetUpcomingResults(payload);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (
+                ex is HttpRequestException
+                or TaskCanceledException
+                or InvalidOperationException
+                or ArgumentException
+                or IOException
+                or TimeoutException
+                or System.Text.Json.JsonException
+                or Newtonsoft.Json.JsonException)
             {
                 PluginLog.UpcomingSectionError(Logger, ex, GetSectionName(), GetServiceName());
                 return new QueryResult<BaseItemDto>();
             }
+        }
+
+        private QueryResult<BaseItemDto> TryGetUpcomingResults(HomeScreenSectionPayload payload)
+        {
+            PluginConfiguration? config = HomeScreenSectionsPlugin.Instance?.Configuration;
+            if (config == null)
+            {
+                PluginLog.PluginConfigurationMissing(Logger);
+                return new QueryResult<BaseItemDto>();
+            }
+
+            // Check if service is configured
+            (string? url, string? apiKey) = GetServiceConfiguration(config);
+            if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(apiKey))
+            {
+                PluginLog.ArrServiceNotConfigured(Logger, GetServiceName(), GetSectionName());
+                return new QueryResult<BaseItemDto>();
+            }
+
+            T[] upcomingItems = FetchUpcomingItems(config, payload.UserId);
+            if (upcomingItems.Length == 0)
+            {
+                return new QueryResult<BaseItemDto>();
+            }
+
+            PluginLog.FoundUpcomingItems(Logger, upcomingItems.Length);
+
+            BaseItemDto[] dtoItems = [.. upcomingItems.Select(item => CreateDto(item, config))];
+            return new QueryResult<BaseItemDto>(dtoItems);
+        }
+
+        private T[] FetchUpcomingItems(PluginConfiguration config, Guid userId)
+        {
+            DateTime startDate = DateTime.UtcNow;
+            (int timeframeValue, TimeframeUnit timeframeUnit) = GetTimeframeConfiguration(config);
+            DateTime endDate = ArrApiService.CalculateEndDate(startDate, timeframeValue, timeframeUnit);
+
+            string configuredSectionName = GetSectionName();
+            string configuredServiceName = GetServiceName();
+            
+            PluginLog.FetchingUpcomingSection(Logger, configuredSectionName, startDate, endDate);
+
+            T[] calendarItems = GetCalendarItems(startDate, endDate);
+            
+            if (calendarItems == null || calendarItems.Length == 0)
+            {
+                PluginLog.NoUpcomingItems(Logger, configuredSectionName, configuredServiceName);
+                return [];
+            }
+
+            T[] upcomingItems = [.. FilterAndSortItems(calendarItems).Take(16)];
+
+            if (config.FilterUpcomingByLibraryAccess)
+            {
+                upcomingItems = FilterByLibraryAccess(upcomingItems, userId);
+            }
+
+            return upcomingItems;
         }
 
         private T[] FilterByLibraryAccess(T[] items, Guid userId)
