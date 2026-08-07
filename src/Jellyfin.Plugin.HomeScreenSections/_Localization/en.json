@@ -192,6 +192,7 @@
   "AdminEnabled": "Enabled",
   "AdminUserOverride": "User Override",
   "AdminHideWatched": "Hide Watched",
+  "AdminHideWatchedDesc": "Hide items the user has already watched from this section",
   "AdminMin": "Min",
   "AdminMax": "Max",
   "AdminViewMode": "View Mode",
