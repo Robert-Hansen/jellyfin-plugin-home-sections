@@ -188,6 +188,8 @@
   "AdminDisableAllSections": "Disable all",
   "AdminUndoMove": "Undo move",
   "AdminUnsavedSectionChanges": "Unsaved section changes",
+  "AdminHomeOrderPreview": "Home will look like:",
+  "AdminDisabledPreview": "Disabled — will not show on home",
   "AdminExportSections": "Export",
   "AdminImportSections": "Import",
   "AdminImportSectionsInvalid": "Import file is missing SectionSettings.",

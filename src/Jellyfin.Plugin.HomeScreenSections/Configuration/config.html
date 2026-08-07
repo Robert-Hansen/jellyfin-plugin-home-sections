@@ -417,6 +417,39 @@
                         opacity: 0.45;
                         cursor: default;
                     }
+                    .section-order-preview {
+                        margin: 0 0 1em;
+                        padding: 12px 14px;
+                        border-radius: 12px;
+                        background: rgba(0, 164, 220, 0.08);
+                        border: 1px solid rgba(0, 164, 220, 0.25);
+                    }
+                    .section-order-preview-title {
+                        font-weight: 600;
+                        margin-bottom: 0.5em;
+                        color: #e8f6fb;
+                    }
+                    .section-order-preview-list {
+                        margin: 0;
+                        padding-left: 1.4em;
+                        columns: 2;
+                        column-gap: 1.5em;
+                    }
+                    .section-order-preview-list li {
+                        break-inside: avoid;
+                        margin: 0.2em 0;
+                        color: #cfd8dc;
+                        font-size: 0.95em;
+                    }
+                    .section-order-preview-list li.is-disabled-preview {
+                        opacity: 0.45;
+                        text-decoration: line-through;
+                    }
+                    @media (max-width: 720px) {
+                        .section-order-preview-list {
+                            columns: 1;
+                        }
+                    }
                     #sectionList .section-card.section-dragging {
                         opacity: 0.5;
                         transform: scale(0.99);
@@ -708,6 +741,11 @@
                         <input type="file" id="sectionImportFile" accept="application/json,.json" style="display: none;" />
                     </div>
                     <span id="sectionDirtyHint" class="section-dirty-hint" hidden data-i18n="AdminUnsavedSectionChanges">Unsaved section changes</span>
+                </div>
+
+                <div id="sectionOrderPreview" class="section-order-preview" aria-live="polite">
+                    <div class="section-order-preview-title" data-i18n="AdminHomeOrderPreview">Home will look like:</div>
+                    <ol id="sectionOrderPreviewList" class="section-order-preview-list"></ol>
                 </div>
 
                 <div id="sectionList" class="section-list">
@@ -1101,6 +1139,31 @@
                         moveDown.disabled = !isVisible || visibleIndex === visible.length - 1;
                     }
                 });
+                updateSectionOrderPreview();
+            }
+
+            function updateSectionOrderPreview() {
+                const list = document.querySelector('#sectionOrderPreviewList');
+                if (!list) {
+                    return;
+                }
+
+                list.innerHTML = '';
+                Array.from(getSectionCards()).forEach(function (card, index) {
+                    if (card.classList.contains('is-filtered-out')) {
+                        return;
+                    }
+                    const name = ((card.querySelector('[data-id=lblSectionName]') || {}).textContent || '').trim()
+                        || card.querySelector('[data-id=hiddenSectionId]').value;
+                    const enabled = !!(card.querySelector('[data-id=chkSectionEnabled]') || {}).checked;
+                    const li = document.createElement('li');
+                    li.textContent = (index + 1) + '. ' + name;
+                    if (!enabled) {
+                        li.classList.add('is-disabled-preview');
+                        li.title = t('AdminDisabledPreview', 'Disabled — will not show on home');
+                    }
+                    list.appendChild(li);
+                });
             }
 
             function moveSectionCard(card, direction) {
@@ -1228,6 +1291,8 @@
                 if (saveBtn) {
                     saveBtn.disabled = !anyDirty;
                 }
+
+                updateSectionOrderPreview();
             }
 
             function exportSectionSettings() {
