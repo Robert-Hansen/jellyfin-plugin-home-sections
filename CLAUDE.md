@@ -46,5 +46,14 @@ Jellyfin server plugin (C#) that replaces the vanilla home screen with configura
 
 ## Conventions
 
-- Mutated Hungarian notation (`m_` members, `c_` constants), braces on new lines even for single-line blocks, no `var` unless namespace disambiguation requires it, no whitespace-only diffs.
+- Follow standard C# naming conventions (Microsoft / .NET guidelines):
+  - Private instance fields: `_camelCase`
+  - Private static fields: `s_camelCase` (or `_camelCase` if preferred for consistency)
+  - Constants (`const`) and `static readonly`: `PascalCase`
+  - Public / protected / internal members, types, methods, properties: `PascalCase`
+  - Local variables and parameters: `camelCase`
+  - Do not use Hungarian notation or prefixes such as `m_`, `c_`, etc.
+- Braces on new lines (Allman style) even for single-line blocks.
+- Prefer explicit types over `var` unless the type is immediately obvious from the right-hand side or needed for namespace disambiguation.
+- No whitespace-only diffs.
 - Jellyfin version pinned via `JellyfinVersion` MSBuild property; `Directory.Build.props` GitBranch/JellyfinVersion assembly metadata targets.
