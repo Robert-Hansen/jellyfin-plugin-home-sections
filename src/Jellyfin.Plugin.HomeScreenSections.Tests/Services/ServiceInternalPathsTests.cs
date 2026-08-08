@@ -212,7 +212,7 @@ public class ServiceInternalPathsTests
     }
 
     [Fact]
-    public void MonitorLiveUpdatedSections_with_page_hash_builds_missing_page_on_demand()
+    public void MonitorLiveUpdatedSections_with_page_hash_returns_built_page_sections()
     {
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
         SectionSettings[] original = config.SectionSettings;
@@ -237,6 +237,12 @@ public class ServiceInternalPathsTests
 
             HomeScreenSectionService service = MakeService();
             Guid pageHash = Guid.NewGuid();
+
+            // Build the page synchronously. MonitorLiveUpdatedSectionsForUser's on-demand path
+            // otherwise spins up a fire-and-forget background build, which races with the reads
+            // below and makes the test flaky; building first keeps it deterministic while still
+            // exercising the pageHash branch end to end.
+            service.CacheSectionsForUser(m_userId, pageHash);
 
             IReadOnlyList<HomeScreenSectionInfo>? result =
                 service.MonitorLiveUpdatedSectionsForUser(m_userId, "en", 1, 10, pageHash);

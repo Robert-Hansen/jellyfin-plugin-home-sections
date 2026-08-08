@@ -19,9 +19,21 @@ public sealed class JellyseerrFakeServer : IDisposable
     private JellyseerrFakeServer(int port, Func<string, (int StatusCode, string Json)> responder)
     {
         m_responder = responder;
-        BaseUrl = $"http://127.0.0.1:{port}/";
+        // Production code (PluginInterface/HomeScreenController) builds "http://localhost:{port}",
+        // while sections point directly at BaseUrl. Bind the "localhost" prefix so requests to
+        // either host name land here; on Linux "localhost" can resolve to ::1 and a 127.0.0.1-only
+        // binding would miss it (the RegisterSection test failed on CI for exactly this reason).
+        BaseUrl = $"http://localhost:{port}/";
         m_listener = new HttpListener();
         m_listener.Prefixes.Add(BaseUrl);
+        try
+        {
+            m_listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+        }
+        catch (HttpListenerException)
+        {
+            // Some platforms treat the localhost prefix as already covering 127.0.0.1.
+        }
         m_listener.Start();
 
         m_worker = new Thread(AcceptLoop)
