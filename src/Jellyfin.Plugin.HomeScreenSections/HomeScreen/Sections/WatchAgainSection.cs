@@ -137,7 +137,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 {
                     ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
                     Recursive = true,
-                    IncludeItemTypes = new[] { BaseItemKind.BoxSet },
+                    IncludeItemTypes = [BaseItemKind.BoxSet],
                     DtoOptions = dtoOptions
                 }).Items;
             }).OfType<BoxSet>().ToArray();
@@ -206,7 +206,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 return folder.GetItems(new InternalItemsQuery(user)
                 {
                     ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
-                    IncludeItemTypes = new[] { BaseItemKind.Movie },
+                    IncludeItemTypes = [BaseItemKind.Movie],
                     IsPlayed = true,
                     Recursive = true,
                     DtoOptions = new DtoOptions { Fields = [], EnableImages = false }
@@ -241,7 +241,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
             var unplayedEpisodes = LibraryManager.GetItemList(new InternalItemsQuery(user)
             {
-                IncludeItemTypes = new[] { BaseItemKind.Episode },
+                IncludeItemTypes = [BaseItemKind.Episode],
                 AncestorIds = candidateSeriesIds,
                 IsPlayed = false,
                 IsVirtualItem = false,
@@ -279,9 +279,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 return LibraryManager.GetItemList(new InternalItemsQuery(user)
                 {
                     ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
-                    IncludeItemTypes = new[] { BaseItemKind.Episode },
+                    IncludeItemTypes = [BaseItemKind.Episode],
                     IsPlayed = true,
-                    OrderBy = new[] { (ItemSortBy.DatePlayed, SortOrder.Ascending) },
+                    OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Ascending)],
                     Limit = 1000,
                     IsVirtualItem = false,
                     Recursive = true,

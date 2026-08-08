@@ -132,8 +132,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Latest
 
                 var items = folder.GetItems(new InternalItemsQuery(user)
                 {
-                    IncludeItemTypes = new[] { SectionItemKind },
-                    OrderBy = new[] { (ItemSortBy.PremiereDate, SortOrder.Descending) },
+                    IncludeItemTypes = [SectionItemKind],
+                    OrderBy = [(ItemSortBy.PremiereDate, SortOrder.Descending)],
                     Limit = 200, // Enough to find 16 unique series even with multi-episode releases
                     IsVirtualItem = false,
                     IsPlayed = isPlayed,

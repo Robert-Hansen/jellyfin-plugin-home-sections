@@ -55,7 +55,7 @@ public class RecentlyPlayedSection : IHomeScreenSection
             IsPlayed = true,
             IsResumable = false,
             Limit = 16,
-            OrderBy = new[] { (ItemSortBy.DatePlayed, SortOrder.Descending) },
+            OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Descending)],
             DtoOptions = dtoOptions,
             EnableTotalRecordCount = false,
             IsVirtualItem = false

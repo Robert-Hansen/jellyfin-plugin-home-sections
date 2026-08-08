@@ -59,12 +59,12 @@ public class DecadeSection : IHomeScreenSection
 
         QueryResult<BaseItem> items = m_libraryManager.GetItemsResult(new InternalItemsQuery(user)
         {
-            IncludeItemTypes = new[] { BaseItemKind.Movie },
+            IncludeItemTypes = [BaseItemKind.Movie],
             Recursive = true,
             Years = years,
             IsPlayed = isPlayed,
             Limit = 16,
-            OrderBy = new[] { (ItemSortBy.Random, SortOrder.Ascending) },
+            OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
             DtoOptions = dtoOptions,
             EnableTotalRecordCount = false,
             IsVirtualItem = false
@@ -107,10 +107,10 @@ public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this, allo
     {
         QueryResult<BaseItem> sample = m_libraryManager.GetItemsResult(new InternalItemsQuery(user)
         {
-            IncludeItemTypes = new[] { BaseItemKind.Movie },
+            IncludeItemTypes = [BaseItemKind.Movie],
             Recursive = true,
             Limit = 400,
-            OrderBy = new[] { (ItemSortBy.Random, SortOrder.Ascending) },
+            OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
             EnableTotalRecordCount = false,
             IsVirtualItem = false
         });

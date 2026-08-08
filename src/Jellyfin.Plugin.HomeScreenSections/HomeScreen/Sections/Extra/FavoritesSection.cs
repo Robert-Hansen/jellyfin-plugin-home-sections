@@ -54,7 +54,7 @@ public class FavoritesSection : IHomeScreenSection
             Recursive = true,
             IsFavorite = true,
             Limit = 24,
-            OrderBy = new[] { (ItemSortBy.DateCreated, SortOrder.Descending) },
+            OrderBy = [(ItemSortBy.DateCreated, SortOrder.Descending)],
             DtoOptions = dtoOptions,
             EnableTotalRecordCount = false
         });

@@ -57,7 +57,7 @@ public class ComingSoonInLibrarySection : IHomeScreenSection
             MinPremiereDate = today,
             MaxPremiereDate = today.AddDays(90),
             Limit = 24,
-            OrderBy = new[] { (ItemSortBy.PremiereDate, SortOrder.Ascending) },
+            OrderBy = [(ItemSortBy.PremiereDate, SortOrder.Ascending)],
             DtoOptions = dtoOptions,
             EnableTotalRecordCount = false
         });

@@ -92,7 +92,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
             QueryResult<BaseItem>? itemsResult = m_libraryManager.GetItemsResult(new InternalItemsQuery(user)
             {
-                OrderBy = new[] { (ItemSortBy.DatePlayed, SortOrder.Descending) },
+                OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Descending)],
                 IsResumable = true,
                 Limit = 12,
                 Recursive = true,

@@ -54,7 +54,7 @@ public class TrendingSection : IHomeScreenSection
             Recursive = true,
             IsPlayed = true,
             Limit = 16,
-            OrderBy = new[] { (ItemSortBy.PlayCount, SortOrder.Descending) },
+            OrderBy = [(ItemSortBy.PlayCount, SortOrder.Descending)],
             DtoOptions = dtoOptions,
             EnableTotalRecordCount = false,
             IsVirtualItem = false

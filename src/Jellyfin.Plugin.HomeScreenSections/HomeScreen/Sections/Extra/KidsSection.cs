@@ -57,7 +57,7 @@ public class KidsSection : IHomeScreenSection
             OfficialRatings = SectionDtoHelper.KidsOfficialRatings,
             IsPlayed = isPlayed,
             Limit = 24,
-            OrderBy = new[] { (ItemSortBy.Random, SortOrder.Ascending) },
+            OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
             DtoOptions = dtoOptions,
             EnableTotalRecordCount = false,
             IsVirtualItem = false

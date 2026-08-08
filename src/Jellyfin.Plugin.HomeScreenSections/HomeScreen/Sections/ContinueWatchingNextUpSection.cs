@@ -109,10 +109,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             {
                 IReadOnlyList<BaseItem> recentEpisodes = m_libraryManager.GetItemList(new InternalItemsQuery(user)
                 {
-                    AncestorIds = new[] { seriesId },
-                    IncludeItemTypes = new[] { BaseItemKind.Episode },
+                    AncestorIds = [seriesId],
+                    IncludeItemTypes = [BaseItemKind.Episode],
                     IsPlayed = true,
-                    OrderBy = new[] { (ItemSortBy.DatePlayed, SortOrder.Descending) },
+                    OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Descending)],
                     Limit = 2
                 });
 

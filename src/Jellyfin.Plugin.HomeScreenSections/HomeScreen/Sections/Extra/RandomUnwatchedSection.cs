@@ -54,7 +54,7 @@ public class RandomUnwatchedSection : IHomeScreenSection
             Recursive = true,
             IsPlayed = false,
             Limit = 16,
-            OrderBy = new[] { (ItemSortBy.Random, SortOrder.Ascending) },
+            OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
             DtoOptions = dtoOptions,
             EnableTotalRecordCount = false,
             IsVirtualItem = false

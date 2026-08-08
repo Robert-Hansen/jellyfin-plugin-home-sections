@@ -172,7 +172,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 					{
 						BaseItemKind.Movie
 					},
-					OrderBy = new[] { (ItemSortBy.DatePlayed, SortOrder.Descending), (ItemSortBy.Random, SortOrder.Descending) },
+					OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Descending), (ItemSortBy.Random, SortOrder.Descending)],
 					Limit = 15,
 					ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
 					Recursive = true,
@@ -241,7 +241,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 					{
 						BaseItemKind.Movie
 					},
-					OrderBy = new[] { (ItemSortBy.Random, SortOrder.Descending) },
+					OrderBy = [(ItemSortBy.Random, SortOrder.Descending)],
 					User = user,
 					IsPlayed = isPlayed,
 					DtoOptions = dtoOptions,

@@ -129,7 +129,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                     },
                     DtoOptions = dtoOptions,
                     IsPlayed = isPlayed,
-                    OrderBy = new[] { (ItemSortBy.DateCreated, SortOrder.Descending) },
+                    OrderBy = [(ItemSortBy.DateCreated, SortOrder.Descending)],
                     Limit = 16,
                     IsMissing = false,
                     Recursive = true,

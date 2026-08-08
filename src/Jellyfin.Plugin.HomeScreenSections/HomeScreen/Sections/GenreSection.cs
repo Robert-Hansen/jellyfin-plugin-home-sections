@@ -182,7 +182,7 @@ public class GenreSection : IHomeScreenSection
                 {
                     BaseItemKind.Movie
                 },
-                OrderBy = new[] { (ItemSortBy.Random, SortOrder.Descending) },
+                OrderBy = [(ItemSortBy.Random, SortOrder.Descending)],
                 ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
                 Recursive = true,
                 Limit = 24,
@@ -282,7 +282,7 @@ public class GenreSection : IHomeScreenSection
 
             return folder.GetItems(new InternalItemsQuery(user)
             {
-                IncludeItemTypes = new[] { BaseItemKind.Movie },
+                IncludeItemTypes = [BaseItemKind.Movie],
                 Recursive = true,
                 IsPlayed = true,
                 ParentId = folderId,
@@ -357,7 +357,7 @@ public class GenreSection : IHomeScreenSection
 
             return folder.GetItems(new InternalItemsQuery(user)
             {
-                IncludeItemTypes = new[] { BaseItemKind.Movie },
+                IncludeItemTypes = [BaseItemKind.Movie],
                 Recursive = true,
                 IsFavoriteOrLiked = true,
                 User = user,

@@ -66,10 +66,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
 
             List<BaseItem> personItems = folders.SelectMany(x => m_libraryManager.GetItemList(new InternalItemsQuery()
             {
-                PersonIds = new[] { personId },
+                PersonIds = [personId],
                 PersonTypes = PersonTypes.ToArray(),
-                OrderBy = new[] { (ItemSortBy.Random, SortOrder.Ascending) },
-                IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Episode },
+                OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
+                IncludeItemTypes = [BaseItemKind.Movie, BaseItemKind.Episode],
                 Limit = 16,
                 ParentId = Guid.Parse(x.ItemId),
                 Recursive = true
@@ -104,9 +104,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
             {
                 List<BaseItem> personItems = folders.SelectMany(x => m_libraryManager.GetItemList(new InternalItemsQuery()
                 {
-                    PersonIds = new[] { person.Id },
+                    PersonIds = [person.Id],
                     PersonTypes = PersonTypes.ToArray(),
-                    IncludeItemTypes = new[] { BaseItemKind.Movie, BaseItemKind.Episode },
+                    IncludeItemTypes = [BaseItemKind.Movie, BaseItemKind.Episode],
                     ParentId = Guid.Parse(x.ItemId),
                     Recursive = true,
                     Limit = 16
