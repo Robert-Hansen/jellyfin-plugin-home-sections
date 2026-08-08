@@ -124,7 +124,7 @@ public class GenreSection : IHomeScreenSection
         Guid[] folderIds = GetMovieFolderIds(user);
         if (folderIds.Length == 0)
         {
-            return Array.Empty<(string, int)>();
+            return [];
         }
 
         List<Movie> allPlayedMovies = GetPlayedMovies(user, folderIds);

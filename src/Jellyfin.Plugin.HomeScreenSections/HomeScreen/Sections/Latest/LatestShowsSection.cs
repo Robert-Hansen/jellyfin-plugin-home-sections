@@ -148,7 +148,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Latest
                     MaxPremiereDate = currentDate,
                     MinPremiereDate = currentDate.Subtract(TimeSpan.FromDays(dayIncrement)),
                     EnableTotalRecordCount = true // This might have to go
-                    // DtoOptions = new DtoOptions { Fields = Array.Empty<ItemFields>(), EnableImages = false }
+                    // DtoOptions = new DtoOptions { Fields = [], EnableImages = false }
                 });
 
                 return (Items: items.Items, items.Items.Count, items.TotalRecordCount);

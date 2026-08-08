@@ -133,7 +133,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             return jellyfinItemIds?
                 .Where(y => !string.IsNullOrEmpty(y))
                 .Select(y => Guid.Parse(y!))
-                .ToArray() ?? Array.Empty<Guid>();
+                .ToArray() ?? [];
         }
 
         private IEnumerable<BaseItem> LoadRequestedLibraryItems(User user, Guid[] requestedItemIds)

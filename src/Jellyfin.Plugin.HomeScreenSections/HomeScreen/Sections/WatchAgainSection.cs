@@ -215,7 +215,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                     IncludeItemTypes = new[] { BaseItemKind.Movie },
                     IsPlayed = true,
                     Recursive = true,
-                    DtoOptions = new DtoOptions { Fields = Array.Empty<ItemFields>(), EnableImages = false }
+                    DtoOptions = new DtoOptions { Fields = [], EnableImages = false }
                 }).Items;
             }).OfType<Movie>().ToList();
 
@@ -251,7 +251,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 AncestorIds = candidateSeriesIds,
                 IsPlayed = false,
                 IsVirtualItem = false,
-                DtoOptions = new DtoOptions { Fields = Array.Empty<ItemFields>(), EnableImages = false }
+                DtoOptions = new DtoOptions { Fields = [], EnableImages = false }
             }).OfType<Episode>().ToList();
 
             // Get set of series IDs that have unplayed episodes
@@ -291,7 +291,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                     Limit = 1000,
                     IsVirtualItem = false,
                     Recursive = true,
-                    DtoOptions = new DtoOptions { Fields = Array.Empty<ItemFields>(), EnableImages = false }
+                    DtoOptions = new DtoOptions { Fields = [], EnableImages = false }
                 });
             }).OfType<Episode>().ToList();
 

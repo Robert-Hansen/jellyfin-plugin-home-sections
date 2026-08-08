@@ -338,7 +338,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
             [FromQuery] Guid? pageHash = null)
         {
             IReadOnlyList<HomeScreenSectionInfo> sections = m_homeScreenSectionService.MonitorLiveUpdatedSectionsForUser(userId ?? Guid.Empty, language, 
-                page ?? 1, numResultsPerPage, pageHash) ?? Array.Empty<HomeScreenSectionInfo>();
+                page ?? 1, numResultsPerPage, pageHash) ?? [];
 
             return new QueryResult<HomeScreenSectionInfo>(
                 0,

@@ -270,7 +270,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 if (originalBitmap == null)
                 {
                     PluginLog.ImageDecodeFailed(m_logger);
-                    return Array.Empty<byte>();
+                    return [];
                 }
 
                 SKBitmap? bitmapToCompress = originalBitmap;
@@ -301,17 +301,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             catch (ArgumentException ex)
             {
                 PluginLog.ImageProcessError(m_logger, ex);
-                return Array.Empty<byte>();
+                return [];
             }
             catch (InvalidOperationException ex)
             {
                 PluginLog.ImageProcessError(m_logger, ex);
-                return Array.Empty<byte>();
+                return [];
             }
             catch (NullReferenceException ex)
             {
                 PluginLog.ImageProcessError(m_logger, ex);
-                return Array.Empty<byte>();
+                return [];
             }
         }
         private SKBitmap? ResizeImage(SKBitmap originalBitmap, int maxWidth)

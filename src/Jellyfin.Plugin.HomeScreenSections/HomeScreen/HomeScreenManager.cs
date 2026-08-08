@@ -92,7 +92,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
                 return section.GetResults(payload, queryCollection);
             }
 
-            return new QueryResult<BaseItemDto>(Array.Empty<BaseItemDto>());
+            return new QueryResult<BaseItemDto>([]);
         }
 
         /// <inheritdoc/>

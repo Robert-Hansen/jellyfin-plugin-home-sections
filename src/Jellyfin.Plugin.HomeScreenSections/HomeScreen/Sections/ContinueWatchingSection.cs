@@ -84,7 +84,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 }
             };
 
-            Guid[]? ancestorIds = Array.Empty<Guid>();
+            Guid[]? ancestorIds = [];
 
             Guid[]? excludeFolderIds = user!.GetPreferenceValues<Guid>(PreferenceKind.LatestItemExcludes);
             if (excludeFolderIds.Length > 0)

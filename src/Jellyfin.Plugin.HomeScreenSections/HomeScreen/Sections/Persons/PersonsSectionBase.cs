@@ -97,7 +97,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
             User? user = m_userManager.GetUserById(userId ?? Guid.Empty);
             // Want to use the user data at some point to actually weight the people chosen based on watch history, similar to how Genres are picked.
             // For now this is fine to get something in.
-            List<Person> people = m_libraryManager.GetPeopleItems(new InternalPeopleQuery(PersonTypes, Array.Empty<string>())).ToList();
+            List<Person> people = m_libraryManager.GetPeopleItems(new InternalPeopleQuery(PersonTypes, [])).ToList();
 
             people.Shuffle();
 
