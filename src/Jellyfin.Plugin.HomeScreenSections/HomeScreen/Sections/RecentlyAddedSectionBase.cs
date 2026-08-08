@@ -1,5 +1,6 @@
 using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.Helpers;
+using Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Extra;
 using Jellyfin.Plugin.HomeScreenSections.Library;
 using Jellyfin.Plugin.HomeScreenSections.Model.Dto;
 using MediaBrowser.Controller.Dto;
@@ -132,17 +133,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         
         public HomeScreenSectionInfo GetInfo()
         {
-            return new HomeScreenSectionInfo
-            {
-                Section = Section,
-                DisplayText = DisplayText,
-                AdditionalData = AdditionalData,
-                Route = Route,
-                Limit = Limit ?? 1,
-                OriginalPayload = OriginalPayload,
-                ViewMode = DefaultViewMode,
-                AllowHideWatched = true
-            };
+            // ponytail: reuse helper — was duplicated in LatestSectionBase
+            return SectionDtoHelper.CreateInfo(this, DefaultViewMode, true);
         }
 
         protected virtual IEnumerable<BaseItem> GetItems(User? user, DtoOptions dtoOptions, VirtualFolderInfo[] folders, bool? isPlayed)
