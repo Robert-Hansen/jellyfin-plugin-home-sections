@@ -1,3 +1,5 @@
+using Jellyfin.Plugin.HomeScreenSections.Configuration;
+using Jellyfin.Plugin.HomeScreenSections.Library;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Querying;
@@ -22,6 +24,22 @@ internal static class SectionDtoHelper
                 ImageType.Thumb,
                 ImageType.Backdrop
             }
+        };
+    }
+
+    // ponytail: one helper replaces 10 identical GetInfo() bodies
+    public static HomeScreenSectionInfo CreateInfo(IHomeScreenSection section, SectionViewMode viewMode = SectionViewMode.Landscape, bool allowHideWatched = false)
+    {
+        return new HomeScreenSectionInfo
+        {
+            Section = section.Section,
+            DisplayText = section.DisplayText,
+            AdditionalData = section.AdditionalData,
+            Route = section.Route,
+            Limit = section.Limit ?? 1,
+            OriginalPayload = section.OriginalPayload,
+            ViewMode = viewMode,
+            AllowHideWatched = allowHideWatched
         };
     }
 
