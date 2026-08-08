@@ -63,7 +63,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
             string cachedImageUrl = GetCachedImageUrl(sourceImageUrl);
 
             // Create provider IDs to store external image URL and metadata
-            Dictionary<string, string> providerIds = new Dictionary<string, string>(StringComparer.Ordinal) {
+            Dictionary<string, string> providerIds = new(StringComparer.Ordinal) {
                 { "SonarrSeriesId", calendarItem.SeriesId.ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 { "SonarrEpisodeId", calendarItem.Id.ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 { "EpisodeInfo", episodeInfo },

@@ -7,7 +7,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 {
     public class TranslationManager : ITranslationManager
     {
-        private Dictionary<string, JObject> m_translationPacks = new Dictionary<string, JObject>(StringComparer.Ordinal);
+        private Dictionary<string, JObject> m_translationPacks = new(StringComparer.Ordinal);
         private readonly ILogger<ITranslationManager> m_logger;
 
         public TranslationManager(ILogger<ITranslationManager> logger)

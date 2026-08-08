@@ -126,7 +126,7 @@ public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this, allo
             IsVirtualItem = false
         });
 
-        Dictionary<string, int> scores = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, int> scores = new(StringComparer.OrdinalIgnoreCase);
         foreach (BaseItem item in played.Items)
         {
             if (item.Studios == null || item.Studios.Length == 0)

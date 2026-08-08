@@ -132,7 +132,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 OriginalTitle = item.Value<string>("originalTitle") ?? item.Value<string>("originalName"),
                 SourceType = item.Value<string>("mediaType"),
                 CommunityRating = rating > 0 ? rating : null,
-                ProviderIds = new Dictionary<string, string>(StringComparer.Ordinal)
+                ProviderIds = new(StringComparer.Ordinal)
                 {
                     { "JellyseerrRoot", jellyseerrDisplayUrl },
                     { "Jellyseerr", item.Value<int>("id").ToString(System.Globalization.CultureInfo.InvariantCulture) },
