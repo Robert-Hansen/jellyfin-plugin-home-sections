@@ -71,17 +71,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             User? user = m_userManager.GetUserById(payload.UserId);
             DtoOptions? dtoOptions = new DtoOptions
             {
-                Fields = new List<ItemFields>
-                {
-                    ItemFields.PrimaryImageAspectRatio
-                },
+                Fields = [ItemFields.PrimaryImageAspectRatio],
                 ImageTypeLimit = 1,
-                ImageTypes = new List<ImageType>
-                {
-                    ImageType.Thumb,
+                ImageTypes = [ImageType.Thumb,
                     ImageType.Backdrop,
-                    ImageType.Primary,
-                }
+                    ImageType.Primary,]
             };
 
             Guid[]? ancestorIds = [];

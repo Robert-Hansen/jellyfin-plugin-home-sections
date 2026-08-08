@@ -93,11 +93,8 @@ public class UnwatchedCollectionsSection : IHomeScreenSection
 
         DtoOptions linkDto = new DtoOptions
         {
-            Fields = new List<ItemFields>
-            {
-                ItemFields.PrimaryImageAspectRatio,
-                ItemFields.DisplayPreferencesId
-            }
+            Fields = [ItemFields.PrimaryImageAspectRatio,
+                ItemFields.DisplayPreferencesId]
         };
 
         foreach (BoxSet boxSet in FindPartialCollections(user).Take(instanceCount))

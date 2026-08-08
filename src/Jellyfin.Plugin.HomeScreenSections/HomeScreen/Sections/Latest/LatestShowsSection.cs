@@ -65,20 +65,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Latest
         {
             DtoOptions dtoOptions = new DtoOptions
             {
-                Fields = new List<ItemFields>
-                {
-                    ItemFields.PrimaryImageAspectRatio,
-                    ItemFields.Path
-                }
+                Fields = [ItemFields.PrimaryImageAspectRatio,
+                    ItemFields.Path]
             };
 
             dtoOptions.ImageTypeLimit = 1;
-            dtoOptions.ImageTypes = new List<ImageType>
-            {
-                ImageType.Thumb,
+            dtoOptions.ImageTypes = [ImageType.Thumb,
                 ImageType.Backdrop,
-                ImageType.Primary,
-            };
+                ImageType.Primary,];
 
             return dtoOptions;
         }

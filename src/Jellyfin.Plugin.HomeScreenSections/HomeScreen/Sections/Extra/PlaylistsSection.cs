@@ -83,11 +83,8 @@ public class PlaylistsSection : IHomeScreenSection
 
         DtoOptions linkDto = new DtoOptions
         {
-            Fields = new List<ItemFields>
-            {
-                ItemFields.PrimaryImageAspectRatio,
-                ItemFields.DisplayPreferencesId
-            }
+            Fields = [ItemFields.PrimaryImageAspectRatio,
+                ItemFields.DisplayPreferencesId]
         };
 
         IEnumerable<Playlist> playlists = m_playlistManager.GetPlaylists(user.Id)

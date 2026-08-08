@@ -65,19 +65,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
             DtoOptions dtoOptions = new DtoOptions
             {
-                Fields = new List<ItemFields>
-                {
-                    ItemFields.PrimaryImageAspectRatio,
+                Fields = [ItemFields.PrimaryImageAspectRatio,
                     ItemFields.Path,
-                    ItemFields.DateCreated
-                },
+                    ItemFields.DateCreated],
                 ImageTypeLimit = 1,
-                ImageTypes = new List<ImageType>
-                {
-                    ImageType.Primary,
+                ImageTypes = [ImageType.Primary,
                     ImageType.Thumb,
-                    ImageType.Backdrop,
-                }
+                    ImageType.Backdrop,]
             };
             
             PluginConfiguration? config = HomeScreenSectionsPlugin.Instance?.Configuration;

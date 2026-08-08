@@ -12,18 +12,12 @@ internal static class SectionDtoHelper
     {
         return new DtoOptions
         {
-            Fields = new List<ItemFields>
-            {
-                ItemFields.PrimaryImageAspectRatio,
-                ItemFields.MediaSourceCount
-            },
+            Fields = [ItemFields.PrimaryImageAspectRatio,
+                ItemFields.MediaSourceCount],
             ImageTypeLimit = 1,
-            ImageTypes = new List<ImageType>
-            {
-                ImageType.Primary,
+            ImageTypes = [ImageType.Primary,
                 ImageType.Thumb,
-                ImageType.Backdrop
-            }
+                ImageType.Backdrop]
         };
     }
 

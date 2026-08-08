@@ -437,11 +437,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         {
             return new DtoOptions
             {
-                Fields = new List<ItemFields>
-                {
-                    ItemFields.PrimaryImageAspectRatio,
-                    ItemFields.DisplayPreferencesId
-                }
+                Fields = [ItemFields.PrimaryImageAspectRatio,
+                    ItemFields.DisplayPreferencesId]
             };
         }
 

@@ -88,11 +88,8 @@ public class GenreSection : IHomeScreenSection
 
         DtoOptions linkDtoOptions = new DtoOptions
         {
-            Fields = new List<ItemFields>
-            {
-                ItemFields.PrimaryImageAspectRatio,
-                ItemFields.DisplayPreferencesId
-            }
+            Fields = [ItemFields.PrimaryImageAspectRatio,
+                ItemFields.DisplayPreferencesId]
         };
 
         foreach (string selectedGenre in PickWeightedGenres(userGenreScores, instanceCount))
@@ -191,7 +188,7 @@ public class GenreSection : IHomeScreenSection
                 Limit = 24,
                 IsPlayed = isPlayed,
                 DtoOptions = dtoOptions,
-                Genres = new List<string> { genre.Name }
+                Genres = [genre.Name]
             }).Items;
         }).GroupBy(x => x.Id).Select(x => x.First()).ToList();
     }
