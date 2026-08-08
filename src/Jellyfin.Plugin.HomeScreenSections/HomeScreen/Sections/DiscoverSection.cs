@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.Helpers;
 using Jellyfin.Plugin.HomeScreenSections.Library;
@@ -8,7 +7,6 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Querying;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 
 namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
@@ -51,8 +49,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 return new QueryResult<BaseItemDto>();
             }
 
-            using HttpClient client = CreateJellyseerrClient(jellyseerrUrl);
-            int? jellyseerrUserId = ResolveJellyseerrUserId(client, user.Username);
+            using HttpClient client = JellyseerrHelper.CreateClient(jellyseerrUrl);
+            int? jellyseerrUserId = JellyseerrHelper.ResolveUserId(client, user.Username);
             if (jellyseerrUserId == null)
             {
                 return new QueryResult<BaseItemDto>();
@@ -71,25 +69,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             };
         }
 
-        private static HttpClient CreateJellyseerrClient(string jellyseerrUrl)
-        {
-            // ponytail: reuse pooled handler when available — fallback to new for tests
-            IHttpClientFactory? factory = HomeScreenSectionsPlugin.Instance.ServiceProvider.GetService<IHttpClientFactory>();
-            HttpClient client = factory?.CreateClient() ?? new HttpClient();
-            client.BaseAddress = new Uri(jellyseerrUrl);
-            client.DefaultRequestHeaders.Add("X-Api-Key", HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrApiKey);
-            return client;
-        }
-
-        private static int? ResolveJellyseerrUserId(HttpClient client, string username)
-        {
-            HttpResponseMessage usersResponse = client.GetAsync($"/api/v1/user?q={Uri.EscapeDataString(username)}").GetAwaiter().GetResult();
-            string userResponseRaw = usersResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            return JObject.Parse(userResponseRaw).Value<JArray>("results")!
-                .OfType<JObject>()
-                .FirstOrDefault(x => string.Equals(x.Value<string>("jellyfinUsername"), username, StringComparison.Ordinal))
-                ?.Value<int>("id");
-        }
 
         private List<BaseItemDto> FetchDiscoverItems(HttpClient client, string jellyseerrDisplayUrl)
         {
