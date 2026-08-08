@@ -265,7 +265,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
             fInfo.Directory?.Create();
 
             JArray settings = new JArray();
-            List<ModularHomeUserSettings?> newSettings = new List<ModularHomeUserSettings?>();
+            // Seed with the incoming settings so a first-ever save (no settings file yet) is
+            // not written out as an empty array.
+            List<ModularHomeUserSettings?> newSettings = new List<ModularHomeUserSettings?> { userSettings };
 
             PluginLog.CheckingExistingUserSettings(m_logger, userId);
             if (File.Exists(pluginSettings))
