@@ -165,11 +165,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             return path.Replace('\\', '/').TrimEnd('/');
         }
 
-        protected string CalculateCountdown(DateTime releaseDate, PluginConfiguration config)
+        protected string CalculateCountdown(DateTime releaseDate, PluginConfiguration config, DateTime? now = null)
         {
             DateTime releaseDateLocal = releaseDate.ToLocalTime();
             // Calculate the difference in calendar days
-            int totalDays = (releaseDateLocal.Date - DateTime.Now.Date).Days;
+            int totalDays = (releaseDateLocal.Date - (now ?? DateTime.Now).Date).Days;
             
             string countdownText = totalDays switch
             {

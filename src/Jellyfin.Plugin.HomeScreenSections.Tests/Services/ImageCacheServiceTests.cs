@@ -1,6 +1,7 @@
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.Services;
 using Jellyfin.Plugin.HomeScreenSections.Tests.Support;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -175,6 +176,9 @@ public class ImageCacheServiceTests
         // JPEG magic bytes confirm the image was re-encoded rather than stored verbatim.
         Assert.Equal((byte)0xFF, data![0]);
         Assert.Equal((byte)0xD8, data[1]);
+        // And the resize actually happened: width clamped to the configured MaxImageWidth.
+        using SKBitmap decoded = SKBitmap.Decode(data);
+        Assert.Equal(HomeScreenSectionsPlugin.Instance.Configuration.MaxImageWidth, decoded.Width);
     }
 
     [Fact]
@@ -190,6 +194,64 @@ public class ImageCacheServiceTests
         Assert.Equal("image/jpeg", contentType);
         Assert.NotNull(data);
         Assert.Equal((byte)0xFF, data![0]);
+    }
+
+    [Fact]
+    public async Task GetOrCacheImage_evicts_oldest_entries_when_cache_is_full()
+    {
+        PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
+        int originalMax = config.MaxImageCacheEntries;
+        config.MaxImageCacheEntries = 10;
+        try
+        {
+            ImageCacheService service = MakeService(MakeImageHandler([1, 2, 3], "image/jpeg"));
+
+            string? firstKey = null;
+            string? lastKey = null;
+            for (int index = 0; index < 11; index++)
+            {
+                string? key = await service.GetOrCacheImage($"http://images.test/img-{index}.jpg", 3600);
+                Assert.NotNull(key);
+                if (index == 0)
+                {
+                    firstKey = key;
+                }
+
+                if (index == 10)
+                {
+                    lastKey = key;
+                }
+            }
+
+            // The oldest entry was evicted to make room; the newest is still served.
+            Assert.Null(service.GetCachedImage(firstKey!).data);
+            Assert.NotNull(service.GetCachedImage(lastKey!).data);
+        }
+        finally
+        {
+            config.MaxImageCacheEntries = originalMax;
+        }
+    }
+
+    [Fact]
+    public async Task GetOrCacheImage_redownloads_expired_entry()
+    {
+        FakeHttpMessageHandler handler = MakeImageHandler([4, 5, 6], "image/jpeg");
+        ImageCacheService service = MakeService(handler);
+        const string sourceUrl = "http://images.test/expirable.jpg";
+
+        // Negative timeout -> the entry is already expired the moment it is written.
+        string? firstKey = await service.GetOrCacheImage(sourceUrl, -1);
+        Assert.NotNull(firstKey);
+        Assert.Single(handler.Requests);
+
+        // Re-requesting the expired key must re-download rather than serve the stale entry.
+        string? secondKey = await service.GetOrCacheImage(sourceUrl, 3600);
+
+        Assert.NotNull(secondKey);
+        Assert.Equal(firstKey, secondKey);
+        Assert.Equal(2, handler.Requests.Count);
+        Assert.NotNull(service.GetCachedImage(secondKey!).data);
     }
 
     private static FakeHttpMessageHandler MakeImageHandler(byte[] payload, string mediaType)

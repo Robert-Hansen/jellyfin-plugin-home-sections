@@ -8,11 +8,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Helpers;
 [Collection("Plugin Instance")]
 public class TransformationPatchesTests
 {
-    private readonly PluginFixture m_fixture;
 
     public TransformationPatchesTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        _ = fixture;
     }
 
     [Fact]

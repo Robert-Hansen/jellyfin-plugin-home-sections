@@ -16,13 +16,12 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Controllers;
 [Collection("Plugin Instance")]
 public class ModularHomeViewsControllerTests
 {
-    private readonly PluginFixture m_fixture;
     private readonly Mock<IHomeScreenManager> m_homeScreenManager = new();
     private readonly Mock<ITranslationManager> m_translationManager = new();
 
     public ModularHomeViewsControllerTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        _ = fixture;
     }
 
     private ModularHomeViewsController MakeController()

@@ -150,5 +150,7 @@ public class PluginInterfaceTests
 
         Assert.NotNull(captured);
         Assert.NotNull(captured!.OriginalPayload);
+        JObject preserved = Assert.IsType<JObject>(captured.OriginalPayload);
+        Assert.Equal("bar", preserved.Value<string>("foo"));
     }
 }

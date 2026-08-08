@@ -16,18 +16,12 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Support;
 /// </summary>
 internal sealed class TestServiceProvider : IServiceProvider
 {
-    private readonly Dictionary<Type, object> m_overrides = [];
     private readonly Dictionary<Type, object> m_resolvedCache = [];
     private readonly FakeApplicationPaths m_applicationPaths;
 
     public TestServiceProvider(FakeApplicationPaths applicationPaths)
     {
         m_applicationPaths = applicationPaths;
-    }
-
-    public void Register<T>(T instance) where T : class
-    {
-        m_overrides[typeof(T)] = instance;
     }
 
     public T Resolve<T>() where T : class
@@ -37,11 +31,6 @@ internal sealed class TestServiceProvider : IServiceProvider
 
     public object? GetService(Type serviceType)
     {
-        if (m_overrides.TryGetValue(serviceType, out object? overridden))
-        {
-            return overridden;
-        }
-
         if (m_resolvedCache.TryGetValue(serviceType, out object? cached))
         {
             return cached;

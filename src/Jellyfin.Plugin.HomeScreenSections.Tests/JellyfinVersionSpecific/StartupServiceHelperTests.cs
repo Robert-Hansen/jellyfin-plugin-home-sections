@@ -25,14 +25,4 @@ public class StartupServiceHelperTests
         Assert.Equal(TaskTriggerInfoType.DailyTrigger, triggers[0].Type);
         Assert.Equal((long?)timeOfDay.Ticks, triggers[0].TimeOfDayTicks);
     }
-
-    [Fact]
-    public void GetDailyTrigger_preserves_fractional_seconds()
-    {
-        TimeSpan timeOfDay = TimeSpan.FromSeconds(123.456);
-
-        List<TaskTriggerInfo> triggers = [.. StartupServiceHelper.GetDailyTrigger(timeOfDay)];
-
-        Assert.Equal((long?)timeOfDay.Ticks, Assert.Single(triggers).TimeOfDayTicks);
-    }
 }

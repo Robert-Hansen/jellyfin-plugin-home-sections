@@ -42,7 +42,8 @@ public class TranslationManagerTests
     public void Translate_returns_pack_value_for_known_key()
     {
         TranslationManager manager = MakeManager();
-        Assert.Equal("Continue Watching", manager.Translate("ContinueWatching", "en", "Continue Watching"));
+        // Fallback differs from the en pack value so the test can only pass via the pack lookup.
+        Assert.Equal("Continue Watching", manager.Translate("ContinueWatching", "en", "FALLBACK TEXT"));
     }
 
     [Fact]

@@ -41,16 +41,7 @@ public class LatestAndRecentlyAddedSectionTests : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        try
-        {
-            Directory.Delete(m_paths.Root, recursive: true);
-        }
-        catch (IOException)
-        {
-        }
-        catch (UnauthorizedAccessException)
-        {
-        }
+        TestIO.DeleteBestEffort(m_paths.Root);
     }
 
     [Fact]

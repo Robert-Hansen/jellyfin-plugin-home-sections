@@ -25,7 +25,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Services;
 [Collection("Plugin Instance")]
 public class ServiceInternalPathsTests
 {
-    private readonly PluginFixture m_fixture;
     private readonly Mock<IHomeScreenManager> m_homeScreenManager = new();
     private readonly Mock<ITranslationManager> m_translationManager = new();
     private readonly Mock<IServerConfigurationManager> m_serverConfigurationManager = new();
@@ -40,7 +39,7 @@ public class ServiceInternalPathsTests
 
     public ServiceInternalPathsTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        _ = fixture;
 
         MediaBrowser.Model.Configuration.ServerConfiguration serverConfiguration = new MediaBrowser.Model.Configuration.ServerConfiguration
         {
@@ -63,7 +62,7 @@ public class ServiceInternalPathsTests
             .Returns(m_user);
     }
 
-    private HomeScreenSectionService MakeService()
+    private HomeScreenSectionService MakeService(MediaBrowser.Controller.Collections.ICollectionManager? collectionManager = null)
     {
         return new HomeScreenSectionService(
             m_homeScreenManager.Object,
@@ -74,7 +73,7 @@ public class ServiceInternalPathsTests
             m_userManager.Object,
             m_libraryManager.Object,
             m_dtoService.Object,
-            new CollectionManagerProxy(m_collectionManager.Object),
+            new CollectionManagerProxy(collectionManager ?? m_collectionManager.Object),
             m_playlistManager.Object);
     }
 
@@ -150,6 +149,30 @@ public class ServiceInternalPathsTests
 
         HomeScreenSectionService service = MakeService();
         Guid pageHash = SeedPage(MakeSection("Action"));
+
+        IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(m_userId, "en", 1, 10, pageHash);
+
+        Assert.Same(marker, Assert.Single(result!).OriginalPayload);
+    }
+
+    [Fact]
+    public void TitleLink_resolves_collection_name_additional_data()
+    {
+        // ResolveTitleLinkByName tries collections first; FakeCollectionManager exposes the
+        // private GetCollections(User) the proxy resolves via reflection.
+        TestBoxSet collection = new(Array.Empty<BaseItem>())
+        {
+            Id = Guid.NewGuid(),
+            Name = "My Collection"
+        };
+        BaseItemDto marker = new BaseItemDto { Id = collection.Id, Name = "My Collection" };
+
+        m_dtoService
+            .Setup(service => service.GetBaseItemDto(collection, It.IsAny<DtoOptions>(), m_user, It.IsAny<BaseItem>()))
+            .Returns(marker);
+
+        HomeScreenSectionService service = MakeService(new FakeCollectionManager([collection]));
+        Guid pageHash = SeedPage(MakeSection("My Collection"));
 
         IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(m_userId, "en", 1, 10, pageHash);
 

@@ -17,7 +17,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.HomeScreen.Sections.Extra;
 [Collection("Plugin Instance")]
 public class QueryBasedSectionsTests
 {
-    private readonly PluginFixture m_fixture;
     private readonly Mock<IUserManager> m_userManager = new();
     private readonly Mock<ILibraryManager> m_libraryManager = new();
     private readonly Mock<IDtoService> m_dtoService = new();
@@ -26,7 +25,9 @@ public class QueryBasedSectionsTests
 
     public QueryBasedSectionsTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        // The fixture parameter binds this class to the "Plugin Instance" collection so the
+        // shared HomeScreenSectionsPlugin.Instance is initialized; the object itself is unused.
+        _ = fixture;
     }
 
     private InternalItemsQuery? m_capturedQuery;
@@ -124,7 +125,12 @@ public class QueryBasedSectionsTests
         Assert.Single(result.Items);
         Assert.NotNull(m_capturedQuery!.MinPremiereDate);
         Assert.NotNull(m_capturedQuery!.MaxPremiereDate);
-        Assert.True(m_capturedQuery!.MaxPremiereDate > m_capturedQuery!.MinPremiereDate);
+
+        // The window spans exactly 90 days, anchored at UTC midnight today.
+        TimeSpan window = m_capturedQuery!.MaxPremiereDate!.Value - m_capturedQuery!.MinPremiereDate!.Value;
+        Assert.Equal(90, window.TotalDays);
+        Assert.Equal(TimeSpan.Zero, m_capturedQuery!.MinPremiereDate!.Value.TimeOfDay);
+        Assert.InRange((DateTime.UtcNow.Date - m_capturedQuery!.MinPremiereDate!.Value.Date).TotalDays, 0, 1);
     }
 
     [Fact]

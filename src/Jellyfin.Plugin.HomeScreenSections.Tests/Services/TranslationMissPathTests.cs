@@ -13,11 +13,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Services;
 [Collection("Plugin Instance")]
 public class TranslationMissPathTests
 {
-    private readonly PluginFixture m_fixture;
 
     public TranslationMissPathTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        _ = fixture;
     }
 
     [Fact]

@@ -21,7 +21,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Services;
 [Collection("Plugin Instance")]
 public class HomeScreenSectionServiceTests
 {
-    private readonly PluginFixture m_fixture;
     private readonly Mock<IHomeScreenManager> m_homeScreenManager = new();
     private readonly Mock<ITranslationManager> m_translationManager = new();
     private readonly Mock<IServerConfigurationManager> m_serverConfigurationManager = new();
@@ -34,7 +33,7 @@ public class HomeScreenSectionServiceTests
 
     public HomeScreenSectionServiceTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        _ = fixture;
 
         m_translationManager
             .Setup(manager => manager.Translate(
@@ -72,7 +71,7 @@ public class HomeScreenSectionServiceTests
         };
     }
 
-    private static UserSectionsData SeedPage(Guid pageHash, Guid userId, params (int Order, IHomeScreenSection Section)[] sections)
+    private static UserSectionsData SeedPage(Guid userId, params (int Order, IHomeScreenSection Section)[] sections)
     {
         UserSectionsData data = new UserSectionsData
         {
@@ -101,7 +100,6 @@ public class HomeScreenSectionServiceTests
         Guid userId = Guid.NewGuid();
         Guid pageHash = Guid.NewGuid();
         m_dataCache.Cache[pageHash] = SeedPage(
-            pageHash,
             userId,
             (0, MakeSection("First", "First Section")),
             (1, MakeSection("Second", "Second Section")));
@@ -124,7 +122,6 @@ public class HomeScreenSectionServiceTests
         Guid userId = Guid.NewGuid();
         Guid pageHash = Guid.NewGuid();
         m_dataCache.Cache[pageHash] = SeedPage(
-            pageHash,
             userId,
             (0, MakeSection("First", "First")),
             (2, MakeSection("Third", "Third")));
@@ -140,7 +137,6 @@ public class HomeScreenSectionServiceTests
         Guid pageHash = Guid.NewGuid();
         // Keys 1 and 3 leave index 2 empty; a range covering index 2 marks the page cohesive.
         UserSectionsData data = SeedPage(
-            pageHash,
             userId,
             (1, MakeSection("First", "First")),
             (3, MakeSection("Third", "Third")));
@@ -159,7 +155,7 @@ public class HomeScreenSectionServiceTests
         HomeScreenSectionService service = MakeService();
         Guid userId = Guid.NewGuid();
         Guid pageHash = Guid.NewGuid();
-        UserSectionsData data = SeedPage(pageHash, userId, (0, MakeSection("First", "First")));
+        UserSectionsData data = SeedPage(userId, (0, MakeSection("First", "First")));
         data.SectionsInProgress[1] = true;
         m_dataCache.Cache[pageHash] = data;
 
@@ -172,12 +168,16 @@ public class HomeScreenSectionServiceTests
         HomeScreenSectionService service = MakeService();
         Guid userId = Guid.NewGuid();
         Guid pageHash = Guid.NewGuid();
-        m_dataCache.Cache[pageHash] = SeedPage(
-            pageHash,
+        // Sections 0 and 1 are ready but section 2 is still building, so the page is NOT
+        // complete; with pageSize=2 the two ready sections must still be returned via the
+        // "full page" short-circuit. If that short-circuit were removed this would return null.
+        UserSectionsData data = SeedPage(
             userId,
             (0, MakeSection("First", "First")),
-            (1, MakeSection("Second", "Second")),
-            (2, MakeSection("Third", "Third")));
+            (1, MakeSection("Second", "Second")));
+        data.MaxOrderIndex = 2;
+        data.SectionsInProgress[2] = true;
+        m_dataCache.Cache[pageHash] = data;
 
         IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(userId, "en", 1, 2, pageHash);
 
@@ -227,12 +227,14 @@ public class HomeScreenSectionServiceTests
         HomeScreenSectionService service = MakeService();
         Guid userId = Guid.NewGuid();
         Guid pageHash = Guid.NewGuid();
-        m_dataCache.Cache[pageHash] = SeedPage(pageHash, userId);
+        UserSectionsData seeded = SeedPage(userId);
+        m_dataCache.Cache[pageHash] = seeded;
 
         // Second call must not throw or overwrite the existing page.
         service.CacheSectionsForUser(userId, pageHash);
 
-        Assert.True(m_dataCache.Cache.ContainsKey(pageHash));
+        Assert.Same(seeded, m_dataCache.Cache[pageHash]);
+        m_homeScreenManager.Verify(manager => manager.GetUserSettings(It.IsAny<Guid>()), Times.Never());
     }
 
     [Fact]

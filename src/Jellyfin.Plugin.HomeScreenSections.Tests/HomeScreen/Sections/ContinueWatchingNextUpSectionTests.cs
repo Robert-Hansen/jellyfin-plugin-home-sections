@@ -22,7 +22,6 @@ public class ContinueWatchingNextUpSectionTests
 {
     private static readonly Guid s_userId = Guid.NewGuid();
 
-    private readonly PluginFixture m_fixture;
     private readonly Mock<IHomeScreenManager> m_homeScreenManager = new();
     private readonly Mock<ILibraryManager> m_libraryManager = new();
     private readonly Mock<IUserManager> m_userManager = new();
@@ -33,7 +32,7 @@ public class ContinueWatchingNextUpSectionTests
 
     public ContinueWatchingNextUpSectionTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        _ = fixture;
     }
 
     private ContinueWatchingNextUpSection MakeSection(params BaseItemDto[] nextUpDtos)

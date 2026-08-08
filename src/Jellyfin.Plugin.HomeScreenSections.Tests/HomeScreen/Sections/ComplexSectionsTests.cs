@@ -56,14 +56,7 @@ public class ComplexSectionsTests
             .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
             .Returns([]);
 
-        m_dtoService
-            .Setup(service => service.GetBaseItemDtos(
-                It.IsAny<IReadOnlyList<BaseItem>>(),
-                It.IsAny<DtoOptions>(),
-                It.IsAny<User>(),
-                It.IsAny<BaseItem>()))
-            .Returns((IReadOnlyList<BaseItem> list, DtoOptions options, User user, BaseItem owner) =>
-                list.Select(item => new BaseItemDto { Id = item.Id, Name = item.Name }).ToArray());
+        TestDtos.StubPassthrough(m_dtoService);
     }
 
     [Fact]
@@ -76,8 +69,10 @@ public class ComplexSectionsTests
     }
 
     [Fact]
-    public void BecauseYouWatched_GetResults_returns_similar_movies_dtos()
+    public void BecauseYouWatched_GetResults_returns_empty_when_no_similar_items_found()
     {
+        // The similar-items query ultimately runs through the non-virtual Folder.GetItems, so
+        // the DTO-mapping path cannot be exercised here; this covers the empty/no-folders path.
         m_libraryManager
             .Setup(manager => manager.GetItemById(It.IsAny<Guid>()))
             .Returns(new Movie());

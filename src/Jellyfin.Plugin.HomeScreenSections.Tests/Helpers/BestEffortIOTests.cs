@@ -1,4 +1,5 @@
 using Jellyfin.Plugin.HomeScreenSections.Helpers;
+using Jellyfin.Plugin.HomeScreenSections.Tests.Support;
 
 namespace Jellyfin.Plugin.HomeScreenSections.Tests.Helpers;
 
@@ -98,15 +99,6 @@ public class BestEffortIOTests : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        try
-        {
-            Directory.Delete(m_tempDir, recursive: true);
-        }
-        catch (IOException)
-        {
-        }
-        catch (UnauthorizedAccessException)
-        {
-        }
+        TestIO.DeleteBestEffort(m_tempDir);
     }
 }

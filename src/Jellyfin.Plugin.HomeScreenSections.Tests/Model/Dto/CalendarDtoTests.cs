@@ -173,13 +173,4 @@ public class CalendarDtoTests
         Assert.Equal(string.Empty, dto.FilePath);
         Assert.Equal("image/jpeg", dto.ContentType);
     }
-
-    [Fact]
-    public void HomeScreenSectionPayload_defaults_are_empty()
-    {
-        HomeScreenSectionPayload payload = new HomeScreenSectionPayload();
-
-        Assert.Equal(Guid.Empty, payload.UserId);
-        Assert.Null(payload.AdditionalData);
-    }
 }

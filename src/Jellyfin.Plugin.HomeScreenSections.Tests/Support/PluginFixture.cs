@@ -76,16 +76,7 @@ public sealed class PluginFixture : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        try
-        {
-            Directory.Delete(TempRoot, recursive: true);
-        }
-        catch (IOException)
-        {
-        }
-        catch (UnauthorizedAccessException)
-        {
-        }
+        TestIO.DeleteBestEffort(TempRoot);
     }
 }
 

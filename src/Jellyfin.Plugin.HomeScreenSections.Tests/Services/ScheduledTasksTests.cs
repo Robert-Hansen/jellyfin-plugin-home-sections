@@ -18,15 +18,15 @@ public class ScheduledTasksTests
     }
 
     [Fact]
-    public async Task StartupService_registers_index_html_and_matching_chunk_transformations()
+    public async Task StartupService_runs_chunk_scan_and_exposes_task_metadata()
     {
-        // A web chunk containing the loadSections marker must produce an extra payload.
+        // A web chunk containing the loadSections marker exercises the scan's found-branch;
+        // a chunk without the marker exercises the skip-branch.
         string chunkDir = Path.Combine(m_fixture.Paths.WebPath, "main-container");
         Directory.CreateDirectory(chunkDir);
         await File.WriteAllTextAsync(
             Path.Combine(chunkDir, "main.abc123.chunk.js"),
             "var x=1,loadSections:oldFn,otherStuff;");
-        // A chunk without the marker must be ignored.
         await File.WriteAllTextAsync(
             Path.Combine(chunkDir, "vendor.def456.chunk.js"),
             "console.log('nothing here');");
@@ -36,8 +36,8 @@ public class ScheduledTasksTests
             m_fixture.Paths,
             NullLogger<HomeScreenSectionsPlugin>.Instance);
 
-        // The FileTransformation plugin is not loaded in tests, so registration is skipped,
-        // but the scan + payload-building paths still run.
+        // The FileTransformation plugin is not loaded in tests, so registration is skipped; the
+        // scan still runs. Only the task metadata is observable here, hence the assertions below.
         await task.ExecuteAsync(new Progress<double>(), CancellationToken.None);
 
         Assert.Equal("HomeScreenSections Startup", task.Name);
@@ -60,7 +60,7 @@ public class ScheduledTasksTests
     }
 
     [Fact]
-    public async Task ImageCacheCleanupTask_reports_progress_and_completes()
+    public async Task ImageCacheCleanupTask_completes()
     {
         ImageCacheService imageCacheService = new ImageCacheService(
             NullLogger<ImageCacheService>.Instance,
@@ -71,10 +71,7 @@ public class ScheduledTasksTests
             imageCacheService,
             NullLogger<ImageCacheCleanupTask>.Instance);
 
-        List<double> progressValues = [];
-        Progress<double> progress = new Progress<double>(value => progressValues.Add(value));
-
-        await task.ExecuteAsync(progress, CancellationToken.None);
+        await task.ExecuteAsync(new Progress<double>(), CancellationToken.None);
 
         Assert.Equal("Home Sections Image Cache Cleanup", task.Name);
         Assert.Equal("Jellyfin.Plugin.HomeScreenSections.ImageCacheCleanup", task.Key);

@@ -14,11 +14,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Services;
 [Collection("Plugin Instance")]
 public class ArrApiServiceCalendarTests
 {
-    private readonly PluginFixture m_fixture;
 
     public ArrApiServiceCalendarTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        _ = fixture;
     }
 
     [Fact]

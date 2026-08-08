@@ -20,7 +20,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.HomeScreen.Sections.Extra;
 [Collection("Plugin Instance")]
 public class MultiInstanceSectionsTests
 {
-    private readonly PluginFixture m_fixture;
     private readonly Mock<IUserManager> m_userManager = new();
     private readonly Mock<ILibraryManager> m_libraryManager = new();
     private readonly Mock<IDtoService> m_dtoService = new();
@@ -32,20 +31,13 @@ public class MultiInstanceSectionsTests
 
     public MultiInstanceSectionsTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        _ = fixture;
 
         m_userManager
             .Setup(manager => manager.GetUserById(m_userId))
             .Returns(m_user);
 
-        m_dtoService
-            .Setup(service => service.GetBaseItemDtos(
-                It.IsAny<IReadOnlyList<BaseItem>>(),
-                It.IsAny<DtoOptions>(),
-                It.IsAny<User>(),
-                It.IsAny<BaseItem>()))
-            .Returns((IReadOnlyList<BaseItem> list, DtoOptions options, User user, BaseItem owner) =>
-                list.Select(item => new BaseItemDto { Id = item.Id, Name = item.Name }).ToArray());
+        TestDtos.StubPassthrough(m_dtoService);
     }
 
     [Fact]

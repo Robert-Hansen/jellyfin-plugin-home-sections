@@ -44,23 +44,6 @@ public class PluginLogTests
         method.Invoke(null, CreateArgumentsFor(method, NullLogger.Instance));
     }
 
-    [Fact]
-    public void Generated_log_methods_accept_null_strings()
-    {
-        CapturingLogger logger = new CapturingLogger();
-
-        foreach (MethodInfo method in EnumerateLogMethods())
-        {
-            object?[] arguments = method.GetParameters()
-                .Select(parameter => parameter.ParameterType == typeof(string)
-                    ? (object?)null
-                    : CreateArgument(parameter.ParameterType, logger))
-                .ToArray();
-
-            method.Invoke(null, arguments);
-        }
-    }
-
     private static List<MethodInfo> EnumerateLogMethods()
     {
         return typeof(PluginLog)

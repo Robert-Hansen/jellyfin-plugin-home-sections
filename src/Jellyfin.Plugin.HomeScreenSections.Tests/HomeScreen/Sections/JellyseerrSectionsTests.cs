@@ -28,7 +28,6 @@ public class JellyseerrSectionsTests : IDisposable
 {
     private const string Username = "JellyseerrUser";
 
-    private readonly PluginFixture m_fixture;
     private readonly Mock<IUserManager> m_userManager = new();
     private readonly Mock<ILibraryManager> m_libraryManager = new();
     private readonly Mock<IDtoService> m_dtoService = new();
@@ -44,7 +43,7 @@ public class JellyseerrSectionsTests : IDisposable
 
     public JellyseerrSectionsTests(PluginFixture fixture)
     {
-        m_fixture = fixture;
+        _ = fixture;
         m_server = JellyseerrFakeServer.Start(Respond);
         m_imageCacheService = new ImageCacheService(
             NullLogger<ImageCacheService>.Instance,
@@ -55,14 +54,7 @@ public class JellyseerrSectionsTests : IDisposable
             .Setup(manager => manager.GetUserById(m_userId))
             .Returns(m_user);
 
-        m_dtoService
-            .Setup(service => service.GetBaseItemDtos(
-                It.IsAny<IReadOnlyList<BaseItem>>(),
-                It.IsAny<DtoOptions>(),
-                It.IsAny<User>(),
-                It.IsAny<BaseItem>()))
-            .Returns((IReadOnlyList<BaseItem> list, DtoOptions options, User user, BaseItem owner) =>
-                list.Select(item => new BaseItemDto { Id = item.Id, Name = item.Name }).ToArray());
+        TestDtos.StubPassthrough(m_dtoService);
 
         UseFakeJellyseerr();
     }
@@ -257,11 +249,13 @@ public class JellyseerrSectionsTests : IDisposable
         Guid folderId = Guid.NewGuid();
         Movie requestedMovie = new Movie { Id = RequestedLibraryItemId, Name = "Requested Movie" };
 
+        InternalItemsQuery? capturedQuery = null;
         m_libraryManager
             .Setup(manager => manager.GetVirtualFolders())
             .Returns([new MediaBrowser.Model.Entities.VirtualFolderInfo { ItemId = folderId.ToString(), Name = "Movies", Locations = ["/media/movies"] }]);
         m_libraryManager
             .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
+            .Callback<InternalItemsQuery>(query => capturedQuery = query)
             .Returns(new BaseItem[] { requestedMovie });
 
         MyRequestsSection section = new MyRequestsSection(m_userManager.Object, m_libraryManager.Object, m_dtoService.Object);
@@ -270,6 +264,10 @@ public class JellyseerrSectionsTests : IDisposable
 
         Assert.Equal("Requested Movie", Assert.Single(result.Items).Name);
         Assert.Contains(m_server.RequestsReceived, request => request.StartsWith("/api/v1/user/7/requests", StringComparison.Ordinal));
+        // The library lookup must be constrained to the requested Jellyfin media ids, not the whole library.
+        Assert.NotNull(capturedQuery);
+        Assert.NotNull(capturedQuery!.ItemIds);
+        Assert.Contains(RequestedLibraryItemId, capturedQuery!.ItemIds);
     }
 
     [Fact]

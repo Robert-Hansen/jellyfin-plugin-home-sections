@@ -77,35 +77,60 @@ public class HomeScreenSectionsPluginTests
     public void UpdateConfiguration_increments_cache_bust_when_developer_mode_turns_on()
     {
         HomeScreenSectionsPlugin plugin = m_fixture.Plugin;
+        PluginConfiguration original = plugin.Configuration;
         int counter = plugin.Configuration.CacheBustCounter;
+        try
+        {
+            plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = true });
 
-        plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = true });
-
-        Assert.Equal(counter + 1, plugin.Configuration.CacheBustCounter);
+            Assert.Equal(counter + 1, plugin.Configuration.CacheBustCounter);
+        }
+        finally
+        {
+            // UpdateConfiguration replaces the shared fixture's Configuration object; restore it
+            // so DeveloperMode/other fields do not leak into later tests in the collection.
+            plugin.UpdateConfiguration(original);
+        }
     }
 
     [Fact]
     public void UpdateConfiguration_preserves_counter_when_developer_mode_stays_on()
     {
         HomeScreenSectionsPlugin plugin = m_fixture.Plugin;
-        plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = true });
-        int counter = plugin.Configuration.CacheBustCounter;
+        PluginConfiguration original = plugin.Configuration;
+        try
+        {
+            plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = true });
+            int counter = plugin.Configuration.CacheBustCounter;
 
-        plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = true });
+            plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = true });
 
-        Assert.Equal(counter, plugin.Configuration.CacheBustCounter);
+            Assert.Equal(counter, plugin.Configuration.CacheBustCounter);
+        }
+        finally
+        {
+            plugin.UpdateConfiguration(original);
+        }
     }
 
     [Fact]
     public void UpdateConfiguration_preserves_counter_when_developer_mode_turns_off()
     {
         HomeScreenSectionsPlugin plugin = m_fixture.Plugin;
-        plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = true });
-        int counter = plugin.Configuration.CacheBustCounter;
+        PluginConfiguration original = plugin.Configuration;
+        try
+        {
+            plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = true });
+            int counter = plugin.Configuration.CacheBustCounter;
 
-        plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = false });
+            plugin.UpdateConfiguration(new PluginConfiguration { DeveloperMode = false });
 
-        Assert.Equal(counter, plugin.Configuration.CacheBustCounter);
+            Assert.Equal(counter, plugin.Configuration.CacheBustCounter);
+        }
+        finally
+        {
+            plugin.UpdateConfiguration(original);
+        }
     }
 
     [Fact]
@@ -118,25 +143,39 @@ public class HomeScreenSectionsPluginTests
             UserId = Guid.NewGuid(),
             MaxOrderIndex = 1
         };
+        try
+        {
+            plugin.BustCache();
 
-        plugin.BustCache();
-
-        Assert.Equal(counter + 1, plugin.Configuration.CacheBustCounter);
-        Assert.Empty(m_fixture.SectionsCache.Cache);
+            Assert.Equal(counter + 1, plugin.Configuration.CacheBustCounter);
+            Assert.Empty(m_fixture.SectionsCache.Cache);
+        }
+        finally
+        {
+            plugin.Configuration.CacheBustCounter = counter;
+        }
     }
 
     [Fact]
     public void UpdateConfiguration_clears_user_sections_cache()
     {
+        HomeScreenSectionsPlugin plugin = m_fixture.Plugin;
+        PluginConfiguration original = plugin.Configuration;
         m_fixture.SectionsCache.Cache[Guid.NewGuid()] = new UserSectionsData
         {
             UserId = Guid.NewGuid(),
             MaxOrderIndex = 1
         };
+        try
+        {
+            plugin.UpdateConfiguration(new PluginConfiguration());
 
-        m_fixture.Plugin.UpdateConfiguration(new PluginConfiguration());
-
-        Assert.Empty(m_fixture.SectionsCache.Cache);
+            Assert.Empty(m_fixture.SectionsCache.Cache);
+        }
+        finally
+        {
+            plugin.UpdateConfiguration(original);
+        }
     }
 
     [Fact]

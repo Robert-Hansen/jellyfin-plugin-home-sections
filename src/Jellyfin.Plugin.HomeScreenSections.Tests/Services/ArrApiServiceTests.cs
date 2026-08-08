@@ -74,9 +74,9 @@ public class ArrApiServiceTests
     [Fact]
     public void FormatDate_is_case_insensitive()
     {
-        Assert.Equal(
-            ArrApiService.FormatDate(s_referenceDate, "YYYY/MM/DD", "/"),
-            ArrApiService.FormatDate(s_referenceDate, "yyyy/mm/dd", "/"));
+        // Assert against the literal, not the uppercase call's own output, so a lowercase
+        // path that silently fell back to ISO ordering would fail here.
+        Assert.Equal("2026/08/07", ArrApiService.FormatDate(s_referenceDate, "yyyy/mm/dd", "/"));
     }
 
     [Fact]

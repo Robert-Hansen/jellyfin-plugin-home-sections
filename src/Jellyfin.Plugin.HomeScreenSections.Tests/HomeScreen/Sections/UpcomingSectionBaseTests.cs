@@ -17,6 +17,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.HomeScreen.Sections;
 [Collection("Plugin Instance")]
 public class UpcomingSectionBaseTests
 {
+    // Fixed clock so countdown bucketing is deterministic; the production code reads
+    // DateTime.Now internally, which made these tests flaky across midnight.
+    private static readonly DateTime s_now = new DateTime(2026, 8, 7, 14, 30, 0, DateTimeKind.Local);
+
     private readonly PluginFixture m_fixture;
 
     public UpcomingSectionBaseTests(PluginFixture fixture)
@@ -30,8 +34,8 @@ public class UpcomingSectionBaseTests
         TestUpcomingSection section = MakeSection();
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
 
-        Assert.StartsWith("Today! - ", section.ExposedCountdown(DateTime.Now.AddDays(-2), config), StringComparison.Ordinal);
-        Assert.StartsWith("Today! - ", section.ExposedCountdown(DateTime.Now.Date, config), StringComparison.Ordinal);
+        Assert.StartsWith("Today! - ", section.ExposedCountdown(s_now.AddDays(-2), config, s_now), StringComparison.Ordinal);
+        Assert.StartsWith("Today! - ", section.ExposedCountdown(s_now.Date, config, s_now), StringComparison.Ordinal);
     }
 
     [Theory]
@@ -43,7 +47,7 @@ public class UpcomingSectionBaseTests
         TestUpcomingSection section = MakeSection();
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
 
-        string countdown = section.ExposedCountdown(DateTime.Now.Date.AddDays(daysFromNow), config);
+        string countdown = section.ExposedCountdown(s_now.Date.AddDays(daysFromNow), config, s_now);
 
         Assert.StartsWith(expectedText + " - ", countdown, StringComparison.Ordinal);
     }
@@ -57,7 +61,7 @@ public class UpcomingSectionBaseTests
         TestUpcomingSection section = MakeSection();
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
 
-        string countdown = section.ExposedCountdown(DateTime.Now.Date.AddDays(daysFromNow), config);
+        string countdown = section.ExposedCountdown(s_now.Date.AddDays(daysFromNow), config, s_now);
 
         Assert.StartsWith(expectedText + " - ", countdown, StringComparison.Ordinal);
     }
@@ -71,7 +75,7 @@ public class UpcomingSectionBaseTests
         TestUpcomingSection section = MakeSection();
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
 
-        string countdown = section.ExposedCountdown(DateTime.Now.Date.AddDays(daysFromNow), config);
+        string countdown = section.ExposedCountdown(s_now.Date.AddDays(daysFromNow), config, s_now);
 
         Assert.StartsWith(expectedText + " - ", countdown, StringComparison.Ordinal);
     }
@@ -84,7 +88,7 @@ public class UpcomingSectionBaseTests
         TestUpcomingSection section = MakeSection();
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
 
-        string countdown = section.ExposedCountdown(DateTime.Now.Date.AddDays(daysFromNow), config);
+        string countdown = section.ExposedCountdown(s_now.Date.AddDays(daysFromNow), config, s_now);
 
         Assert.StartsWith(expectedText + " - ", countdown, StringComparison.Ordinal);
     }
@@ -94,9 +98,9 @@ public class UpcomingSectionBaseTests
     {
         TestUpcomingSection section = MakeSection();
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
-        DateTime releaseDate = DateTime.Now.Date.AddDays(3);
+        DateTime releaseDate = s_now.Date.AddDays(3);
 
-        string countdown = section.ExposedCountdown(releaseDate, config);
+        string countdown = section.ExposedCountdown(releaseDate, config, s_now);
 
         string expectedSuffix = ArrApiService.FormatDate(releaseDate.ToLocalTime(), config.DateFormat, config.DateDelimiter);
         Assert.EndsWith(" - " + expectedSuffix, countdown, StringComparison.Ordinal);
@@ -323,9 +327,9 @@ public class UpcomingSectionBaseTests
 
         public override string? DisplayText { get; set; } = "Test Upcoming";
 
-        public string ExposedCountdown(DateTime releaseDate, PluginConfiguration config)
+        public string ExposedCountdown(DateTime releaseDate, PluginConfiguration config, DateTime? now = null)
         {
-            return CalculateCountdown(releaseDate, config);
+            return CalculateCountdown(releaseDate, config, now);
         }
 
         public static string ExposedRandomBgColor()

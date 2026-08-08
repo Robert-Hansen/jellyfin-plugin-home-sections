@@ -70,6 +70,43 @@ public class UpcomingServiceSectionsTests
     }
 
     [Fact]
+    public void UpcomingMovies_includes_cinema_only_items_when_cinema_release_enabled()
+    {
+        PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
+        config.Radarr.Url = "http://radarr.test";
+        config.Radarr.ApiKey = "test-key";
+        config.FilterUpcomingByLibraryAccess = false;
+        bool originalCinema = config.Radarr.ConsiderCinemaRelease;
+        config.Radarr.ConsiderCinemaRelease = true;
+        try
+        {
+            DateTime cinemaDate = DateTime.UtcNow.AddDays(6);
+            string json = $$"""
+                [
+                    { "id": 9, "title": "Cinema Only", "monitored": true, "hasFile": false,
+                      "inCinemas": "{{cinemaDate:O}}" }
+                ]
+                """;
+
+            UpcomingMoviesSection section = MakeMoviesSection(json);
+
+            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result =
+                section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+
+            MediaBrowser.Model.Dto.BaseItemDto dto = Assert.Single(result.Items);
+            Assert.Equal("Cinema Only", dto.Name);
+            Assert.Equal(cinemaDate.Date, dto.PremiereDate!.Value.Date);
+        }
+        finally
+        {
+            config.Radarr.ConsiderCinemaRelease = originalCinema;
+            config.Radarr.Url = string.Empty;
+            config.Radarr.ApiKey = string.Empty;
+            config.FilterUpcomingByLibraryAccess = true;
+        }
+    }
+
+    [Fact]
     public void UpcomingMovies_maps_dto_fields_and_provider_ids()
     {
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
