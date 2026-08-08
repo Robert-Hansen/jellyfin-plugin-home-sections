@@ -32,7 +32,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
 
         protected override RadarrCalendarDto[] GetCalendarItems(DateTime startDate, DateTime endDate)
         {
-            return ArrApiService.GetArrCalendarAsync<RadarrCalendarDto>(ArrServiceType.Radarr, startDate, endDate).GetAwaiter().GetResult() ?? [];
+            return GetCalendar<RadarrCalendarDto>(ArrServiceType.Radarr, startDate, endDate);
         }
 
         private static DateTime GetEarliestReleaseDate(RadarrCalendarDto item, PluginConfiguration config)
