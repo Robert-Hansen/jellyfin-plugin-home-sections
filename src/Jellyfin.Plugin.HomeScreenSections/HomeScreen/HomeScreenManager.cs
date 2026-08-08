@@ -54,7 +54,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
         
         public void RegisterBuiltInResultsDelegates()
         {
-            // ponytail: table-driven — was 30 hand-written RegisterResultsDelegate<X>() lines
             Type[] sectionTypes =
             [
                 typeof(MyMediaSection), typeof(ContinueWatchingSection), typeof(NextUpSection), typeof(ContinueWatchingNextUpSection),

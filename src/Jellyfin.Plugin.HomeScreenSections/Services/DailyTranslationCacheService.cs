@@ -18,7 +18,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         // Trailing slash included to avoid getting the folder from the github trees JSON data
         private const string LocPath = "src/Jellyfin.Plugin.HomeScreenSections/_Localization/";
 
-        // ponytail: reuse HttpClient — was new per ExecuteAsync (socket churn)
         private static readonly HttpClient s_httpClient = CreateHttpClient();
 
         private static HttpClient CreateHttpClient()

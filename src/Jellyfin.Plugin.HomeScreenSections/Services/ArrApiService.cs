@@ -46,7 +46,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or NotSupportedException or InvalidOperationException)
             {
-                // ponytail: one filter replaces 5 identical catch bodies
                 if (ex is JsonException)
                 {
                     PluginLog.ArrCalendarJsonError(_logger, (JsonException)ex, serviceName);

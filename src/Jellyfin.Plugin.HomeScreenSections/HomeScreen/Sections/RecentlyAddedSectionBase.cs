@@ -104,7 +104,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         
         public HomeScreenSectionInfo GetInfo()
         {
-            // ponytail: reuse helper — was duplicated in LatestSectionBase
             return SectionDtoHelper.CreateInfo(this, DefaultViewMode, true);
         }
 
