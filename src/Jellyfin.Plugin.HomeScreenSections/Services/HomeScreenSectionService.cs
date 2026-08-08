@@ -138,7 +138,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
             if (settings?.SectionOrder is { Count: > 0 } userOrder)
             {
-                Dictionary<string, int> rank = new Dictionary<string, int>(StringComparer.Ordinal);
+                Dictionary<string, int> rank = new(StringComparer.Ordinal);
                 for (int i = 0; i < userOrder.Count; i++)
                 {
                     string id = userOrder[i];

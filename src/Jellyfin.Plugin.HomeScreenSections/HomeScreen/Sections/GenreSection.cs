@@ -292,7 +292,7 @@ public class GenreSection : IHomeScreenSection
 
     private Dictionary<Guid, UserItemData?> BuildUserDataCache(User user, List<Movie> allPlayedMovies)
     {
-        var userDataCache = new Dictionary<Guid, UserItemData?>();
+        Dictionary<Guid, UserItemData?> userDataCache = [];
         foreach (var movie in allPlayedMovies)
         {
             userDataCache[movie.Id] = m_userDataManager.GetUserData(user, movie);

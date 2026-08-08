@@ -25,8 +25,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
     /// </summary>
     public class HomeScreenManager : IHomeScreenManager
     {
-        private Dictionary<string, IHomeScreenSection> m_delegates = new Dictionary<string, IHomeScreenSection>(StringComparer.Ordinal);
-        private Dictionary<Guid, bool> m_userFeatureEnabledStates = new Dictionary<Guid, bool>();
+        private Dictionary<string, IHomeScreenSection> m_delegates = new(StringComparer.Ordinal);
+        private Dictionary<Guid, bool> m_userFeatureEnabledStates = [];
 
         private readonly IServiceProvider m_serviceProvider;
         private readonly IApplicationPaths m_applicationPaths;
@@ -48,7 +48,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
             string userFeatureEnabledPath = Path.Combine(m_applicationPaths.PluginConfigurationsPath, typeof(HomeScreenSectionsPlugin).Namespace!, "userFeatureEnabled.json");
             if (File.Exists(userFeatureEnabledPath))
             {
-                m_userFeatureEnabledStates = JsonConvert.DeserializeObject<Dictionary<Guid, bool>>(File.ReadAllText(userFeatureEnabledPath)) ?? new Dictionary<Guid, bool>();
+                m_userFeatureEnabledStates = JsonConvert.DeserializeObject<Dictionary<Guid, bool>>(File.ReadAllText(userFeatureEnabledPath)) ?? [];
             }
         }
         
