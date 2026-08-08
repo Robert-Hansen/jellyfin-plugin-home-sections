@@ -127,27 +127,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 PluginLog.CachedImage(m_logger, cacheKey, sourceUrl);
                 return cacheKey;
             }
-            catch (HttpRequestException ex)
-            {
-                PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
-                return null;
-            }
-            catch (TaskCanceledException ex)
-            {
-                PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
-                return null;
-            }
-            catch (IOException ex)
-            {
-                PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
-                return null;
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
-                return null;
-            }
-            catch (InvalidOperationException ex)
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException or UnauthorizedAccessException or InvalidOperationException)
             {
                 PluginLog.ImageCacheError(m_logger, ex, sourceUrl);
                 return null;
@@ -254,7 +234,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         private static string GenerateCacheKey(string sourceUrl)
         {
             byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(sourceUrl));
-            return Convert.ToHexString(hashBytes).ToLowerInvariant();
+            // ponytail: stdlib already lowercases, avoid extra allocation
+            return Convert.ToHexStringLower(hashBytes);
         }
         private byte[] ProcessImage(byte[] imageData)
         {

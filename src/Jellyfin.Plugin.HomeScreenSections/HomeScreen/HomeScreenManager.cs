@@ -54,61 +54,23 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
         
         public void RegisterBuiltInResultsDelegates()
         {
-            RegisterResultsDelegate<MyMediaSection>();
-            
-            RegisterResultsDelegate<ContinueWatchingSection>();
-            RegisterResultsDelegate<NextUpSection>();
-            RegisterResultsDelegate<ContinueWatchingNextUpSection>();
-            
-            RegisterResultsDelegate<RecentlyAddedMoviesSection>();
-            RegisterResultsDelegate<RecentlyAddedShowsSection>();
-            RegisterResultsDelegate<RecentlyAddedAlbumsSection>();
-            RegisterResultsDelegate<RecentlyAddedArtistsSection>();
-            RegisterResultsDelegate<RecentlyAddedBooksSection>();
-            RegisterResultsDelegate<RecentlyAddedAudioBooksSection>();
-            RegisterResultsDelegate<RecentlyAddedMusicVideosSection>();
-            
-            RegisterResultsDelegate<LatestMoviesSection>();
-            RegisterResultsDelegate<LatestShowsSection>();
-            RegisterResultsDelegate<LatestAlbumsSection>();
-            RegisterResultsDelegate<LatestBooksSection>();
-            RegisterResultsDelegate<LatestAudioBooksSection>();
-            RegisterResultsDelegate<LatestMusicVideoSection>();
-            
-            RegisterResultsDelegate<BecauseYouWatchedSection>();
-            RegisterResultsDelegate<LiveTvSection>();
-            RegisterResultsDelegate<MyListSection>();
-            RegisterResultsDelegate<WatchAgainSection>();
-            
-            RegisterResultsDelegate<DiscoverSection>();
-            RegisterResultsDelegate<DiscoverMoviesSection>();
-            RegisterResultsDelegate<DiscoverTvSection>();
-            
-            RegisterResultsDelegate<UpcomingShowsSection>();
-            RegisterResultsDelegate<UpcomingMoviesSection>();
-            RegisterResultsDelegate<UpcomingMusicSection>();
-            RegisterResultsDelegate<UpcomingBooksSection>();
-            
-            RegisterResultsDelegate<GenreSection>();
-            RegisterResultsDelegate<MyRequestsSection>();
+            // ponytail: table-driven — was 30 hand-written RegisterResultsDelegate<X>() lines
+            Type[] sectionTypes =
+            [
+                typeof(MyMediaSection), typeof(ContinueWatchingSection), typeof(NextUpSection), typeof(ContinueWatchingNextUpSection),
+                typeof(RecentlyAddedMoviesSection), typeof(RecentlyAddedShowsSection), typeof(RecentlyAddedAlbumsSection), typeof(RecentlyAddedArtistsSection), typeof(RecentlyAddedBooksSection), typeof(RecentlyAddedAudioBooksSection), typeof(RecentlyAddedMusicVideosSection),
+                typeof(LatestMoviesSection), typeof(LatestShowsSection), typeof(LatestAlbumsSection), typeof(LatestBooksSection), typeof(LatestAudioBooksSection), typeof(LatestMusicVideoSection),
+                typeof(BecauseYouWatchedSection), typeof(LiveTvSection), typeof(MyListSection), typeof(WatchAgainSection),
+                typeof(DiscoverSection), typeof(DiscoverMoviesSection), typeof(DiscoverTvSection),
+                typeof(UpcomingShowsSection), typeof(UpcomingMoviesSection), typeof(UpcomingMusicSection), typeof(UpcomingBooksSection),
+                typeof(GenreSection), typeof(MyRequestsSection),
+                typeof(FavoritesSection), typeof(RandomUnwatchedSection), typeof(TrendingSection), typeof(RecentlyPlayedSection), typeof(KidsSection), typeof(ComingSoonInLibrarySection), typeof(DecadeSection), typeof(StudioSection), typeof(PlaylistsSection), typeof(UnwatchedCollectionsSection),
+            ];
 
-            // Extra library rows
-            RegisterResultsDelegate<FavoritesSection>();
-            RegisterResultsDelegate<RandomUnwatchedSection>();
-            RegisterResultsDelegate<TrendingSection>();
-            RegisterResultsDelegate<RecentlyPlayedSection>();
-            RegisterResultsDelegate<KidsSection>();
-            RegisterResultsDelegate<ComingSoonInLibrarySection>();
-            RegisterResultsDelegate<DecadeSection>();
-            RegisterResultsDelegate<StudioSection>();
-            RegisterResultsDelegate<PlaylistsSection>();
-            RegisterResultsDelegate<UnwatchedCollectionsSection>();
-            
-            // Removed from public access while its still in dev.
-            //RegisterResultsDelegate<DirectedBySection>();
-            //RegisterResultsDelegate<StarringSection>();
-            
-            //RegisterResultsDelegate<TopTenSection>();
+            foreach (Type t in sectionTypes)
+            {
+                RegisterResultsDelegate(t);
+            }
         }
 
         /// <inheritdoc/>
