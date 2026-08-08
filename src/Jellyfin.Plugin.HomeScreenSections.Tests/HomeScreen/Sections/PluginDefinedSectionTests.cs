@@ -37,10 +37,14 @@ public class PluginDefinedSectionTests
             {
                 receivedPayload = payload;
                 return expected;
-            }
+            },
         };
 
-        HomeScreenSectionPayload payload = new HomeScreenSectionPayload { UserId = Guid.NewGuid(), AdditionalData = "data" };
+        HomeScreenSectionPayload payload = new HomeScreenSectionPayload
+        {
+            UserId = Guid.NewGuid(),
+            AdditionalData = "data",
+        };
         QueryResult<BaseItemDto> result = section.GetResults(payload, new FakeQueryCollection());
 
         Assert.Same(expected, result);
@@ -95,9 +99,10 @@ public class PluginDefinedSectionTests
             "Test Section",
             route: "test/route",
             additionalData: "extra",
-            originalPayload: originalPayload)
+            originalPayload: originalPayload
+        )
         {
-            OnGetResults = _ => new QueryResult<BaseItemDto>()
+            OnGetResults = _ => new QueryResult<BaseItemDto>(),
         };
     }
 }

@@ -19,11 +19,15 @@ public class PluginLogTests
         CapturingLogger logger = new CapturingLogger();
 
         List<MethodInfo> logMethods = EnumerateLogMethods();
-        Assert.True(logMethods.Count >= 60, $"Expected a large generated log surface, found {logMethods.Count} methods.");
+        Assert.True(
+            logMethods.Count >= 60,
+            $"Expected a large generated log surface, found {logMethods.Count} methods."
+        );
 
         foreach (MethodInfo method in logMethods)
         {
-            object?[] arguments = method.GetParameters()
+            object?[] arguments = method
+                .GetParameters()
                 .Select(parameter => CreateArgument(parameter.ParameterType, logger))
                 .ToArray();
 
@@ -54,9 +58,7 @@ public class PluginLogTests
 
     private static object?[] CreateArgumentsFor(MethodInfo method, ILogger logger)
     {
-        return method.GetParameters()
-            .Select(parameter => CreateArgument(parameter.ParameterType, logger))
-            .ToArray();
+        return method.GetParameters().Select(parameter => CreateArgument(parameter.ParameterType, logger)).ToArray();
     }
 
     private static object? CreateArgument(Type type, ILogger logger)
@@ -161,7 +163,8 @@ public class PluginLogTests
     {
         public List<string> Messages { get; } = [];
 
-        public IDisposable BeginScope<TState>(TState state) where TState : notnull
+        public IDisposable BeginScope<TState>(TState state)
+            where TState : notnull
         {
             return NullDisposable.Instance;
         }
@@ -171,7 +174,13 @@ public class PluginLogTests
             return true;
         }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter
+        )
         {
             Messages.Add(formatter(state, exception));
         }
@@ -180,9 +189,7 @@ public class PluginLogTests
         {
             public static readonly NullDisposable Instance = new();
 
-            public void Dispose()
-            {
-            }
+            public void Dispose() { }
         }
     }
 }

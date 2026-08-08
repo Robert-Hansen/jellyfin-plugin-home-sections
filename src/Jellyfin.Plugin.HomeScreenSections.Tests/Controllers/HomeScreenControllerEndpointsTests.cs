@@ -86,9 +86,8 @@ public class HomeScreenControllerEndpointsTests : IDisposable
 
         if (pathAndQuery.StartsWith("/sections/results", StringComparison.Ordinal))
         {
-            QueryResult<BaseItemDto> result = new QueryResult<BaseItemDto>(
-            [
-                new BaseItemDto { Id = Guid.NewGuid(), Name = "Endpoint Section Item" }
+            QueryResult<BaseItemDto> result = new QueryResult<BaseItemDto>([
+                new BaseItemDto { Id = Guid.NewGuid(), Name = "Endpoint Section Item" },
             ]);
             return (200, JsonConvert.SerializeObject(result));
         }
@@ -108,12 +107,14 @@ public class HomeScreenControllerEndpointsTests : IDisposable
             _libraryManager.Object,
             _dtoService.Object,
             new CollectionManagerProxy(_collectionManager.Object),
-            _playlistManager.Object);
+            _playlistManager.Object
+        );
 
         ImageCacheService imageCacheService = new ImageCacheService(
             NullLogger<ImageCacheService>.Instance,
             _fixture.Paths,
-            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound)));
+            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound))
+        );
 
         HomeScreenController controller = new HomeScreenController(
             _homeScreenManager.Object,
@@ -121,15 +122,13 @@ public class HomeScreenControllerEndpointsTests : IDisposable
             _serverApplicationHost.Object,
             _fixture.Paths,
             sectionService,
-            imageCacheService);
+            imageCacheService
+        );
 
         DefaultHttpContext httpContext = new DefaultHttpContext();
         if (userIdClaim != null)
         {
-            ClaimsIdentity identity = new ClaimsIdentity(
-            [
-                new Claim("Jellyfin-UserId", userIdClaim)
-            ]);
+            ClaimsIdentity identity = new ClaimsIdentity([new Claim("Jellyfin-UserId", userIdClaim)]);
             httpContext.User = new ClaimsPrincipal(identity);
         }
 
@@ -140,9 +139,7 @@ public class HomeScreenControllerEndpointsTests : IDisposable
     [Fact]
     public void GetReady_returns_503_when_no_sections_registered()
     {
-        _homeScreenManager
-            .Setup(manager => manager.GetSectionTypes())
-            .Returns(Array.Empty<IHomeScreenSection>());
+        _homeScreenManager.Setup(manager => manager.GetSectionTypes()).Returns(Array.Empty<IHomeScreenSection>());
 
         ActionResult result = MakeController().GetReady();
 
@@ -155,13 +152,12 @@ public class HomeScreenControllerEndpointsTests : IDisposable
     {
         _homeScreenManager
             .Setup(manager => manager.GetSectionTypes())
-            .Returns(new IHomeScreenSection[]
-            {
-                new PluginDefinedSection("Ready", "Ready")
+            .Returns(
+                new IHomeScreenSection[]
                 {
-                    OnGetResults = _ => new QueryResult<BaseItemDto>()
+                    new PluginDefinedSection("Ready", "Ready") { OnGetResults = _ => new QueryResult<BaseItemDto>() },
                 }
-            });
+            );
 
         ActionResult result = MakeController().GetReady();
 
@@ -176,7 +172,12 @@ public class HomeScreenControllerEndpointsTests : IDisposable
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "EndpointSection", Enabled = true, OrderIndex = 0 }
+            new SectionSettings
+            {
+                SectionId = "EndpointSection",
+                Enabled = true,
+                OrderIndex = 0,
+            },
         ];
         try
         {
@@ -185,25 +186,35 @@ public class HomeScreenControllerEndpointsTests : IDisposable
                 .Returns(new ModularHomeUserSettings { UserId = userId, EnabledSections = ["EndpointSection"] });
             _homeScreenManager
                 .Setup(manager => manager.GetSectionTypes())
-                .Returns(new IHomeScreenSection[]
-                {
-                    new PluginDefinedSection("EndpointSection", "Endpoint")
+                .Returns(
+                    new IHomeScreenSection[]
                     {
-                        OnGetResults = _ => new QueryResult<BaseItemDto>()
+                        new PluginDefinedSection("EndpointSection", "Endpoint")
+                        {
+                            OnGetResults = _ => new QueryResult<BaseItemDto>(),
+                        },
                     }
-                });
-            _fixture.TranslationManagerMock
-                .Setup(manager => manager.Translate(
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<string>(),
-                    It.IsAny<TranslationMetadata?>()))
+                );
+            _fixture
+                .TranslationManagerMock.Setup(manager =>
+                    manager.Translate(
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<string>(),
+                        It.IsAny<TranslationMetadata?>()
+                    )
+                )
                 .Returns((string key, string language, string fallback, TranslationMetadata? metadata) => fallback);
 
             HomeScreenController controller = MakeController();
 
-            ActionResult<QueryResult<HomeScreenSectionInfo>> result =
-                controller.GetHomeScreenSections(userId, "en", 1, 10, null);
+            ActionResult<QueryResult<HomeScreenSectionInfo>> result = controller.GetHomeScreenSections(
+                userId,
+                "en",
+                1,
+                10,
+                null
+            );
 
             Assert.NotNull(result.Value);
             HomeScreenSectionInfo info = Assert.Single(result.Value!.Items);
@@ -220,10 +231,13 @@ public class HomeScreenControllerEndpointsTests : IDisposable
     {
         Guid userId = Guid.NewGuid();
         _homeScreenManager
-            .Setup(manager => manager.InvokeResultsDelegate(
-                "NextUp",
-                It.Is<HomeScreenSectionPayload>(payload => payload.UserId == userId),
-                It.IsAny<IQueryCollection>()))
+            .Setup(manager =>
+                manager.InvokeResultsDelegate(
+                    "NextUp",
+                    It.Is<HomeScreenSectionPayload>(payload => payload.UserId == userId),
+                    It.IsAny<IQueryCollection>()
+                )
+            )
             .Returns(new QueryResult<BaseItemDto>([new BaseItemDto { Name = "Next Up Item" }]));
 
         HomeScreenController controller = MakeController();
@@ -237,9 +251,7 @@ public class HomeScreenControllerEndpointsTests : IDisposable
     public void RegisterSection_registers_delegate_that_posts_to_endpoint()
     {
         int port = new Uri(_server.BaseUrl).Port;
-        _serverApplicationHost
-            .SetupGet(host => host.HttpPort)
-            .Returns(port);
+        _serverApplicationHost.SetupGet(host => host.HttpPort).Returns(port);
 
         PluginDefinedSection? captured = null;
         _homeScreenManager
@@ -248,19 +260,22 @@ public class HomeScreenControllerEndpointsTests : IDisposable
 
         HomeScreenController controller = MakeController();
 
-        ActionResult result = controller.RegisterSection(new SectionRegisterPayload
-        {
-            Id = "controller-endpoint-section",
-            DisplayText = "Controller Endpoint",
-            ResultsEndpoint = "/sections/results"
-        });
+        ActionResult result = controller.RegisterSection(
+            new SectionRegisterPayload
+            {
+                Id = "controller-endpoint-section",
+                DisplayText = "Controller Endpoint",
+                ResultsEndpoint = "/sections/results",
+            }
+        );
 
         Assert.IsType<OkResult>(result);
         Assert.NotNull(captured);
 
         QueryResult<BaseItemDto> results = captured!.GetResults(
             new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
-            new FakeQueryCollection());
+            new FakeQueryCollection()
+        );
 
         Assert.Equal("Endpoint Section Item", Assert.Single(results.Items).Name);
     }
@@ -272,36 +287,38 @@ public class HomeScreenControllerEndpointsTests : IDisposable
         // silently replace the handler (e.g. a built-in like ContinueWatching).
         _homeScreenManager
             .Setup(manager => manager.GetSection("NextUp"))
-            .Returns(new PluginDefinedSection("NextUp", "Existing")
-            {
-                OnGetResults = _ => new QueryResult<BaseItemDto>()
-            });
+            .Returns(
+                new PluginDefinedSection("NextUp", "Existing") { OnGetResults = _ => new QueryResult<BaseItemDto>() }
+            );
 
         HomeScreenController controller = MakeController();
 
-        ActionResult result = controller.RegisterSection(new SectionRegisterPayload
-        {
-            Id = "NextUp",
-            DisplayText = "Impostor",
-            ResultsEndpoint = "/sections/results"
-        });
+        ActionResult result = controller.RegisterSection(
+            new SectionRegisterPayload
+            {
+                Id = "NextUp",
+                DisplayText = "Impostor",
+                ResultsEndpoint = "/sections/results",
+            }
+        );
 
         Assert.IsType<ConflictResult>(result);
         _homeScreenManager.Verify(
             manager => manager.RegisterResultsDelegate(It.IsAny<PluginDefinedSection>()),
-            Times.Never());
+            Times.Never()
+        );
     }
 
     [Fact]
     public void RegisterSection_requires_administrator_authorization()
     {
         // Regression for upstream #258: the endpoint used to be completely unauthenticated.
-        MethodInfo method = typeof(HomeScreenController)
-            .GetMethod(nameof(HomeScreenController.RegisterSection))
+        MethodInfo method =
+            typeof(HomeScreenController).GetMethod(nameof(HomeScreenController.RegisterSection))
             ?? throw new InvalidOperationException("RegisterSection action not found.");
 
-        Microsoft.AspNetCore.Authorization.AuthorizeAttribute? attribute = method
-            .GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
+        Microsoft.AspNetCore.Authorization.AuthorizeAttribute? attribute =
+            method.GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
 
         Assert.NotNull(attribute);
         Assert.Equal("Administrator", attribute!.Roles);
@@ -314,7 +331,8 @@ public class HomeScreenControllerEndpointsTests : IDisposable
 
         ActionResult result = await controller.MakeDiscoverRequest(
             _userManager.Object,
-            new DiscoverRequestPayload { MediaType = "movie", MediaId = 5 });
+            new DiscoverRequestPayload { MediaType = "movie", MediaId = 5 }
+        );
 
         Assert.IsType<ForbidResult>(result);
     }
@@ -323,15 +341,14 @@ public class HomeScreenControllerEndpointsTests : IDisposable
     public async Task MakeDiscoverRequest_returns_bad_request_for_unknown_user()
     {
         Guid userId = Guid.NewGuid();
-        _userManager
-            .Setup(manager => manager.GetUserById(userId))
-            .Returns((User?)null);
+        _userManager.Setup(manager => manager.GetUserById(userId)).Returns((User?)null);
 
         HomeScreenController controller = MakeController(userIdClaim: userId.ToString());
 
         ActionResult result = await controller.MakeDiscoverRequest(
             _userManager.Object,
-            new DiscoverRequestPayload { MediaType = "movie", MediaId = 5 });
+            new DiscoverRequestPayload { MediaType = "movie", MediaId = 5 }
+        );
 
         Assert.IsType<BadRequestResult>(result);
     }
@@ -343,18 +360,20 @@ public class HomeScreenControllerEndpointsTests : IDisposable
     {
         Guid userId = Guid.NewGuid();
         User user = new("EndpointUser", "AuthProvider", "PasswordResetProvider");
-        _userManager
-            .Setup(manager => manager.GetUserById(userId))
-            .Returns(user);
+        _userManager.Setup(manager => manager.GetUserById(userId)).Returns(user);
 
         HomeScreenController controller = MakeController(userIdClaim: userId.ToString());
 
         ActionResult result = await controller.MakeDiscoverRequest(
             _userManager.Object,
-            new DiscoverRequestPayload { MediaType = mediaType, MediaId = 42 });
+            new DiscoverRequestPayload { MediaType = mediaType, MediaId = 42 }
+        );
 
         ContentResult content = Assert.IsType<ContentResult>(result);
         Assert.Contains("55", content.Content, StringComparison.Ordinal);
-        Assert.Contains(_server.RequestsReceived, request => request.StartsWith("/api/v1/request", StringComparison.Ordinal));
+        Assert.Contains(
+            _server.RequestsReceived,
+            request => request.StartsWith("/api/v1/request", StringComparison.Ordinal)
+        );
     }
 }

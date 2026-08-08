@@ -13,7 +13,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 {
-    public abstract class UpcomingSectionBase<T> : IHomeScreenSection where T : class
+    public abstract class UpcomingSectionBase<T> : IHomeScreenSection
+        where T : class
     {
         public abstract string? Section { get; }
         public abstract string? DisplayText { get; set; }
@@ -21,7 +22,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public virtual string? Route => null;
         public string? AdditionalData { get; set; }
         public object? OriginalPayload { get; set; }
-        
+
         protected IUserManager UserManager { get; }
         protected ILibraryManager LibraryManager { get; }
         protected IDtoService DtoService { get; }
@@ -29,7 +30,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         protected ImageCacheService ImageCacheService { get; }
         protected ILogger Logger { get; }
 
-        protected UpcomingSectionBase(IUserManager userManager, ILibraryManager libraryManager, IDtoService dtoService, ArrApiService arrApiService, ImageCacheService imageCacheService, ILogger logger)
+        protected UpcomingSectionBase(
+            IUserManager userManager,
+            ILibraryManager libraryManager,
+            IDtoService dtoService,
+            ArrApiService arrApiService,
+            ImageCacheService imageCacheService,
+            ILogger logger
+        )
         {
             UserManager = userManager;
             LibraryManager = libraryManager;
@@ -45,15 +53,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             {
                 return TryGetUpcomingResults(payload);
             }
-            catch (Exception ex) when (
-                ex is HttpRequestException
-                or TaskCanceledException
-                or InvalidOperationException
-                or ArgumentException
-                or IOException
-                or TimeoutException
-                or System.Text.Json.JsonException
-                or Newtonsoft.Json.JsonException)
+            catch (Exception ex)
+                when (ex
+                        is HttpRequestException
+                            or TaskCanceledException
+                            or InvalidOperationException
+                            or ArgumentException
+                            or IOException
+                            or TimeoutException
+                            or System.Text.Json.JsonException
+                            or Newtonsoft.Json.JsonException
+                )
             {
                 PluginLog.UpcomingSectionError(Logger, ex, GetSectionName(), GetServiceName());
                 return new QueryResult<BaseItemDto>();
@@ -97,11 +107,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
             string configuredSectionName = GetSectionName();
             string configuredServiceName = GetServiceName();
-            
+
             PluginLog.FetchingUpcomingSection(Logger, configuredSectionName, startDate, endDate);
 
             T[] calendarItems = GetCalendarItems(startDate, endDate);
-            
+
             if (calendarItems == null || calendarItems.Length == 0)
             {
                 PluginLog.NoUpcomingItems(Logger, configuredSectionName, configuredServiceName);
@@ -151,13 +161,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
             // The *arr instance may be using a different mount point/path mapping than Jellyfin,
             // in which case we can't tell which library the item would belong to, so default to showing it.
-            bool matchesKnownLibrary = allLocations.Any(location => normalizedItemPath.StartsWith(NormalizePath(location), StringComparison.OrdinalIgnoreCase));
+            bool matchesKnownLibrary = allLocations.Any(location =>
+                normalizedItemPath.StartsWith(NormalizePath(location), StringComparison.OrdinalIgnoreCase)
+            );
             if (!matchesKnownLibrary)
             {
                 return true;
             }
 
-            return permittedLocations.Any(location => normalizedItemPath.StartsWith(NormalizePath(location), StringComparison.OrdinalIgnoreCase));
+            return permittedLocations.Any(location =>
+                normalizedItemPath.StartsWith(NormalizePath(location), StringComparison.OrdinalIgnoreCase)
+            );
         }
 
         private static string NormalizePath(string path)
@@ -170,29 +184,35 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             DateTime releaseDateLocal = releaseDate.ToLocalTime();
             // Calculate the difference in calendar days
             int totalDays = (releaseDateLocal.Date - (now ?? DateTime.Now).Date).Days;
-            
+
             string countdownText = totalDays switch
             {
                 <= 0 => "Today!",
                 < 7 => $"{totalDays} {(totalDays == 1 ? "Day" : "Days")}",
                 < 30 => FormatTimeUnit(totalDays / 7, totalDays % 7, "Week", "Day"),
                 < 365 => FormatTimeUnit(totalDays / 30, (totalDays % 30) / 7, "Month", "Week"),
-                _ => FormatTimeUnit(totalDays / 365, (totalDays % 365) / 30, "Year", "Month")
+                _ => FormatTimeUnit(totalDays / 365, (totalDays % 365) / 30, "Year", "Month"),
             };
 
             return $"{countdownText} - {ArrApiService.FormatDate(releaseDateLocal, config.DateFormat, config.DateDelimiter)}";
         }
 
-        private static string FormatTimeUnit(int primaryValue, int secondaryValue, string primaryUnit, string secondaryUnit)
+        private static string FormatTimeUnit(
+            int primaryValue,
+            int secondaryValue,
+            string primaryUnit,
+            string secondaryUnit
+        )
         {
             string primaryText = $"{primaryValue} {(primaryValue == 1 ? primaryUnit : $"{primaryUnit}s")}";
-            
+
             if (secondaryValue > 0)
             {
-                string secondaryText = $"{secondaryValue} {(secondaryValue == 1 ? secondaryUnit : $"{secondaryUnit}s")}";
-            return $"{primaryText}, {secondaryText}";
+                string secondaryText =
+                    $"{secondaryValue} {(secondaryValue == 1 ? secondaryUnit : $"{secondaryUnit}s")}";
+                return $"{primaryText}, {secondaryText}";
             }
-            
+
             return primaryText;
         }
 
@@ -205,15 +225,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         {
             return $"https://placehold.co/250x400/{GetRandomBgColor()}/FFF?text={Uri.EscapeDataString("Unknown Item\nImage Not Found")}";
         }
-        
+
         protected string GetCachedImageUrl(string? sourceUrl)
         {
             return ImageCacheHelper.GetCachedImageUrl(ImageCacheService, sourceUrl, Logger);
         }
 
-        protected TDto[] GetCalendar<TDto>(ArrServiceType serviceType, DateTime startDate, DateTime endDate) where TDto : class
+        protected TDto[] GetCalendar<TDto>(ArrServiceType serviceType, DateTime startDate, DateTime endDate)
+            where TDto : class
         {
-            return ArrApiService.GetArrCalendarAsync<TDto>(serviceType, startDate, endDate).GetAwaiter().GetResult() ?? [];
+            return ArrApiService.GetArrCalendarAsync<TDto>(serviceType, startDate, endDate).GetAwaiter().GetResult()
+                ?? [];
         }
 
         // Abstract methods that subclasses must implement

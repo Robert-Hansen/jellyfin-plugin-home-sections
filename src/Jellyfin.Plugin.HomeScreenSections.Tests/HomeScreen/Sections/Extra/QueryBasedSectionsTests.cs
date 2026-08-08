@@ -34,9 +34,7 @@ public class QueryBasedSectionsTests
 
     private void SetupLibrary(params BaseItem[] items)
     {
-        _userManager
-            .Setup(manager => manager.GetUserById(_userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(_userId)).Returns(_user);
 
         _libraryManager
             .Setup(manager => manager.GetItemsResult(It.IsAny<InternalItemsQuery>()))
@@ -44,22 +42,34 @@ public class QueryBasedSectionsTests
             .Returns(new QueryResult<BaseItem>(items));
 
         _dtoService
-            .Setup(service => service.GetBaseItemDtos(
-                It.IsAny<IReadOnlyList<BaseItem>>(),
-                It.IsAny<DtoOptions>(),
-                It.IsAny<User>(),
-                It.IsAny<BaseItem>()))
-            .Returns((IReadOnlyList<BaseItem> list, DtoOptions options, User user, BaseItem owner) =>
-                list.Select(_ => new BaseItemDto { Id = Guid.NewGuid() }).ToArray());
+            .Setup(service =>
+                service.GetBaseItemDtos(
+                    It.IsAny<IReadOnlyList<BaseItem>>(),
+                    It.IsAny<DtoOptions>(),
+                    It.IsAny<User>(),
+                    It.IsAny<BaseItem>()
+                )
+            )
+            .Returns(
+                (IReadOnlyList<BaseItem> list, DtoOptions options, User user, BaseItem owner) =>
+                    list.Select(_ => new BaseItemDto { Id = Guid.NewGuid() }).ToArray()
+            );
     }
 
     [Fact]
     public void Favorites_returns_mapped_dtos_for_user()
     {
         SetupLibrary(new Movie());
-        FavoritesSection section = new FavoritesSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        FavoritesSection section = new FavoritesSection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Single(result.Items);
         Assert.True(_capturedQuery!.IsFavorite);
@@ -70,9 +80,16 @@ public class QueryBasedSectionsTests
     public void Favorites_returns_empty_when_user_missing()
     {
         _userManager.Setup(manager => manager.GetUserById(_userId)).Returns((User?)null);
-        FavoritesSection section = new FavoritesSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        FavoritesSection section = new FavoritesSection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -81,9 +98,16 @@ public class QueryBasedSectionsTests
     public void RandomUnwatched_queries_only_unplayed_items()
     {
         SetupLibrary(new Movie());
-        RandomUnwatchedSection section = new RandomUnwatchedSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        RandomUnwatchedSection section = new RandomUnwatchedSection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Single(result.Items);
         Assert.False(_capturedQuery!.IsPlayed);
@@ -95,7 +119,10 @@ public class QueryBasedSectionsTests
         SetupLibrary(new Movie());
         TrendingSection section = new TrendingSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Single(result.Items);
         Assert.True(_capturedQuery!.IsPlayed);
@@ -105,9 +132,16 @@ public class QueryBasedSectionsTests
     public void RecentlyPlayed_queries_played_non_resumable_items()
     {
         SetupLibrary(new Movie());
-        RecentlyPlayedSection section = new RecentlyPlayedSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        RecentlyPlayedSection section = new RecentlyPlayedSection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Single(result.Items);
         Assert.True(_capturedQuery!.IsPlayed);
@@ -118,9 +152,16 @@ public class QueryBasedSectionsTests
     public void ComingSoon_constrains_premiere_window_to_next_90_days()
     {
         SetupLibrary(new Movie());
-        ComingSoonInLibrarySection section = new ComingSoonInLibrarySection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        ComingSoonInLibrarySection section = new ComingSoonInLibrarySection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Single(result.Items);
         Assert.NotNull(_capturedQuery!.MinPremiereDate);
@@ -139,7 +180,10 @@ public class QueryBasedSectionsTests
         _userManager.Setup(manager => manager.GetUserById(_userId)).Returns((User?)null);
         KidsSection section = new KidsSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -150,7 +194,10 @@ public class QueryBasedSectionsTests
         SetupLibrary(new Movie());
         KidsSection section = new KidsSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Single(result.Items);
         Assert.NotNull(_capturedQuery!.OfficialRatings);
@@ -163,7 +210,12 @@ public class QueryBasedSectionsTests
         SectionSettings[] original = HomeScreenSectionsPlugin.Instance.Configuration.SectionSettings;
         HomeScreenSectionsPlugin.Instance.Configuration.SectionSettings =
         [
-            new SectionSettings { SectionId = "Kids", Enabled = true, HideWatchedItems = true }
+            new SectionSettings
+            {
+                SectionId = "Kids",
+                Enabled = true,
+                HideWatchedItems = true,
+            },
         ];
         try
         {
@@ -192,11 +244,23 @@ public class QueryBasedSectionsTests
         IHomeScreenSection section = expectedSection switch
         {
             "Favorites" => new FavoritesSection(_userManager.Object, _libraryManager.Object, _dtoService.Object),
-            "RandomUnwatched" => new RandomUnwatchedSection(_userManager.Object, _libraryManager.Object, _dtoService.Object),
+            "RandomUnwatched" => new RandomUnwatchedSection(
+                _userManager.Object,
+                _libraryManager.Object,
+                _dtoService.Object
+            ),
             "Trending" => new TrendingSection(_userManager.Object, _libraryManager.Object, _dtoService.Object),
-            "RecentlyPlayed" => new RecentlyPlayedSection(_userManager.Object, _libraryManager.Object, _dtoService.Object),
-            "ComingSoonInLibrary" => new ComingSoonInLibrarySection(_userManager.Object, _libraryManager.Object, _dtoService.Object),
-            _ => new KidsSection(_userManager.Object, _libraryManager.Object, _dtoService.Object)
+            "RecentlyPlayed" => new RecentlyPlayedSection(
+                _userManager.Object,
+                _libraryManager.Object,
+                _dtoService.Object
+            ),
+            "ComingSoonInLibrary" => new ComingSoonInLibrarySection(
+                _userManager.Object,
+                _libraryManager.Object,
+                _dtoService.Object
+            ),
+            _ => new KidsSection(_userManager.Object, _libraryManager.Object, _dtoService.Object),
         };
 
         HomeScreenSectionInfo info = section.GetInfo();

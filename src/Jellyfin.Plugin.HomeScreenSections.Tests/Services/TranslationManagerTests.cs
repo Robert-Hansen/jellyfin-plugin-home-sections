@@ -17,7 +17,8 @@ public class TranslationManagerTests
 
     private static JObject EnglishPack()
     {
-        return JObject.Parse("""
+        return JObject.Parse(
+            """
             {
                 "ContinueWatching": "Continue Watching",
                 "BecauseYouWatched": "Because You Watched {0}",
@@ -25,17 +26,20 @@ public class TranslationManagerTests
                 "Genre": "Genre",
                 "SciFi": "Sci-Fi"
             }
-            """);
+            """
+        );
     }
 
     private static JObject GermanPack()
     {
-        return JObject.Parse("""
+        return JObject.Parse(
+            """
             {
                 "ContinueWatching": "Weiter schauen",
                 "LatestMovies": "Neueste Filme"
             }
-            """);
+            """
+        );
     }
 
     [Fact]
@@ -80,19 +84,24 @@ public class TranslationManagerTests
     public void Translate_prefers_full_text_key_and_drops_metadata()
     {
         TranslationManager manager = MakeManager();
-        manager.UpdateTranslationPack("en", JObject.Parse("""
-            {
-                "SciFiMovies": "Sci-Fi Movies",
-                "Latest": "Latest"
-            }
-            """));
+        manager.UpdateTranslationPack(
+            "en",
+            JObject.Parse(
+                """
+                {
+                    "SciFiMovies": "Sci-Fi Movies",
+                    "Latest": "Latest"
+                }
+                """
+            )
+        );
 
         // fallbackText "Sci-Fi Movies" derives the key "SciFiMovies", which exists — that wins,
         // and the Pattern metadata must be ignored (no {0} substitution on the result).
         TranslationMetadata metadata = new TranslationMetadata
         {
             Type = TranslationType.Pattern,
-            AdditionalContent = "Extra"
+            AdditionalContent = "Extra",
         };
 
         string result = manager.Translate("SomeOtherKey", "en", "Sci-Fi Movies", metadata);
@@ -107,7 +116,7 @@ public class TranslationManagerTests
         TranslationMetadata metadata = new TranslationMetadata
         {
             Type = TranslationType.Pattern,
-            AdditionalContent = "Interstellar"
+            AdditionalContent = "Interstellar",
         };
 
         string result = manager.Translate("BecauseYouWatched", "en", "Because You Watched", metadata);
@@ -122,7 +131,7 @@ public class TranslationManagerTests
         TranslationMetadata metadata = new TranslationMetadata
         {
             Type = TranslationType.Prefix,
-            AdditionalContent = "Comedy"
+            AdditionalContent = "Comedy",
         };
 
         Assert.Equal("Genre Comedy", manager.Translate("Genre", "en", "Genre", metadata));
@@ -135,7 +144,7 @@ public class TranslationManagerTests
         TranslationMetadata metadata = new TranslationMetadata
         {
             Type = TranslationType.Suffix,
-            AdditionalContent = "Comedy"
+            AdditionalContent = "Comedy",
         };
 
         Assert.Equal("Comedy Genre", manager.Translate("Genre", "en", "Genre", metadata));
@@ -149,7 +158,7 @@ public class TranslationManagerTests
         {
             Type = TranslationType.Pattern,
             AdditionalContent = "Sci Fi",
-            TranslateAdditionalContent = true
+            TranslateAdditionalContent = true,
         };
 
         // "Sci Fi" -> key "SciFi" -> "Sci-Fi" in the en pack, then substituted into the pattern.
@@ -162,11 +171,16 @@ public class TranslationManagerTests
     public void UpdateTranslationPack_overwrites_existing_pack()
     {
         TranslationManager manager = MakeManager();
-        manager.UpdateTranslationPack("de", JObject.Parse("""
-            {
-                "ContinueWatching": "Weitersehen"
-            }
-            """));
+        manager.UpdateTranslationPack(
+            "de",
+            JObject.Parse(
+                """
+                {
+                    "ContinueWatching": "Weitersehen"
+                }
+                """
+            )
+        );
 
         Assert.Equal("Weitersehen", manager.Translate("ContinueWatching", "de", "Continue Watching"));
     }

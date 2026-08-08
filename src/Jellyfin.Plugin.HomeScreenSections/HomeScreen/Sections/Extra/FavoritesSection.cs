@@ -48,16 +48,18 @@ public class FavoritesSection : IHomeScreenSection
         }
 
         DtoOptions dtoOptions = SectionDtoHelper.CreateDefaultDtoOptions();
-        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(new InternalItemsQuery(user)
-        {
-            IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
-            Recursive = true,
-            IsFavorite = true,
-            Limit = 24,
-            OrderBy = [(ItemSortBy.DateCreated, SortOrder.Descending)],
-            DtoOptions = dtoOptions,
-            EnableTotalRecordCount = false
-        });
+        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(
+            new InternalItemsQuery(user)
+            {
+                IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
+                Recursive = true,
+                IsFavorite = true,
+                Limit = 24,
+                OrderBy = [(ItemSortBy.DateCreated, SortOrder.Descending)],
+                DtoOptions = dtoOptions,
+                EnableTotalRecordCount = false,
+            }
+        );
 
         return new QueryResult<BaseItemDto>(_dtoService.GetBaseItemDtos(items.Items, dtoOptions, user));
     }
@@ -67,5 +69,5 @@ public class FavoritesSection : IHomeScreenSection
         yield return this;
     }
 
-public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
+    public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
 }

@@ -16,12 +16,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.JellyfinVersionSpecific
 
         public IEnumerable<BoxSet> GetCollections(User user)
         {
-            return _collectionManager.GetType()
-                .GetMethod("GetCollections", BindingFlags.Instance | BindingFlags.NonPublic)?
-                .Invoke(_collectionManager, new object?[]
-                {
-                    user
-                }) as IEnumerable<BoxSet> ?? Enumerable.Empty<BoxSet>();
+            return _collectionManager
+                    .GetType()
+                    .GetMethod("GetCollections", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.Invoke(_collectionManager, new object?[] { user }) as IEnumerable<BoxSet>
+                ?? Enumerable.Empty<BoxSet>();
         }
     }
 }

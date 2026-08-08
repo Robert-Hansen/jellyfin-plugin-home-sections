@@ -37,7 +37,8 @@ public class StudioSection : IHomeScreenSection
         IUserManager userManager,
         ILibraryManager libraryManager,
         IDtoService dtoService,
-        IUserDataManager userDataManager)
+        IUserDataManager userDataManager
+    )
     {
         _userManager = userManager;
         _libraryManager = libraryManager;
@@ -63,21 +64,24 @@ public class StudioSection : IHomeScreenSection
         string studio = payload.AdditionalData;
 
         // Pull a random sample and filter by studio name (query has StudioIds, not names).
-        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(new InternalItemsQuery(user)
-        {
-            IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
-            Recursive = true,
-            IsPlayed = isPlayed,
-            Limit = 120,
-            OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
-            DtoOptions = dtoOptions,
-            EnableTotalRecordCount = false,
-            IsVirtualItem = false
-        });
+        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(
+            new InternalItemsQuery(user)
+            {
+                IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
+                Recursive = true,
+                IsPlayed = isPlayed,
+                Limit = 120,
+                OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
+                DtoOptions = dtoOptions,
+                EnableTotalRecordCount = false,
+                IsVirtualItem = false,
+            }
+        );
 
-        BaseItem[] matched = items.Items
-            .Where(x => x.Studios != null
-                && x.Studios.Any(s => string.Equals(s, studio, StringComparison.OrdinalIgnoreCase)))
+        BaseItem[] matched = items
+            .Items.Where(x =>
+                x.Studios != null && x.Studios.Any(s => string.Equals(s, studio, StringComparison.OrdinalIgnoreCase))
+            )
             .Take(16)
             .ToArray();
 
@@ -86,9 +90,7 @@ public class StudioSection : IHomeScreenSection
 
     public IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
     {
-        User? user = userId is null || userId.Value == Guid.Empty
-            ? null
-            : _userManager.GetUserById(userId.Value);
+        User? user = userId is null || userId.Value == Guid.Empty ? null : _userManager.GetUserById(userId.Value);
 
         if (user == null)
         {
@@ -107,24 +109,26 @@ public class StudioSection : IHomeScreenSection
             yield return new StudioSection(_userManager, _libraryManager, _dtoService, _userDataManager)
             {
                 AdditionalData = studio,
-                DisplayText = studio
+                DisplayText = studio,
             };
         }
     }
 
-public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this, allowHideWatched: true);
+    public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this, allowHideWatched: true);
 
     private List<string> GetStudiosForUser(User user)
     {
-        QueryResult<BaseItem> played = _libraryManager.GetItemsResult(new InternalItemsQuery(user)
-        {
-            IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
-            Recursive = true,
-            IsPlayed = true,
-            Limit = 200,
-            EnableTotalRecordCount = false,
-            IsVirtualItem = false
-        });
+        QueryResult<BaseItem> played = _libraryManager.GetItemsResult(
+            new InternalItemsQuery(user)
+            {
+                IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
+                Recursive = true,
+                IsPlayed = true,
+                Limit = 200,
+                EnableTotalRecordCount = false,
+                IsVirtualItem = false,
+            }
+        );
 
         Dictionary<string, int> scores = new(StringComparer.OrdinalIgnoreCase);
         foreach (BaseItem item in played.Items)
@@ -152,17 +156,14 @@ public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this, allo
             }
         }
 
-        return scores
-            .OrderByDescending(x => x.Value)
-            .Select(x => x.Key)
-            .Take(12)
-            .ToList();
+        return scores.OrderByDescending(x => x.Value).Select(x => x.Key).Take(12).ToList();
     }
 
     private static bool? GetHideWatchedIsPlayed()
     {
-        SectionSettings? settings = HomeScreenSectionsPlugin.Instance?.Configuration?.SectionSettings
-            .FirstOrDefault(x => string.Equals(x.SectionId, "Studio", StringComparison.Ordinal));
+        SectionSettings? settings = HomeScreenSectionsPlugin.Instance?.Configuration?.SectionSettings.FirstOrDefault(
+            x => string.Equals(x.SectionId, "Studio", StringComparison.Ordinal)
+        );
         return settings?.HideWatchedItems == true ? false : null;
     }
 }

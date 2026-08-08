@@ -9,11 +9,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         public string Name => "Home Sections Image Cache Cleanup";
 
         public string Key => "Jellyfin.Plugin.HomeScreenSections.ImageCacheCleanup";
-        
+
         public string Description => "Cleans up expired cached images from the Home Screen Sections plugin";
-        
+
         public string Category => "Maintenance";
-        
+
         private readonly ImageCacheService _imageCacheService;
         private readonly ILogger<ImageCacheCleanupTask> _logger;
 
@@ -29,12 +29,12 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 PluginLog.ImageCacheCleanupStarted(_logger);
                 progress?.Report(0);
-                
+
                 _imageCacheService.ClearExpiredCache();
-                
+
                 progress?.Report(100);
                 PluginLog.ImageCacheCleanupCompleted(_logger);
-                
+
                 return Task.CompletedTask;
             }
             catch (Exception ex)
@@ -44,6 +44,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
         }
 
-        public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() => StartupServiceHelper.GetDailyTrigger(TimeSpan.FromHours(3));
+        public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() =>
+            StartupServiceHelper.GetDailyTrigger(TimeSpan.FromHours(3));
     }
 }

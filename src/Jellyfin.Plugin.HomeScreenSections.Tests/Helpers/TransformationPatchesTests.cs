@@ -8,7 +8,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Helpers;
 [Collection("Plugin Instance")]
 public class TransformationPatchesTests
 {
-
     public TransformationPatchesTests(PluginFixture fixture)
     {
         _ = fixture;
@@ -39,7 +38,7 @@ public class TransformationPatchesTests
         {
             PatchRequestPayload payload = new PatchRequestPayload
             {
-                Contents = "<html><head></head><body></body></html>"
+                Contents = "<html><head></head><body></body></html>",
             };
 
             string result = TransformationPatches.IndexHtml(payload);
@@ -68,7 +67,7 @@ public class TransformationPatchesTests
         {
             PatchRequestPayload payload = new PatchRequestPayload
             {
-                Contents = "<html><head></head><body></body></html>"
+                Contents = "<html><head></head><body></body></html>",
             };
 
             string result = TransformationPatches.IndexHtml(payload);

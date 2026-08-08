@@ -9,11 +9,7 @@ public class BecauseYouWatchedHelperTests
     [Fact]
     public void ApplySimilarSettings_copies_genres_and_tags_from_item()
     {
-        Movie movie = new Movie
-        {
-            Genres = ["Sci-Fi", "Adventure"],
-            Tags = ["space", "epic"]
-        };
+        Movie movie = new Movie { Genres = ["Sci-Fi", "Adventure"], Tags = ["space", "epic"] };
         InternalItemsQuery query = new InternalItemsQuery();
 
         InternalItemsQuery result = query.ApplySimilarSettings(movie);

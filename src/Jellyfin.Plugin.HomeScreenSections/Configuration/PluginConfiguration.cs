@@ -9,38 +9,42 @@ namespace Jellyfin.Plugin.HomeScreenSections.Configuration
         public bool LazyLoadEnabled { get; set; }
 
         public int NumSectionsPerPage { get; set; } = 10;
-        
+
         public bool AllowUserOverride { get; set; } = true;
 
         public string? LibreTranslateUrl { get; set; } = "";
 
         public string? LibreTranslateApiKey { get; set; } = "";
-        
+
         public string? JellyseerrUrl { get; set; } = "";
 
         public string? JellyseerrExternalUrl { get; set; } = "";
 
         public string? JellyseerrApiKey { get; set; } = "";
-        
+
         public string? JellyseerrPreferredLanguages { get; set; } = "en";
-        
+
         public string? DefaultMoviesLibraryId { get; set; } = "";
-        
+
         public string? DefaultTVShowsLibraryId { get; set; } = "";
-        
+
         public string? DefaultMusicLibraryId { get; set; } = "";
-        
+
         public string? DefaultBooksLibraryId { get; set; } = "";
-        
+
         public string? DefaultMusicVideosLibraryId { get; set; } = "";
 
-        public ArrConfig Sonarr { get; set; } = new ArrConfig { UpcomingTimeframeValue = 1, UpcomingTimeframeUnit = TimeframeUnit.Weeks };
+        public ArrConfig Sonarr { get; set; } =
+            new ArrConfig { UpcomingTimeframeValue = 1, UpcomingTimeframeUnit = TimeframeUnit.Weeks };
 
-        public ArrConfig Radarr { get; set; } = new ArrConfig { UpcomingTimeframeValue = 3, UpcomingTimeframeUnit = TimeframeUnit.Months };
+        public ArrConfig Radarr { get; set; } =
+            new ArrConfig { UpcomingTimeframeValue = 3, UpcomingTimeframeUnit = TimeframeUnit.Months };
 
-        public ArrConfig Lidarr { get; set; } = new ArrConfig { UpcomingTimeframeValue = 6, UpcomingTimeframeUnit = TimeframeUnit.Months };
+        public ArrConfig Lidarr { get; set; } =
+            new ArrConfig { UpcomingTimeframeValue = 6, UpcomingTimeframeUnit = TimeframeUnit.Months };
 
-        public ArrConfig Readarr { get; set; } = new ArrConfig { UpcomingTimeframeValue = 1, UpcomingTimeframeUnit = TimeframeUnit.Years };
+        public ArrConfig Readarr { get; set; } =
+            new ArrConfig { UpcomingTimeframeValue = 1, UpcomingTimeframeUnit = TimeframeUnit.Years };
 
         public string DateFormat { get; set; } = "YYYY/MM/DD";
 
@@ -70,7 +74,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Configuration
         Portrait,
         Landscape,
         Square,
-        Small
+        Small,
     }
 
     public enum TimeframeUnit
@@ -78,28 +82,28 @@ namespace Jellyfin.Plugin.HomeScreenSections.Configuration
         Days,
         Weeks,
         Months,
-        Years
+        Years,
     }
-    
+
     public class SectionSettings
     {
         public string SectionId { get; set; } = string.Empty;
-        
+
         public bool Enabled { get; set; }
-        
+
         public bool AllowUserOverride { get; set; }
-        
+
         public int LowerLimit { get; set; }
-        
+
         public int UpperLimit { get; set; }
 
         public int OrderIndex { get; set; }
-        
+
         public SectionViewMode ViewMode { get; set; } = SectionViewMode.Landscape;
 
         public bool HideWatchedItems { get; set; }
     }
-    
+
     public class ArrConfig
     {
         public string? ApiKey { get; set; } = "";
@@ -109,5 +113,5 @@ namespace Jellyfin.Plugin.HomeScreenSections.Configuration
         public bool ConsiderCinemaRelease { get; set; }
         public bool ConsiderPhysicalRelease { get; set; }
         public bool ConsiderDigitalRelease { get; set; } = true;
-    }   
+    }
 }

@@ -24,12 +24,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         private readonly ILibraryManager _libraryManager;
         private readonly IUserManager _userManager;
         private readonly IUserDataManager _userDataManager;
-        
+
         public ContinueWatchingNextUpSection(
             IHomeScreenManager homeScreenManager,
             ILibraryManager libraryManager,
             IUserManager userManager,
-            IUserDataManager userDataManager)
+            IUserDataManager userDataManager
+        )
         {
             _continueWatchingSection = homeScreenManager.GetSection("ContinueWatching") as ContinueWatchingSection;
             _nextUpSection = homeScreenManager.GetSection("NextUp") as NextUpSection;
@@ -37,21 +38,26 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             _userManager = userManager;
             _userDataManager = userDataManager;
         }
-        
+
         public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
         {
-            IReadOnlyList<BaseItemDto>? cwResults = _continueWatchingSection?.GetResults(payload, queryCollection).Items;
-            
+            IReadOnlyList<BaseItemDto>? cwResults = _continueWatchingSection
+                ?.GetResults(payload, queryCollection)
+                .Items;
+
             // Apply default Next Up settings, halves performance impact
             // Unfortunately we can't get the user's actual Next Up settings, as they're stored in local storage on the client
-            Dictionary<string, Microsoft.Extensions.Primitives.StringValues> nuQuery = new(StringComparer.Ordinal) {
+            Dictionary<string, Microsoft.Extensions.Primitives.StringValues> nuQuery = new(StringComparer.Ordinal)
+            {
                 ["UserId"] = queryCollection["UserId"],
                 ["EnableRewatching"] = "false",
-                ["NextUpDateCutoff"] = DateTime.UtcNow.AddDays(-365).ToString("O")
+                ["NextUpDateCutoff"] = DateTime.UtcNow.AddDays(-365).ToString("O"),
             };
-            
-            IReadOnlyList<BaseItemDto>? nuResults = _nextUpSection?.GetResults(payload, new QueryCollection(nuQuery)).Items;
-            
+
+            IReadOnlyList<BaseItemDto>? nuResults = _nextUpSection
+                ?.GetResults(payload, new QueryCollection(nuQuery))
+                .Items;
+
             List<BaseItemDto> returnItems = [];
 
             if (cwResults != null)
@@ -66,7 +72,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
             // If HideWatchedItems is enabled for this section, filter out watched items
             var config = HomeScreenSectionsPlugin.Instance?.Configuration;
-            var sectionSettings = config?.SectionSettings.FirstOrDefault(x => string.Equals(x.SectionId, Section, StringComparison.Ordinal));
+            var sectionSettings = config?.SectionSettings.FirstOrDefault(x =>
+                string.Equals(x.SectionId, Section, StringComparison.Ordinal)
+            );
             if (sectionSettings?.HideWatchedItems == true)
             {
                 returnItems = returnItems.Where(x => x.UserData?.Played != true).ToList();
@@ -91,9 +99,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
             // Collect all unique series IDs that need lookup
             List<Guid> seriesIds = items
-                .Where(x => x.Type == BaseItemKind.Episode && 
-                           x.SeriesId != null && 
-                           x.UserData?.LastPlayedDate == null)
+                .Where(x => x.Type == BaseItemKind.Episode && x.SeriesId != null && x.UserData?.LastPlayedDate == null)
                 .Select(x => x.SeriesId!.Value)
                 .Distinct()
                 .ToList();
@@ -107,14 +113,16 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             // Limit 2: most recent + fallback in case first lacks LastPlayedDate
             foreach (Guid seriesId in seriesIds)
             {
-                IReadOnlyList<BaseItem> recentEpisodes = _libraryManager.GetItemList(new InternalItemsQuery(user)
-                {
-                    AncestorIds = [seriesId],
-                    IncludeItemTypes = [BaseItemKind.Episode],
-                    IsPlayed = true,
-                    OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Descending)],
-                    Limit = 2
-                });
+                IReadOnlyList<BaseItem> recentEpisodes = _libraryManager.GetItemList(
+                    new InternalItemsQuery(user)
+                    {
+                        AncestorIds = [seriesId],
+                        IncludeItemTypes = [BaseItemKind.Episode],
+                        IsPlayed = true,
+                        OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Descending)],
+                        Limit = 2,
+                    }
+                );
 
                 // Find the first episode with a valid LastPlayedDate
                 foreach (BaseItem episode in recentEpisodes)
@@ -123,7 +131,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                     if (lastPlayedDate != null)
                     {
                         lookup[seriesId] = lastPlayedDate.Value;
-                        break;  // Found it, move to next series
+                        break; // Found it, move to next series
                     }
                 }
             }
@@ -164,7 +172,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 Limit = Limit ?? 1,
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Landscape,
-                AllowHideWatched = true
+                AllowHideWatched = true,
             };
         }
     }

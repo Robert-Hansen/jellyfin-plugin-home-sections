@@ -6,7 +6,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Attributes
     public class JellyfinVersionAttribute : Attribute
     {
         public string Version { get; set; }
-        
+
         public JellyfinVersionAttribute(string version)
         {
             Version = version;

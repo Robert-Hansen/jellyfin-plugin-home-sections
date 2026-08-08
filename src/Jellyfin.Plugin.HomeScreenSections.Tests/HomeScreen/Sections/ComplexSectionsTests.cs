@@ -44,17 +44,11 @@ public class ComplexSectionsTests
         _fixture = fixture;
         _serviceProvider = new TestServiceProvider(fixture.Paths);
 
-        _userManager
-            .Setup(manager => manager.GetUserById(_userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(_userId)).Returns(_user);
 
-        _libraryManager
-            .Setup(manager => manager.GetVirtualFolders())
-            .Returns([]);
+        _libraryManager.Setup(manager => manager.GetVirtualFolders()).Returns([]);
 
-        _libraryManager
-            .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
-            .Returns([]);
+        _libraryManager.Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>())).Returns([]);
 
         TestDtos.StubPassthrough(_dtoService);
     }
@@ -73,15 +67,14 @@ public class ComplexSectionsTests
     {
         // The similar-items query ultimately runs through the non-virtual Folder.GetItems, so
         // the DTO-mapping path cannot be exercised here; this covers the empty/no-folders path.
-        _libraryManager
-            .Setup(manager => manager.GetItemById(It.IsAny<Guid>()))
-            .Returns(new Movie());
+        _libraryManager.Setup(manager => manager.GetItemById(It.IsAny<Guid>())).Returns(new Movie());
 
         BecauseYouWatchedSection section = MakeBecauseYouWatchedSection();
 
         QueryResult<BaseItemDto> result = section.GetResults(
             new HomeScreenSectionPayload { UserId = _userId, AdditionalData = Guid.NewGuid().ToString() },
-            new FakeQueryCollection());
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -106,16 +99,14 @@ public class ComplexSectionsTests
         Movie sameCollection = new Movie { Id = Guid.NewGuid(), Name = "Same Collection" };
         Movie standalone = new Movie { Id = Guid.NewGuid(), Name = "Standalone" };
 
-        TestBoxSet collection = new(new BaseItem[] { first, sameCollection })
-        {
-            Id = Guid.NewGuid(),
-            Name = "Trilogy"
-        };
+        TestBoxSet collection = new(new BaseItem[] { first, sameCollection }) { Id = Guid.NewGuid(), Name = "Trilogy" };
         FakeCollectionManager collectionManager = new FakeCollectionManager([collection]);
         BecauseYouWatchedSection section = MakeBecauseYouWatchedSection(collectionManager);
 
-        MethodInfo pick = typeof(BecauseYouWatchedSection)
-            .GetMethod("PickMoviesAvoidingCollections", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        MethodInfo pick = typeof(BecauseYouWatchedSection).GetMethod(
+            "PickMoviesAvoidingCollections",
+            BindingFlags.NonPublic | BindingFlags.Instance
+        )!;
 
         List<BaseItem> recentlyPlayed = [first, sameCollection, standalone];
         List<BaseItem> picked = ((System.Collections.IEnumerable)pick.Invoke(section, [_user, recentlyPlayed, 3])!)
@@ -135,16 +126,28 @@ public class ComplexSectionsTests
         Movie directedMovie = new Movie { Id = Guid.NewGuid(), Name = "Directed Movie" };
         _libraryManager
             .Setup(manager => manager.GetVirtualFolders())
-            .Returns([new VirtualFolderInfo { ItemId = folderId.ToString(), Name = "Movies", Locations = ["/media/movies"] }]);
+            .Returns([
+                new VirtualFolderInfo
+                {
+                    ItemId = folderId.ToString(),
+                    Name = "Movies",
+                    Locations = ["/media/movies"],
+                },
+            ]);
         _libraryManager
             .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
             .Returns(new BaseItem[] { directedMovie });
 
-        DirectedBySection section = new DirectedBySection(_libraryManager.Object, _dtoService.Object, _userManager.Object);
+        DirectedBySection section = new DirectedBySection(
+            _libraryManager.Object,
+            _dtoService.Object,
+            _userManager.Object
+        );
 
         QueryResult<BaseItemDto> result = section.GetResults(
             new HomeScreenSectionPayload { UserId = _userId, AdditionalData = Guid.NewGuid().ToString() },
-            new FakeQueryCollection());
+            new FakeQueryCollection()
+        );
 
         Assert.Equal("Directed Movie", Assert.Single(result.Items).Name);
     }
@@ -155,25 +158,38 @@ public class ComplexSectionsTests
         Guid folderId = Guid.NewGuid();
         Person director = new Person { Id = Guid.NewGuid(), Name = "Ava Director" };
 
-        _libraryManager
-            .Setup(manager => manager.GetPeopleItems(It.IsAny<InternalPeopleQuery>()))
-            .Returns([director]);
+        _libraryManager.Setup(manager => manager.GetPeopleItems(It.IsAny<InternalPeopleQuery>())).Returns([director]);
         _libraryManager
             .Setup(manager => manager.GetVirtualFolders())
-            .Returns([new VirtualFolderInfo { ItemId = folderId.ToString(), Name = "Movies", Locations = ["/media/movies"] }]);
+            .Returns([
+                new VirtualFolderInfo
+                {
+                    ItemId = folderId.ToString(),
+                    Name = "Movies",
+                    Locations = ["/media/movies"],
+                },
+            ]);
         _libraryManager
             .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
-            .Returns(new BaseItem[]
-            {
-                new Movie { Id = Guid.NewGuid() },
-                new Movie { Id = Guid.NewGuid() },
-                new Movie { Id = Guid.NewGuid() }
-            });
+            .Returns(
+                new BaseItem[]
+                {
+                    new Movie { Id = Guid.NewGuid() },
+                    new Movie { Id = Guid.NewGuid() },
+                    new Movie { Id = Guid.NewGuid() },
+                }
+            );
         _dtoService
-            .Setup(service => service.GetBaseItemDto(director, It.IsAny<DtoOptions>(), It.IsAny<User>(), It.IsAny<BaseItem>()))
+            .Setup(service =>
+                service.GetBaseItemDto(director, It.IsAny<DtoOptions>(), It.IsAny<User>(), It.IsAny<BaseItem>())
+            )
             .Returns(new BaseItemDto { Id = director.Id });
 
-        DirectedBySection section = new DirectedBySection(_libraryManager.Object, _dtoService.Object, _userManager.Object);
+        DirectedBySection section = new DirectedBySection(
+            _libraryManager.Object,
+            _dtoService.Object,
+            _userManager.Object
+        );
 
         List<IHomeScreenSection> instances = [.. section.CreateInstances(_userId, 2)];
 
@@ -191,17 +207,26 @@ public class ComplexSectionsTests
         Guid folderId = Guid.NewGuid();
         Person director = new Person { Id = Guid.NewGuid(), Name = "One Hit" };
 
-        _libraryManager
-            .Setup(manager => manager.GetPeopleItems(It.IsAny<InternalPeopleQuery>()))
-            .Returns([director]);
+        _libraryManager.Setup(manager => manager.GetPeopleItems(It.IsAny<InternalPeopleQuery>())).Returns([director]);
         _libraryManager
             .Setup(manager => manager.GetVirtualFolders())
-            .Returns([new VirtualFolderInfo { ItemId = folderId.ToString(), Name = "Movies", Locations = ["/media/movies"] }]);
+            .Returns([
+                new VirtualFolderInfo
+                {
+                    ItemId = folderId.ToString(),
+                    Name = "Movies",
+                    Locations = ["/media/movies"],
+                },
+            ]);
         _libraryManager
             .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
             .Returns(new BaseItem[] { new Movie { Id = Guid.NewGuid() } });
 
-        DirectedBySection section = new DirectedBySection(_libraryManager.Object, _dtoService.Object, _userManager.Object);
+        DirectedBySection section = new DirectedBySection(
+            _libraryManager.Object,
+            _dtoService.Object,
+            _userManager.Object
+        );
 
         Assert.Empty(section.CreateInstances(_userId, 2));
     }
@@ -228,9 +253,13 @@ public class ComplexSectionsTests
             _libraryManager.Object,
             _tvSeriesManager.Object,
             _dtoService.Object,
-            _serviceProvider);
+            _serviceProvider
+        );
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -242,9 +271,7 @@ public class ComplexSectionsTests
         rootFolder
             .Setup(folder => folder.GetChildren(It.IsAny<User>(), true, It.IsAny<InternalItemsQuery>()))
             .Returns(Array.Empty<BaseItem>());
-        _libraryManager
-            .Setup(manager => manager.GetUserRootFolder())
-            .Returns(rootFolder.Object);
+        _libraryManager.Setup(manager => manager.GetUserRootFolder()).Returns(rootFolder.Object);
 
         LatestShowsSection section = new LatestShowsSection(
             _userViewManager.Object,
@@ -252,14 +279,17 @@ public class ComplexSectionsTests
             _libraryManager.Object,
             _tvSeriesManager.Object,
             _dtoService.Object,
-            _serviceProvider);
+            _serviceProvider
+        );
 
         Assert.Equal("LatestShows", section.Section);
 
         HomeScreenSectionInfo info = section.GetInfo();
         Assert.True(info.AllowHideWatched);
 
-        LatestShowsSection instance = Assert.IsType<LatestShowsSection>(Assert.Single(section.CreateInstances(_userId, 1)));
+        LatestShowsSection instance = Assert.IsType<LatestShowsSection>(
+            Assert.Single(section.CreateInstances(_userId, 1))
+        );
         Assert.NotSame(section, instance);
     }
 
@@ -280,11 +310,13 @@ public class ComplexSectionsTests
             Name = "The Show",
             DateCreated = DateTime.UtcNow.AddDays(-30),
             // Preset so GetPresentationUniqueKey does not recompute via library lookups.
-            PresentationUniqueKey = "the-show"
+            PresentationUniqueKey = "the-show",
         };
 
-        MethodInfo sortMethod = typeof(RecentlyAddedShowsSection)
-            .GetMethod("GetSortDateForItem", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        MethodInfo sortMethod = typeof(RecentlyAddedShowsSection).GetMethod(
+            "GetSortDateForItem",
+            BindingFlags.NonPublic | BindingFlags.Instance
+        )!;
         DateTime sortDate = (DateTime)sortMethod.Invoke(section, [series, _user, new DtoOptions()])!;
 
         Assert.Equal(episodeDate, sortDate);
@@ -297,8 +329,10 @@ public class ComplexSectionsTests
 
         Movie movie = new Movie { Id = Guid.NewGuid(), DateCreated = DateTime.UtcNow.AddDays(-3) };
 
-        MethodInfo sortMethod = typeof(RecentlyAddedShowsSection)
-            .GetMethod("GetSortDateForItem", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        MethodInfo sortMethod = typeof(RecentlyAddedShowsSection).GetMethod(
+            "GetSortDateForItem",
+            BindingFlags.NonPublic | BindingFlags.Instance
+        )!;
         DateTime sortDate = (DateTime)sortMethod.Invoke(section, [movie, _user, new DtoOptions()])!;
 
         Assert.Equal(movie.DateCreated, sortDate);
@@ -309,7 +343,10 @@ public class ComplexSectionsTests
     {
         RecentlyAddedShowsSection section = MakeRecentlyAddedShowsSection();
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -332,7 +369,8 @@ public class ComplexSectionsTests
             _libraryManager.Object,
             _dtoService.Object,
             collectionManager ?? _collectionManager.Object,
-            new CollectionManagerProxy(collectionManager ?? _collectionManager.Object));
+            new CollectionManagerProxy(collectionManager ?? _collectionManager.Object)
+        );
     }
 
     private RecentlyAddedShowsSection MakeRecentlyAddedShowsSection()
@@ -343,6 +381,7 @@ public class ComplexSectionsTests
             _libraryManager.Object,
             _dtoService.Object,
             _serviceProvider,
-            NullLogger<RecentlyAddedShowsSection>.Instance);
+            NullLogger<RecentlyAddedShowsSection>.Instance
+        );
     }
 }

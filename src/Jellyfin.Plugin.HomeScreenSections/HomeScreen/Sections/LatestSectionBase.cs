@@ -23,26 +23,28 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public virtual string? AdditionalData { get; set; }
         public virtual object? OriginalPayload { get; set; }
         public abstract SectionViewMode DefaultViewMode { get; }
-        
+
         protected abstract BaseItemKind SectionItemKind { get; }
-        
+
         protected abstract CollectionType CollectionType { get; }
-        
+
         protected abstract string? LibraryId { get; }
-        
+
         protected abstract CollectionTypeOptions CollectionTypeOptions { get; }
-        
+
         protected IUserViewManager _userViewManager { get; }
         protected IUserManager _userManager { get; }
         protected ILibraryManager _libraryManager { get; }
         protected IDtoService _dtoService { get; }
         protected IServiceProvider _serviceProvider { get; }
-        
-        protected LatestSectionBase(IUserViewManager userViewManager,
+
+        protected LatestSectionBase(
+            IUserViewManager userViewManager,
             IUserManager userManager,
             ILibraryManager libraryManager,
             IDtoService dtoService,
-            IServiceProvider serviceProvider)
+            IServiceProvider serviceProvider
+        )
         {
             _userViewManager = userViewManager;
             _userManager = userManager;
@@ -51,29 +53,46 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             _serviceProvider = serviceProvider;
         }
 
-        public virtual QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
+        public virtual QueryResult<BaseItemDto> GetResults(
+            HomeScreenSectionPayload payload,
+            IQueryCollection queryCollection
+        )
         {
             DtoOptions dtoOptions = CreateDtoOptions();
             User? user = _userManager.GetUserById(payload.UserId);
 
             var config = HomeScreenSectionsPlugin.Instance?.Configuration;
-            var sectionSettings = config?.SectionSettings.FirstOrDefault(x => string.Equals(x.SectionId, Section, StringComparison.Ordinal));
+            var sectionSettings = config?.SectionSettings.FirstOrDefault(x =>
+                string.Equals(x.SectionId, Section, StringComparison.Ordinal)
+            );
             // If HideWatchedItems is enabled for this section, set isPlayed to false to hide watched items; otherwise, include all.
             bool? isPlayed = sectionSettings?.HideWatchedItems == true ? false : null;
 
-            VirtualFolderInfo[] folders = _libraryManager.GetVirtualFolders()
+            VirtualFolderInfo[] folders = _libraryManager
+                .GetVirtualFolders()
                 .Where(x => x.CollectionType == CollectionTypeOptions)
                 .FilterToUserPermitted(_libraryManager, user);
 
             List<(BaseItem Item, DateTime? PremiereDate)> selectedItems = SearchLatestItems(user, folders, isPlayed);
 
-            return new QueryResult<BaseItemDto>(Array.ConvertAll(selectedItems.OrderByDescending(x => x.PremiereDate).Select(x => x.Item).ToArray(),
-                i => _dtoService.GetBaseItemDto(i, dtoOptions, user)));
+            return new QueryResult<BaseItemDto>(
+                Array.ConvertAll(
+                    selectedItems.OrderByDescending(x => x.PremiereDate).Select(x => x.Item).ToArray(),
+                    i => _dtoService.GetBaseItemDto(i, dtoOptions, user)
+                )
+            );
         }
-        
+
         public IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
         {
-            BaseItemDto? originalPayload = LibrarySectionHelper.ResolveLibraryFolderDto(_libraryManager, _userManager, _dtoService, userId, CollectionType, LibraryId);
+            BaseItemDto? originalPayload = LibrarySectionHelper.ResolveLibraryFolderDto(
+                _libraryManager,
+                _userManager,
+                _dtoService,
+                userId,
+                CollectionType,
+                LibraryId
+            );
 
             LatestSectionBase sectionBase = CreateInstance();
             sectionBase.DisplayText = DisplayText;
@@ -92,20 +111,21 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         {
             DtoOptions dtoOptions = new DtoOptions
             {
-                Fields = [ItemFields.PrimaryImageAspectRatio,
-                    ItemFields.Path],
-                EnableImages = true
+                Fields = [ItemFields.PrimaryImageAspectRatio, ItemFields.Path],
+                EnableImages = true,
             };
 
             dtoOptions.ImageTypeLimit = 1;
-            dtoOptions.ImageTypes = [ImageType.Thumb,
-                ImageType.Backdrop,
-                ImageType.Primary,];
+            dtoOptions.ImageTypes = [ImageType.Thumb, ImageType.Backdrop, ImageType.Primary];
 
             return dtoOptions;
         }
 
-        private List<(BaseItem Item, DateTime? PremiereDate)> SearchLatestItems(User? user, VirtualFolderInfo[] folders, bool? isPlayed)
+        private List<(BaseItem Item, DateTime? PremiereDate)> SearchLatestItems(
+            User? user,
+            VirtualFolderInfo[] folders,
+            bool? isPlayed
+        )
         {
             List<(BaseItem Item, DateTime? PremiereDate)> selectedItems = [];
             int dayIncrement = 30;
@@ -115,19 +135,25 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
             do
             {
-                List<(BaseItem Item, DateTime? PremiereDate)> itemsToAdd = QueryItemsInWindow(user, folders, isPlayed, currentDate, dayIncrement)
+                List<(BaseItem Item, DateTime? PremiereDate)> itemsToAdd = QueryItemsInWindow(
+                        user,
+                        folders,
+                        isPlayed,
+                        currentDate,
+                        dayIncrement
+                    )
                     .Where(x => selectedItems.All(y => y.Item.Id != x.Item.Id))
                     .ToList();
-                
+
                 selectedItems.AddRange(itemsToAdd);
 
                 if (selectedItems.Count >= 16)
                 {
                     continueSearching = false;
                 }
-                
+
                 currentDate = currentDate.Subtract(TimeSpan.FromDays(dayIncrement));
-                
+
                 if (currentDate < stopDate)
                 {
                     break;
@@ -142,45 +168,41 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             VirtualFolderInfo[] folders,
             bool? isPlayed,
             DateTime currentDate,
-            int dayIncrement)
+            int dayIncrement
+        )
         {
-            var latestMovies = folders.Select(x =>
-            {
-                var item = _libraryManager.GetParentItem(Guid.Parse(x.ItemId), user?.Id);
-
-                if (item is not Folder folder)
+            var latestMovies = folders
+                .Select(x =>
                 {
-                    folder = _libraryManager.GetUserRootFolder();
-                }
+                    var item = _libraryManager.GetParentItem(Guid.Parse(x.ItemId), user?.Id);
 
-                var items = folder.GetItems(new InternalItemsQuery(user)
-                {
-                    IncludeItemTypes = new[]
+                    if (item is not Folder folder)
                     {
-                        SectionItemKind
-                    },
-                    Limit = 16,
-                    OrderBy = new[]
-                    {
-                        (ItemSortBy.PremiereDate, SortOrder.Descending)
-                    },
-                    IsPlayed = isPlayed,
-                    ParentId = Guid.Parse(x.ItemId),
-                    Recursive = true,
-                    MaxPremiereDate = currentDate,
-                    MinPremiereDate = currentDate.Subtract(TimeSpan.FromDays(dayIncrement)),
-                    EnableTotalRecordCount = true // This might have to go
-                });
+                        folder = _libraryManager.GetUserRootFolder();
+                    }
 
-                return (Items: items.Items, items.Items.Count, items.TotalRecordCount);
-            }).ToArray();
-            
-            return latestMovies
-                .SelectMany(x => x.Items)
-                .Select(x => (Item: x, PremiereDate: x.PremiereDate))
-                .ToList();
+                    var items = folder.GetItems(
+                        new InternalItemsQuery(user)
+                        {
+                            IncludeItemTypes = new[] { SectionItemKind },
+                            Limit = 16,
+                            OrderBy = new[] { (ItemSortBy.PremiereDate, SortOrder.Descending) },
+                            IsPlayed = isPlayed,
+                            ParentId = Guid.Parse(x.ItemId),
+                            Recursive = true,
+                            MaxPremiereDate = currentDate,
+                            MinPremiereDate = currentDate.Subtract(TimeSpan.FromDays(dayIncrement)),
+                            EnableTotalRecordCount = true, // This might have to go
+                        }
+                    );
+
+                    return (Items: items.Items, items.Items.Count, items.TotalRecordCount);
+                })
+                .ToArray();
+
+            return latestMovies.SelectMany(x => x.Items).Select(x => (Item: x, PremiereDate: x.PremiereDate)).ToList();
         }
-        
+
         protected abstract LatestSectionBase CreateInstance();
     }
 }

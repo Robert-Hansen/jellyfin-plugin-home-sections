@@ -1,5 +1,5 @@
-using Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Extra;
 using Jellyfin.Data.Enums;
+using Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Extra;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Querying;
@@ -32,7 +32,8 @@ public class SectionDtoHelperTests
     {
         Assert.Equal(
             [BaseItemKind.Movie, BaseItemKind.Series, BaseItemKind.Episode],
-            SectionDtoHelper.MovieSeriesEpisodeKinds);
+            SectionDtoHelper.MovieSeriesEpisodeKinds
+        );
     }
 
     [Fact]

@@ -8,11 +8,19 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers
 {
     public static class TransformationPatches
     {
-        private static readonly Regex s_variableFind = new(@"var\s+(?<name>[a-zA-Z][^=]*)=", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(250));
+        private static readonly Regex s_variableFind = new(
+            @"var\s+(?<name>[a-zA-Z][^=]*)=",
+            RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
+            TimeSpan.FromMilliseconds(250)
+        );
 
         private static readonly Lazy<string> s_loadSectionsTemplate = new(() =>
         {
-            using Stream s = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{typeof(HomeScreenSectionsPlugin).Namespace}.Controllers.loadSections.js")!;
+            using Stream s = Assembly
+                .GetExecutingAssembly()
+                .GetManifestResourceStream(
+                    $"{typeof(HomeScreenSectionsPlugin).Namespace}.Controllers.loadSections.js"
+                )!;
             using TextReader r = new StreamReader(s);
             return r.ReadToEnd();
         });
@@ -22,8 +30,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers
             // replace `",loadSections:` with itself followed by our function followed by `",originalLoadSections:`
             string[] parts = content.Contents!.Split(",loadSections:", StringSplitOptions.RemoveEmptyEntries);
             string thisVariableName = s_variableFind.Matches(parts[0]).Last().Groups["name"].Value;
-            string replacementText = s_loadSectionsTemplate.Value
-                .Replace("{{this_hook}}", thisVariableName)
+            string replacementText = s_loadSectionsTemplate
+                .Value.Replace("{{this_hook}}", thisVariableName)
                 .Replace("{{layoutmanager_hook}}", "n"); // NOTE: lookup the first "assigned" variable after `var`
 
             if (JellyfinVersionAttribute.GetVersion()?.StartsWith("10.10.7", StringComparison.Ordinal) ?? false)
@@ -34,15 +42,19 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers
             {
                 replacementText = replacementText.Replace("{{cardbuilder_hook}}", "u");
             }
-            
-            string regex = content.Contents.Replace(",loadSections:", $",loadSections:{replacementText},originalLoadSections:");
+
+            string regex = content.Contents.Replace(
+                ",loadSections:",
+                $",loadSections:{replacementText},originalLoadSections:"
+            );
 
             return regex;
         }
 
         public static string IndexHtml(PatchRequestPayload content)
         {
-            NetworkConfiguration networkConfiguration = HomeScreenSectionsPlugin.Instance.ServerConfigurationManager.GetNetworkConfiguration();
+            NetworkConfiguration networkConfiguration =
+                HomeScreenSectionsPlugin.Instance.ServerConfigurationManager.GetNetworkConfiguration();
             var pluginConfig = HomeScreenSectionsPlugin.Instance.Configuration;
 
             string rootPath = "";
@@ -50,7 +62,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers
             {
                 rootPath = $"/{networkConfiguration.BaseUrl.TrimStart('/').Trim()}";
             }
-            
+
             string pluginVersion = HomeScreenSectionsPlugin.Instance.GetCurrentPluginVersion();
 
             string cacheParam;
@@ -65,11 +77,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers
                 cacheParam = $"?v={pluginVersion}&c={pluginConfig.CacheBustCounter}";
             }
 
-            string replacementText0 = $"<link rel=\"stylesheet\" href=\"{rootPath}/HomeScreen/home-screen-sections.css{cacheParam}\" />";
-            string replacementText1 = $"<script type=\"text/javascript\" plugin=\"Jellyfin.Plugin.HomeScreenSections\" src=\"{rootPath}/HomeScreen/home-screen-sections.js{cacheParam}\" defer></script>";
-            
-            return content.Contents!
-                .Replace("</head>", $"{replacementText0}</head>")
+            string replacementText0 =
+                $"<link rel=\"stylesheet\" href=\"{rootPath}/HomeScreen/home-screen-sections.css{cacheParam}\" />";
+            string replacementText1 =
+                $"<script type=\"text/javascript\" plugin=\"Jellyfin.Plugin.HomeScreenSections\" src=\"{rootPath}/HomeScreen/home-screen-sections.js{cacheParam}\" defer></script>";
+
+            return content
+                .Contents!.Replace("</head>", $"{replacementText0}</head>")
                 .Replace("</body>", $"{replacementText1}</body>");
         }
     }

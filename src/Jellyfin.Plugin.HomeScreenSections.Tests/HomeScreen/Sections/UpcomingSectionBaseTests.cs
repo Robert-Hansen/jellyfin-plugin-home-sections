@@ -34,7 +34,11 @@ public class UpcomingSectionBaseTests
         TestUpcomingSection section = MakeSection();
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
 
-        Assert.StartsWith("Today! - ", section.ExposedCountdown(s_now.AddDays(-2), config, s_now), StringComparison.Ordinal);
+        Assert.StartsWith(
+            "Today! - ",
+            section.ExposedCountdown(s_now.AddDays(-2), config, s_now),
+            StringComparison.Ordinal
+        );
         Assert.StartsWith("Today! - ", section.ExposedCountdown(s_now.Date, config, s_now), StringComparison.Ordinal);
     }
 
@@ -102,7 +106,11 @@ public class UpcomingSectionBaseTests
 
         string countdown = section.ExposedCountdown(releaseDate, config, s_now);
 
-        string expectedSuffix = ArrApiService.FormatDate(releaseDate.ToLocalTime(), config.DateFormat, config.DateDelimiter);
+        string expectedSuffix = ArrApiService.FormatDate(
+            releaseDate.ToLocalTime(),
+            config.DateFormat,
+            config.DateDelimiter
+        );
         Assert.EndsWith(" - " + expectedSuffix, countdown, StringComparison.Ordinal);
     }
 
@@ -115,7 +123,10 @@ public class UpcomingSectionBaseTests
 
         TestUpcomingSection section = MakeSection(() => throw new InvalidOperationException("must not fetch"));
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -133,15 +144,29 @@ public class UpcomingSectionBaseTests
             Guid secondId = Guid.NewGuid();
             RadarrCalendarDto[] calendar =
             [
-                new RadarrCalendarDto { Id = 1, Title = "First", Path = "/movies/first" },
-                new RadarrCalendarDto { Id = 2, Title = "Second", Path = "/movies/second" }
+                new RadarrCalendarDto
+                {
+                    Id = 1,
+                    Title = "First",
+                    Path = "/movies/first",
+                },
+                new RadarrCalendarDto
+                {
+                    Id = 2,
+                    Title = "Second",
+                    Path = "/movies/second",
+                },
             ];
 
             TestUpcomingSection section = MakeSection(
                 () => calendar,
-                item => new BaseItemDto { Id = item.Id == 1 ? firstId : secondId, Name = item.Title });
+                item => new BaseItemDto { Id = item.Id == 1 ? firstId : secondId, Name = item.Title }
+            );
 
-            QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            QueryResult<BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             Assert.Equal(2, result.Items.Count);
             Assert.Contains(result.Items, dto => dto.Id == firstId);
@@ -164,13 +189,17 @@ public class UpcomingSectionBaseTests
         config.FilterUpcomingByLibraryAccess = false;
         try
         {
-            RadarrCalendarDto[] calendar = Enumerable.Range(0, 25)
+            RadarrCalendarDto[] calendar = Enumerable
+                .Range(0, 25)
                 .Select(id => new RadarrCalendarDto { Id = id, Title = $"Movie {id}" })
                 .ToArray();
 
             TestUpcomingSection section = MakeSection(() => calendar);
 
-            QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            QueryResult<BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             Assert.Equal(16, result.Items.Count);
         }
@@ -192,7 +221,10 @@ public class UpcomingSectionBaseTests
         {
             TestUpcomingSection section = MakeSection(() => throw new HttpRequestException("boom"));
 
-            QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            QueryResult<BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             Assert.Empty(result.Items);
         }
@@ -211,9 +243,21 @@ public class UpcomingSectionBaseTests
             string color = TestUpcomingSection.ExposedRandomBgColor();
 
             Assert.Equal(6, color.Length);
-            int red = int.Parse(color.AsSpan(0, 2), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture);
-            int green = int.Parse(color.AsSpan(2, 2), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture);
-            int blue = int.Parse(color.AsSpan(4, 2), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture);
+            int red = int.Parse(
+                color.AsSpan(0, 2),
+                System.Globalization.NumberStyles.HexNumber,
+                System.Globalization.CultureInfo.InvariantCulture
+            );
+            int green = int.Parse(
+                color.AsSpan(2, 2),
+                System.Globalization.NumberStyles.HexNumber,
+                System.Globalization.CultureInfo.InvariantCulture
+            );
+            int blue = int.Parse(
+                color.AsSpan(4, 2),
+                System.Globalization.NumberStyles.HexNumber,
+                System.Globalization.CultureInfo.InvariantCulture
+            );
             Assert.InRange(red, 0, 127);
             Assert.InRange(green, 0, 127);
             Assert.InRange(blue, 0, 127);
@@ -250,7 +294,9 @@ public class UpcomingSectionBaseTests
         Assert.True((bool)InvokeUpcomingBaseStatic("IsItemAccessible", null, allLocations, permitted)!);
         Assert.True((bool)InvokeUpcomingBaseStatic("IsItemAccessible", string.Empty, allLocations, permitted)!);
         // Path under no known library cannot be mapped, so it defaults to accessible.
-        Assert.True((bool)InvokeUpcomingBaseStatic("IsItemAccessible", "/elsewhere/file.mkv", allLocations, permitted)!);
+        Assert.True(
+            (bool)InvokeUpcomingBaseStatic("IsItemAccessible", "/elsewhere/file.mkv", allLocations, permitted)!
+        );
     }
 
     [Fact]
@@ -259,8 +305,12 @@ public class UpcomingSectionBaseTests
         string[] allLocations = ["/media/movies", "/media/tv"];
         string[] permitted = ["/media/movies"];
 
-        Assert.True((bool)InvokeUpcomingBaseStatic("IsItemAccessible", "/media/movies/Film.mkv", allLocations, permitted)!);
-        Assert.False((bool)InvokeUpcomingBaseStatic("IsItemAccessible", "/media/tv/Episode.mkv", allLocations, permitted)!);
+        Assert.True(
+            (bool)InvokeUpcomingBaseStatic("IsItemAccessible", "/media/movies/Film.mkv", allLocations, permitted)!
+        );
+        Assert.False(
+            (bool)InvokeUpcomingBaseStatic("IsItemAccessible", "/media/tv/Episode.mkv", allLocations, permitted)!
+        );
     }
 
     [Theory]
@@ -268,9 +318,16 @@ public class UpcomingSectionBaseTests
     [InlineData(2, 3, "Month", "Week", "2 Months, 3 Weeks")]
     [InlineData(1, 1, "Year", "Month", "1 Year, 1 Month")]
     [InlineData(5, 0, "Day", "Day", "5 Days")]
-    public void FormatTimeUnit_pluralizes_and_joins_secondary(int primary, int secondary, string primaryUnit, string secondaryUnit, string expected)
+    public void FormatTimeUnit_pluralizes_and_joins_secondary(
+        int primary,
+        int secondary,
+        string primaryUnit,
+        string secondaryUnit,
+        string expected
+    )
     {
-        string result = (string)InvokeUpcomingBaseStatic("FormatTimeUnit", primary, secondary, primaryUnit, secondaryUnit)!;
+        string result = (string)
+            InvokeUpcomingBaseStatic("FormatTimeUnit", primary, secondary, primaryUnit, secondaryUnit)!;
         Assert.Equal(expected, result);
     }
 
@@ -278,19 +335,22 @@ public class UpcomingSectionBaseTests
 
     private static object? InvokeUpcomingBaseStatic(string name, params object?[] args)
     {
-        MethodInfo method = s_upcomingBaseType.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)
+        MethodInfo method =
+            s_upcomingBaseType.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)
             ?? throw new InvalidOperationException($"Private static '{name}' not found on {s_upcomingBaseType.Name}.");
         return method.Invoke(null, args);
     }
 
     private TestUpcomingSection MakeSection(
         Func<RadarrCalendarDto[]>? calendarProvider = null,
-        Func<RadarrCalendarDto, BaseItemDto>? dtoCreator = null)
+        Func<RadarrCalendarDto, BaseItemDto>? dtoCreator = null
+    )
     {
         ImageCacheService imageCacheService = new ImageCacheService(
             NullLogger<ImageCacheService>.Instance,
             _fixture.Paths,
-            new HttpClient());
+            new HttpClient()
+        );
 
         return new TestUpcomingSection(
             new Mock<IUserManager>().Object,
@@ -300,7 +360,8 @@ public class UpcomingSectionBaseTests
             imageCacheService,
             NullLogger<TestUpcomingSection>.Instance,
             calendarProvider ?? (() => []),
-            dtoCreator);
+            dtoCreator
+        );
     }
 
     private sealed class TestUpcomingSection : UpcomingSectionBase<RadarrCalendarDto>
@@ -316,7 +377,8 @@ public class UpcomingSectionBaseTests
             ImageCacheService imageCacheService,
             Microsoft.Extensions.Logging.ILogger logger,
             Func<RadarrCalendarDto[]> calendarProvider,
-            Func<RadarrCalendarDto, BaseItemDto>? dtoCreator)
+            Func<RadarrCalendarDto, BaseItemDto>? dtoCreator
+        )
             : base(userManager, libraryManager, dtoService, arrApiService, imageCacheService, logger)
         {
             _calendarProvider = calendarProvider;
@@ -389,11 +451,7 @@ public class UpcomingSectionBaseTests
 
         public override HomeScreenSectionInfo GetInfo()
         {
-            return new HomeScreenSectionInfo
-            {
-                Section = Section,
-                DisplayText = DisplayText
-            };
+            return new HomeScreenSectionInfo { Section = Section, DisplayText = DisplayText };
         }
     }
 }

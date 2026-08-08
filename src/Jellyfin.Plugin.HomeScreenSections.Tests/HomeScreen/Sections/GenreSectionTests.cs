@@ -34,7 +34,8 @@ public class GenreSectionTests
             new CollectionManagerProxy(_collectionManager.Object),
             _userDataManager.Object,
             _dtoService.Object,
-            _userViewManager.Object);
+            _userViewManager.Object
+        );
     }
 
     [Fact]
@@ -84,12 +85,8 @@ public class GenreSectionTests
     {
         Guid userId = Guid.NewGuid();
         User user = new("GenreViewer", "AuthProvider", "PasswordResetProvider");
-        _userManager
-            .Setup(manager => manager.GetUserById(userId))
-            .Returns(user);
-        _libraryManager
-            .Setup(manager => manager.GetVirtualFolders())
-            .Returns([]);
+        _userManager.Setup(manager => manager.GetUserById(userId)).Returns(user);
+        _libraryManager.Setup(manager => manager.GetVirtualFolders()).Returns([]);
 
         GenreSection section = MakeSection();
 
@@ -103,7 +100,8 @@ public class GenreSectionTests
         Dictionary<string, int> recent = new(StringComparer.Ordinal) { ["Action"] = 4, ["Comedy"] = 2 };
         Dictionary<string, int> liked = new(StringComparer.Ordinal) { ["Drama"] = 1 };
 
-        (string Genre, int Score)[] combined = ((string Genre, int Score)[])InvokeGenreStatic("CombineGenreScores", playCount, recent, liked)!;
+        (string Genre, int Score)[] combined = ((string Genre, int Score)[])
+            InvokeGenreStatic("CombineGenreScores", playCount, recent, liked)!;
 
         Dictionary<string, int> byGenre = combined.ToDictionary(x => x.Genre, x => x.Score, StringComparer.Ordinal);
         Assert.Equal(14, byGenre["Action"]);
@@ -121,11 +119,17 @@ public class GenreSectionTests
         Dictionary<Guid, UserItemData?> userDataCache = new()
         {
             [actionMovie.Id] = new UserItemData { Key = "a", PlayCount = 3 },
-            [dramaMovie.Id] = new UserItemData { Key = "d", PlayCount = 2 }
+            [dramaMovie.Id] = new UserItemData { Key = "d", PlayCount = 2 },
         };
 
-        Dictionary<string, int> scores = (Dictionary<string, int>)InvokeGenreStatic(
-            "BuildPlayCountScores", new List<Movie> { actionMovie, dramaMovie }, userDataCache, 10)!;
+        Dictionary<string, int> scores =
+            (Dictionary<string, int>)
+                InvokeGenreStatic(
+                    "BuildPlayCountScores",
+                    new List<Movie> { actionMovie, dramaMovie },
+                    userDataCache,
+                    10
+                )!;
 
         Assert.Equal(30, scores["Action"]);
         Assert.Equal(30, scores["Thriller"]);
@@ -143,11 +147,17 @@ public class GenreSectionTests
         {
             [recent.Id] = new UserItemData { Key = "r", LastPlayedDate = DateTime.Now },
             [old.Id] = new UserItemData { Key = "o", LastPlayedDate = DateTime.Today.Subtract(TimeSpan.FromDays(30)) },
-            [unknown.Id] = null
+            [unknown.Id] = null,
         };
 
-        Dictionary<string, int> scores = (Dictionary<string, int>)InvokeGenreStatic(
-            "BuildRecentlyWatchedScores", new List<Movie> { recent, old, unknown }, userDataCache, 5)!;
+        Dictionary<string, int> scores =
+            (Dictionary<string, int>)
+                InvokeGenreStatic(
+                    "BuildRecentlyWatchedScores",
+                    new List<Movie> { recent, old, unknown },
+                    userDataCache,
+                    5
+                )!;
 
         Assert.Equal(5, scores["Sci-Fi"]);
         Assert.False(scores.ContainsKey("Horror"));
@@ -205,7 +215,8 @@ public class GenreSectionTests
 
     private static object? InvokeGenreStatic(string name, params object?[] args)
     {
-        MethodInfo method = typeof(GenreSection).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)
+        MethodInfo method =
+            typeof(GenreSection).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)
             ?? throw new InvalidOperationException($"Private static '{name}' not found on {nameof(GenreSection)}.");
         return method.Invoke(null, args);
     }

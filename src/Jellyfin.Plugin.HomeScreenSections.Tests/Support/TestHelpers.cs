@@ -21,12 +21,8 @@ public static class TestIO
                 Directory.Delete(path, recursive: true);
             }
         }
-        catch (IOException)
-        {
-        }
-        catch (UnauthorizedAccessException)
-        {
-        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 }
 
@@ -39,12 +35,17 @@ public static class TestDtos
     public static void StubPassthrough(Mock<IDtoService> dtoService)
     {
         dtoService
-            .Setup(service => service.GetBaseItemDtos(
-                It.IsAny<IReadOnlyList<BaseItem>>(),
-                It.IsAny<DtoOptions>(),
-                It.IsAny<User>(),
-                It.IsAny<BaseItem>()))
-            .Returns((IReadOnlyList<BaseItem> list, DtoOptions options, User user, BaseItem owner) =>
-                list.Select(item => new BaseItemDto { Id = item.Id, Name = item.Name }).ToArray());
+            .Setup(service =>
+                service.GetBaseItemDtos(
+                    It.IsAny<IReadOnlyList<BaseItem>>(),
+                    It.IsAny<DtoOptions>(),
+                    It.IsAny<User>(),
+                    It.IsAny<BaseItem>()
+                )
+            )
+            .Returns(
+                (IReadOnlyList<BaseItem> list, DtoOptions options, User user, BaseItem owner) =>
+                    list.Select(item => new BaseItemDto { Id = item.Id, Name = item.Name }).ToArray()
+            );
     }
 }

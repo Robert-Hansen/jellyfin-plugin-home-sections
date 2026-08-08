@@ -7,8 +7,8 @@ using Jellyfin.Plugin.HomeScreenSections.Library;
 using Jellyfin.Plugin.HomeScreenSections.Model.Dto;
 using Jellyfin.Plugin.HomeScreenSections.Services;
 using Jellyfin.Plugin.HomeScreenSections.Tests.Support;
-using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Collections;
+using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
@@ -41,28 +41,27 @@ public class ServiceInternalPathsTests
     {
         _ = fixture;
 
-        MediaBrowser.Model.Configuration.ServerConfiguration serverConfiguration = new MediaBrowser.Model.Configuration.ServerConfiguration
-        {
-            UICulture = "de-DE"
-        };
-        _serverConfigurationManager
-            .Setup(manager => manager.Configuration)
-            .Returns(serverConfiguration);
+        MediaBrowser.Model.Configuration.ServerConfiguration serverConfiguration =
+            new MediaBrowser.Model.Configuration.ServerConfiguration { UICulture = "de-DE" };
+        _serverConfigurationManager.Setup(manager => manager.Configuration).Returns(serverConfiguration);
 
         _translationManager
-            .Setup(manager => manager.Translate(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<TranslationMetadata?>()))
+            .Setup(manager =>
+                manager.Translate(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<TranslationMetadata?>()
+                )
+            )
             .Returns((string key, string language, string fallback, TranslationMetadata? metadata) => fallback);
 
-        _userManager
-            .Setup(manager => manager.GetUserById(_userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(_userId)).Returns(_user);
     }
 
-    private HomeScreenSectionService MakeService(MediaBrowser.Controller.Collections.ICollectionManager? collectionManager = null)
+    private HomeScreenSectionService MakeService(
+        MediaBrowser.Controller.Collections.ICollectionManager? collectionManager = null
+    )
     {
         return new HomeScreenSectionService(
             _homeScreenManager.Object,
@@ -74,25 +73,22 @@ public class ServiceInternalPathsTests
             _libraryManager.Object,
             _dtoService.Object,
             new CollectionManagerProxy(collectionManager ?? _collectionManager.Object),
-            _playlistManager.Object);
+            _playlistManager.Object
+        );
     }
 
     private static PluginDefinedSection MakeSection(string additionalData)
     {
         return new PluginDefinedSection("LinkSection", "Link Section", additionalData: additionalData)
         {
-            OnGetResults = _ => new QueryResult<BaseItemDto>()
+            OnGetResults = _ => new QueryResult<BaseItemDto>(),
         };
     }
 
     private Guid SeedPage(IHomeScreenSection section)
     {
         Guid pageHash = Guid.NewGuid();
-        UserSectionsData data = new UserSectionsData
-        {
-            UserId = _userId,
-            MaxOrderIndex = 0
-        };
+        UserSectionsData data = new UserSectionsData { UserId = _userId, MaxOrderIndex = 0 };
         data.OrderedSections[0] = [section];
         _dataCache.Cache[pageHash] = data;
         return pageHash;
@@ -109,7 +105,8 @@ public class ServiceInternalPathsTests
         Assert.NotNull(result);
         _translationManager.Verify(
             manager => manager.Translate("LinkSection", "de-DE", "Link Section", null),
-            Times.Once());
+            Times.Once()
+        );
     }
 
     [Fact]
@@ -119,9 +116,7 @@ public class ServiceInternalPathsTests
         Movie item = new Movie { Id = itemId, Name = "Linked Movie" };
         BaseItemDto marker = new BaseItemDto { Id = itemId, Name = "Linked Movie" };
 
-        _libraryManager
-            .Setup(manager => manager.GetItemById(itemId))
-            .Returns(item);
+        _libraryManager.Setup(manager => manager.GetItemById(itemId)).Returns(item);
         _dtoService
             .Setup(service => service.GetBaseItemDto(item, It.IsAny<DtoOptions>(), _user, It.IsAny<BaseItem>()))
             .Returns(marker);
@@ -140,9 +135,7 @@ public class ServiceInternalPathsTests
         Genre genre = new Genre { Id = Guid.NewGuid(), Name = "Action" };
         BaseItemDto marker = new BaseItemDto { Id = genre.Id, Name = "Action" };
 
-        _libraryManager
-            .Setup(manager => manager.GetGenre("Action"))
-            .Returns(genre);
+        _libraryManager.Setup(manager => manager.GetGenre("Action")).Returns(genre);
         _dtoService
             .Setup(service => service.GetBaseItemDto(genre, It.IsAny<DtoOptions>(), _user, It.IsAny<BaseItem>()))
             .Returns(marker);
@@ -160,11 +153,7 @@ public class ServiceInternalPathsTests
     {
         // ResolveTitleLinkByName tries collections first; FakeCollectionManager exposes the
         // private GetCollections(User) the proxy resolves via reflection.
-        TestBoxSet collection = new(Array.Empty<BaseItem>())
-        {
-            Id = Guid.NewGuid(),
-            Name = "My Collection"
-        };
+        TestBoxSet collection = new(Array.Empty<BaseItem>()) { Id = Guid.NewGuid(), Name = "My Collection" };
         BaseItemDto marker = new BaseItemDto { Id = collection.Id, Name = "My Collection" };
 
         _dtoService
@@ -183,16 +172,10 @@ public class ServiceInternalPathsTests
     public void TitleLink_resolves_playlist_name_additional_data()
     {
         Guid playlistId = Guid.NewGuid();
-        TestPlaylist playlist = new(Array.Empty<BaseItem>())
-        {
-            Id = playlistId,
-            Name = "Road Trip"
-        };
+        TestPlaylist playlist = new(Array.Empty<BaseItem>()) { Id = playlistId, Name = "Road Trip" };
         BaseItemDto marker = new BaseItemDto { Id = playlistId, Name = "Road Trip" };
 
-        _playlistManager
-            .Setup(manager => manager.GetPlaylists(_userId))
-            .Returns([playlist]);
+        _playlistManager.Setup(manager => manager.GetPlaylists(_userId)).Returns([playlist]);
         _dtoService
             .Setup(service => service.GetBaseItemDto(playlist, It.IsAny<DtoOptions>(), _user, It.IsAny<BaseItem>()))
             .Returns(marker);
@@ -209,9 +192,7 @@ public class ServiceInternalPathsTests
     public void TitleLink_stays_null_when_resolution_throws()
     {
         Guid itemId = Guid.NewGuid();
-        _libraryManager
-            .Setup(manager => manager.GetItemById(itemId))
-            .Throws(new InvalidOperationException("boom"));
+        _libraryManager.Setup(manager => manager.GetItemById(itemId)).Throws(new InvalidOperationException("boom"));
 
         HomeScreenSectionService service = MakeService();
         Guid pageHash = SeedPage(MakeSection(itemId.ToString()));
@@ -227,8 +208,13 @@ public class ServiceInternalPathsTests
         HomeScreenSectionService service = MakeService();
         Guid pageHash = SeedPage(MakeSection(string.Empty));
 
-        IReadOnlyList<HomeScreenSectionInfo>? result =
-            service.MonitorLiveUpdatedSectionsForUser(_userId, "en", 1, 10, pageHash);
+        IReadOnlyList<HomeScreenSectionInfo>? result = service.MonitorLiveUpdatedSectionsForUser(
+            _userId,
+            "en",
+            1,
+            10,
+            pageHash
+        );
 
         Assert.NotNull(result);
         Assert.Equal("LinkSection", Assert.Single(result!).Section);
@@ -241,7 +227,12 @@ public class ServiceInternalPathsTests
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "OnDemand", Enabled = true, OrderIndex = 0 }
+            new SectionSettings
+            {
+                SectionId = "OnDemand",
+                Enabled = true,
+                OrderIndex = 0,
+            },
         ];
         try
         {
@@ -250,13 +241,15 @@ public class ServiceInternalPathsTests
                 .Returns(new ModularHomeUserSettings { UserId = _userId, EnabledSections = ["OnDemand"] });
             _homeScreenManager
                 .Setup(manager => manager.GetSectionTypes())
-                .Returns(new IHomeScreenSection[]
-                {
-                    new PluginDefinedSection("OnDemand", "On Demand")
+                .Returns(
+                    new IHomeScreenSection[]
                     {
-                        OnGetResults = _ => new QueryResult<BaseItemDto>()
+                        new PluginDefinedSection("OnDemand", "On Demand")
+                        {
+                            OnGetResults = _ => new QueryResult<BaseItemDto>(),
+                        },
                     }
-                });
+                );
 
             HomeScreenSectionService service = MakeService();
             Guid pageHash = Guid.NewGuid();
@@ -267,8 +260,13 @@ public class ServiceInternalPathsTests
             // exercising the pageHash branch end to end.
             service.CacheSectionsForUser(_userId, pageHash);
 
-            IReadOnlyList<HomeScreenSectionInfo>? result =
-                service.MonitorLiveUpdatedSectionsForUser(_userId, "en", 1, 10, pageHash);
+            IReadOnlyList<HomeScreenSectionInfo>? result = service.MonitorLiveUpdatedSectionsForUser(
+                _userId,
+                "en",
+                1,
+                10,
+                pageHash
+            );
 
             Assert.NotNull(result);
             Assert.Equal("OnDemand", Assert.Single(result!).Section);
@@ -286,7 +284,12 @@ public class ServiceInternalPathsTests
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "Throwing", Enabled = true, OrderIndex = 0 }
+            new SectionSettings
+            {
+                SectionId = "Throwing",
+                Enabled = true,
+                OrderIndex = 0,
+            },
         ];
         try
         {
@@ -303,7 +306,13 @@ public class ServiceInternalPathsTests
             // Must not throw despite the section's CreateInstances exploding.
             service.CacheSectionsForUser(_userId, pageHash);
 
-            IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(_userId, "en", 1, 10, pageHash);
+            IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(
+                _userId,
+                "en",
+                1,
+                10,
+                pageHash
+            );
             Assert.NotNull(result);
             Assert.Empty(result!);
         }
@@ -339,11 +348,7 @@ public class ServiceInternalPathsTests
 
         public HomeScreenSectionInfo GetInfo()
         {
-            return new HomeScreenSectionInfo
-            {
-                Section = Section,
-                DisplayText = DisplayText
-            };
+            return new HomeScreenSectionInfo { Section = Section, DisplayText = DisplayText };
         }
     }
 }

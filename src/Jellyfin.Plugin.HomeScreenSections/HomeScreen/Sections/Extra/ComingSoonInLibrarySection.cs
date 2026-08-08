@@ -50,17 +50,19 @@ public class ComingSoonInLibrarySection : IHomeScreenSection
         DtoOptions dtoOptions = SectionDtoHelper.CreateDefaultDtoOptions();
         DateTime today = DateTime.UtcNow.Date;
 
-        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(new InternalItemsQuery(user)
-        {
-            IncludeItemTypes = SectionDtoHelper.MovieSeriesEpisodeKinds,
-            Recursive = true,
-            MinPremiereDate = today,
-            MaxPremiereDate = today.AddDays(90),
-            Limit = 24,
-            OrderBy = [(ItemSortBy.PremiereDate, SortOrder.Ascending)],
-            DtoOptions = dtoOptions,
-            EnableTotalRecordCount = false
-        });
+        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(
+            new InternalItemsQuery(user)
+            {
+                IncludeItemTypes = SectionDtoHelper.MovieSeriesEpisodeKinds,
+                Recursive = true,
+                MinPremiereDate = today,
+                MaxPremiereDate = today.AddDays(90),
+                Limit = 24,
+                OrderBy = [(ItemSortBy.PremiereDate, SortOrder.Ascending)],
+                DtoOptions = dtoOptions,
+                EnableTotalRecordCount = false,
+            }
+        );
 
         return new QueryResult<BaseItemDto>(_dtoService.GetBaseItemDtos(items.Items, dtoOptions, user));
     }
@@ -70,5 +72,5 @@ public class ComingSoonInLibrarySection : IHomeScreenSection
         yield return this;
     }
 
-public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
+    public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
 }

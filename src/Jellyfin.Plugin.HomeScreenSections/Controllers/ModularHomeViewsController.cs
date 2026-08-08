@@ -1,12 +1,12 @@
 using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.Library;
+using Jellyfin.Plugin.HomeScreenSections.Services;
 using MediaBrowser.Model;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Querying;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Jellyfin.Plugin.HomeScreenSections.Services;
 
 namespace Jellyfin.Plugin.HomeScreenSections.Controllers
 {
@@ -27,7 +27,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         /// <param name="logger">Instance of <see cref="ILogger"/> interface.</param>
         /// <param name="homeScreenManager">Instance of <see cref="IHomeScreenManager"/> interface.</param>
         /// <param name="translationManager">Instance of <see cref="ITranslationManager"/> interface.</param>
-        public ModularHomeViewsController(ILogger<ModularHomeViewsController> logger, IHomeScreenManager homeScreenManager, ITranslationManager translationManager)
+        public ModularHomeViewsController(
+            ILogger<ModularHomeViewsController> logger,
+            IHomeScreenManager homeScreenManager,
+            ITranslationManager translationManager
+        )
         {
             _logger = logger;
             _homeScreenManager = homeScreenManager;
@@ -69,7 +73,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
                 if (!string.IsNullOrWhiteSpace(language) && item.DisplayText != null)
                 {
                     item.DisplayText = _translationManager.Translate(
-                        item.Section!, language.Trim(), item.DisplayText, section.TranslationMetadata);
+                        item.Section!,
+                        language.Trim(),
+                        item.DisplayText,
+                        section.TranslationMetadata
+                    );
                 }
 
                 items.Add(item);
@@ -91,14 +99,15 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
                 HomeScreenSectionsPlugin.Instance.Configuration.SectionSettings.Where(x => x.Enabled);
             IEnumerable<SectionSettings> adminLockedSections =
                 HomeScreenSectionsPlugin.Instance.Configuration.SectionSettings.Where(x => !x.AllowUserOverride);
-            
-            return _homeScreenManager.GetUserSettings(userId) ?? new ModularHomeUserSettings
-            {
-                UserId = userId,
-                EnabledSections = defaultEnabledSections.Select(x => x.SectionId).ToList(),
-                LockedSections = adminLockedSections.Select(x => x.SectionId).ToList(),
-                DefaultEnabledSections = defaultEnabledSections.Select(x => x.SectionId).ToList()
-            };
+
+            return _homeScreenManager.GetUserSettings(userId)
+                ?? new ModularHomeUserSettings
+                {
+                    UserId = userId,
+                    EnabledSections = defaultEnabledSections.Select(x => x.SectionId).ToList(),
+                    LockedSections = adminLockedSections.Select(x => x.SectionId).ToList(),
+                    DefaultEnabledSections = defaultEnabledSections.Select(x => x.SectionId).ToList(),
+                };
         }
 
         /// <summary>
@@ -142,14 +151,19 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
                 return NotFound("Pages is null or empty");
             }
 
-            PluginPageInfo? view = pages.FirstOrDefault(pageInfo => string.Equals(pageInfo?.Name, viewName, StringComparison.Ordinal), null);
+            PluginPageInfo? view = pages.FirstOrDefault(
+                pageInfo => string.Equals(pageInfo?.Name, viewName, StringComparison.Ordinal),
+                null
+            );
 
             if (view == null)
             {
                 return NotFound("No matching view found");
             }
 
-            Stream? stream = HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceStream(view.EmbeddedResourcePath);
+            Stream? stream = HomeScreenSectionsPlugin
+                .Instance.GetType()
+                .Assembly.GetManifestResourceStream(view.EmbeddedResourcePath);
 
             if (stream == null)
             {

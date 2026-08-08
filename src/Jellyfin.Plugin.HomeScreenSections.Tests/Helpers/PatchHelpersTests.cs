@@ -10,20 +10,25 @@ public class PatchHelpersTests
 {
     private static void InvokeReplace(JArray sectionsArr, IReadOnlyList<HomeScreenSectionInfo> sections)
     {
-        MethodInfo method = typeof(PatchHelpers)
-            .GetMethod("ReplaceStreamyfinSections", BindingFlags.NonPublic | BindingFlags.Static)
+        MethodInfo method =
+            typeof(PatchHelpers).GetMethod("ReplaceStreamyfinSections", BindingFlags.NonPublic | BindingFlags.Static)
             ?? throw new InvalidOperationException("ReplaceStreamyfinSections not found.");
         method.Invoke(null, [sectionsArr, sections]);
     }
 
-    private static HomeScreenSectionInfo MakeInfo(string section, string displayText, SectionViewMode? viewMode, string? additionalData = null)
+    private static HomeScreenSectionInfo MakeInfo(
+        string section,
+        string displayText,
+        SectionViewMode? viewMode,
+        string? additionalData = null
+    )
     {
         return new HomeScreenSectionInfo
         {
             Section = section,
             DisplayText = displayText,
             ViewMode = viewMode,
-            AdditionalData = additionalData
+            AdditionalData = additionalData,
         };
     }
 
@@ -36,7 +41,7 @@ public class PatchHelpersTests
             MakeInfo("Discover", "Discover", SectionViewMode.Landscape),
             MakeInfo("DiscoverMovies", "Discover Movies", SectionViewMode.Landscape),
             MakeInfo("UpcomingMovies", "Upcoming Movies", SectionViewMode.Portrait),
-            MakeInfo("MyMedia", "My Media", SectionViewMode.Landscape)
+            MakeInfo("MyMedia", "My Media", SectionViewMode.Landscape),
         ];
 
         InvokeReplace(sectionsArr, sections);
@@ -52,7 +57,7 @@ public class PatchHelpersTests
         IReadOnlyList<HomeScreenSectionInfo> sections =
         [
             MakeInfo("ContinueWatching", "Continue Watching", SectionViewMode.Landscape, "extra-data"),
-            MakeInfo("Genre", "Genre", SectionViewMode.Portrait, null)
+            MakeInfo("Genre", "Genre", SectionViewMode.Portrait, null),
         ];
 
         InvokeReplace(sectionsArr, sections);

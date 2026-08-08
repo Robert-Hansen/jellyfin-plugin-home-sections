@@ -12,82 +12,83 @@ using Microsoft.AspNetCore.Http;
 
 namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 {
-	internal sealed class MyListSection : IHomeScreenSection
-	{
-		public string? Section => "MyList";
+    internal sealed class MyListSection : IHomeScreenSection
+    {
+        public string? Section => "MyList";
 
-		public string? DisplayText { get; set; } = "My List";
+        public string? DisplayText { get; set; } = "My List";
 
-		public int? Limit => 1;
+        public int? Limit => 1;
 
-		// Favorites / My List landing when the title is clicked.
-		public string? Route => "favorites";
+        // Favorites / My List landing when the title is clicked.
+        public string? Route => "favorites";
 
-		public string? AdditionalData { get; set; }
+        public string? AdditionalData { get; set; }
 
-		public object? OriginalPayload => null;
-		
-		private IUserManager UserManager { get; set; }
+        public object? OriginalPayload => null;
 
-		private IDtoService DtoService { get; set; }
+        private IUserManager UserManager { get; set; }
 
-		private IPlaylistManager PlaylistManager { get; set; }
+        private IDtoService DtoService { get; set; }
 
-		public MyListSection(IUserManager userManager, IDtoService dtoService, IPlaylistManager playlistManager)
-		{
-			UserManager = userManager;
-			DtoService = dtoService;
-			PlaylistManager = playlistManager;
-		}
+        private IPlaylistManager PlaylistManager { get; set; }
 
-		public IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
-		{
-			yield return this;
-		}
+        public MyListSection(IUserManager userManager, IDtoService dtoService, IPlaylistManager playlistManager)
+        {
+            UserManager = userManager;
+            DtoService = dtoService;
+            PlaylistManager = playlistManager;
+        }
 
-		public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
-		{
-			DtoOptions? dtoOptions = new DtoOptions
-			{
-				Fields = [ItemFields.PrimaryImageAspectRatio],
-				ImageTypeLimit = 1,
-				ImageTypes = [ImageType.Thumb,
-					ImageType.Backdrop,
-					ImageType.Primary,]
-			};
+        public IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
+        {
+            yield return this;
+        }
 
-			User user = UserManager.GetUserById(payload.UserId)!;
+        public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
+        {
+            DtoOptions? dtoOptions = new DtoOptions
+            {
+                Fields = [ItemFields.PrimaryImageAspectRatio],
+                ImageTypeLimit = 1,
+                ImageTypes = [ImageType.Thumb, ImageType.Backdrop, ImageType.Primary],
+            };
 
-			IEnumerable<Playlist> playlists = PlaylistManager.GetPlaylists(user.Id);
-			Playlist? myListPlaylist = playlists.FirstOrDefault(x => string.Equals(x.Name, "My List", StringComparison.Ordinal));
+            User user = UserManager.GetUserById(payload.UserId)!;
 
-			List<BaseItem> results = [];
+            IEnumerable<Playlist> playlists = PlaylistManager.GetPlaylists(user.Id);
+            Playlist? myListPlaylist = playlists.FirstOrDefault(x =>
+                string.Equals(x.Name, "My List", StringComparison.Ordinal)
+            );
 
-			if (myListPlaylist != null)
-			{
-				results.AddRange(myListPlaylist.GetChildren(user, true, new InternalItemsQuery(user)
-				{
-					IsAiring = true
-				}));
-			}
+            List<BaseItem> results = [];
 
-			QueryResult<BaseItemDto>? result = new QueryResult<BaseItemDto>(DtoService.GetBaseItemDtos(results, dtoOptions, user));
+            if (myListPlaylist != null)
+            {
+                results.AddRange(
+                    myListPlaylist.GetChildren(user, true, new InternalItemsQuery(user) { IsAiring = true })
+                );
+            }
 
-			return result;
-		}
-		
-		public HomeScreenSectionInfo GetInfo()
-		{
-			return new HomeScreenSectionInfo
-			{
-				Section = Section,
-				DisplayText = DisplayText,
-				AdditionalData = AdditionalData,
-				Route = Route,
-				Limit = Limit ?? 1,
-				OriginalPayload = OriginalPayload,
-				ViewMode = SectionViewMode.Landscape
-			};
-		}
-	}
+            QueryResult<BaseItemDto>? result = new QueryResult<BaseItemDto>(
+                DtoService.GetBaseItemDtos(results, dtoOptions, user)
+            );
+
+            return result;
+        }
+
+        public HomeScreenSectionInfo GetInfo()
+        {
+            return new HomeScreenSectionInfo
+            {
+                Section = Section,
+                DisplayText = DisplayText,
+                AdditionalData = AdditionalData,
+                Route = Route,
+                Limit = Limit ?? 1,
+                OriginalPayload = OriginalPayload,
+                ViewMode = SectionViewMode.Landscape,
+            };
+        }
+    }
 }

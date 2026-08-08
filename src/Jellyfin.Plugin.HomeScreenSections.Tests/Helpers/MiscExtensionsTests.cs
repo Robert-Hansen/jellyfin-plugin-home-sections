@@ -47,15 +47,27 @@ public class MiscExtensionsTests
         Mock<ILibraryManager> libraryManager = new();
         libraryManager
             .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
-            .Returns((InternalItemsQuery query) =>
-                query.ItemIds != null && query.ItemIds.Contains(accessibleId)
-                    ? new BaseItem[] { accessibleItem }
-                    : []);
+            .Returns(
+                (InternalItemsQuery query) =>
+                    query.ItemIds != null && query.ItemIds.Contains(accessibleId)
+                        ? new BaseItem[] { accessibleItem }
+                        : []
+            );
 
         VirtualFolderInfo[] folders =
         [
-            new VirtualFolderInfo { Name = "Movies", ItemId = accessibleId.ToString(), Locations = ["/media/movies"] },
-            new VirtualFolderInfo { Name = "Gone", ItemId = inaccessibleId.ToString(), Locations = ["/media/gone"] }
+            new VirtualFolderInfo
+            {
+                Name = "Movies",
+                ItemId = accessibleId.ToString(),
+                Locations = ["/media/movies"],
+            },
+            new VirtualFolderInfo
+            {
+                Name = "Gone",
+                ItemId = inaccessibleId.ToString(),
+                Locations = ["/media/gone"],
+            },
         ];
 
         VirtualFolderInfo[] result = folders.FilterToUserPermitted(libraryManager.Object, user: null);
@@ -75,16 +87,33 @@ public class MiscExtensionsTests
         Mock<ILibraryManager> libraryManager = new();
         libraryManager
             .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
-            .Returns((InternalItemsQuery query) =>
-                query.ItemIds != null && query.ItemIds.Contains(accessibleId)
-                    ? new BaseItem[] { accessibleItem }
-                    : []);
+            .Returns(
+                (InternalItemsQuery query) =>
+                    query.ItemIds != null && query.ItemIds.Contains(accessibleId)
+                        ? new BaseItem[] { accessibleItem }
+                        : []
+            );
 
         VirtualFolderInfo[] folders =
         [
-            new VirtualFolderInfo { Name = "Movies", ItemId = accessibleId.ToString(), Locations = ["/media/movies"] },
-            new VirtualFolderInfo { Name = "NoId", ItemId = null, Locations = ["/media/noid"] },
-            new VirtualFolderInfo { Name = "BadId", ItemId = "not-a-guid", Locations = ["/media/badid"] }
+            new VirtualFolderInfo
+            {
+                Name = "Movies",
+                ItemId = accessibleId.ToString(),
+                Locations = ["/media/movies"],
+            },
+            new VirtualFolderInfo
+            {
+                Name = "NoId",
+                ItemId = null,
+                Locations = ["/media/noid"],
+            },
+            new VirtualFolderInfo
+            {
+                Name = "BadId",
+                ItemId = "not-a-guid",
+                Locations = ["/media/badid"],
+            },
         ];
 
         VirtualFolderInfo[] result = folders.FilterToUserPermitted(libraryManager.Object, user: null);
@@ -98,13 +127,16 @@ public class MiscExtensionsTests
     {
         // The LatestItemExcludes branch also parses ItemId; null entries must not throw.
         Mock<ILibraryManager> libraryManager = new();
-        libraryManager
-            .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
-            .Returns([]);
+        libraryManager.Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>())).Returns([]);
 
         VirtualFolderInfo[] folders =
         [
-            new VirtualFolderInfo { Name = "NoId", ItemId = null, Locations = ["/media/noid"] }
+            new VirtualFolderInfo
+            {
+                Name = "NoId",
+                ItemId = null,
+                Locations = ["/media/noid"],
+            },
         ];
         User user = new("Viewer", "AuthProvider", "PasswordResetProvider");
 
@@ -122,14 +154,21 @@ public class MiscExtensionsTests
         Mock<ILibraryManager> libraryManager = new();
         libraryManager
             .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
-            .Returns((InternalItemsQuery query) =>
-                query.ItemIds != null && query.ItemIds.Contains(accessibleId)
-                    ? new BaseItem[] { accessibleItem }
-                    : []);
+            .Returns(
+                (InternalItemsQuery query) =>
+                    query.ItemIds != null && query.ItemIds.Contains(accessibleId)
+                        ? new BaseItem[] { accessibleItem }
+                        : []
+            );
 
         VirtualFolderInfo[] folders =
         [
-            new VirtualFolderInfo { Name = "Movies", ItemId = accessibleId.ToString(), Locations = ["/media/movies"] }
+            new VirtualFolderInfo
+            {
+                Name = "Movies",
+                ItemId = accessibleId.ToString(),
+                Locations = ["/media/movies"],
+            },
         ];
         User user = new("Viewer", "AuthProvider", "PasswordResetProvider");
 

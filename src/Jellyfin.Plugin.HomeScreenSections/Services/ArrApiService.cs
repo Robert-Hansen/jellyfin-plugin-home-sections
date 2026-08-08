@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Microsoft.Extensions.Logging;
 using Jellyfin.Plugin.HomeScreenSections.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.HomeScreenSections.Services
 {
@@ -9,14 +9,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         Sonarr,
         Radarr,
         Lidarr,
-        Readarr
+        Readarr,
     }
 
     public class ArrApiService
     {
         private static readonly System.Text.Json.JsonSerializerOptions s_calendarJsonOptions = new()
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
         };
 
         private readonly ILogger<ArrApiService> _logger;
@@ -27,8 +27,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             _logger = logger;
             _httpClient = httpClient;
         }
-        
-        private static PluginConfiguration Config => HomeScreenSectionsPlugin.Instance?.Configuration ?? new PluginConfiguration();
+
+        private static PluginConfiguration Config =>
+            HomeScreenSectionsPlugin.Instance?.Configuration ?? new PluginConfiguration();
 
         public async Task<T[]?> GetArrCalendarAsync<T>(ArrServiceType serviceType, DateTime startDate, DateTime endDate)
         {
@@ -44,7 +45,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 return await FetchCalendarItemsAsync<T>(serviceType, url, apiKey, serviceName, startDate, endDate);
             }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or NotSupportedException or InvalidOperationException)
+            catch (Exception ex)
+                when (ex
+                        is HttpRequestException
+                            or TaskCanceledException
+                            or JsonException
+                            or NotSupportedException
+                            or InvalidOperationException
+                )
             {
                 if (ex is JsonException)
                 {
@@ -69,7 +77,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             string apiKey,
             string? serviceName,
             DateTime startDate,
-            DateTime endDate)
+            DateTime endDate
+        )
         {
             string requestUrl = BuildCalendarRequestUrl(serviceType, url, startDate, endDate);
 
@@ -97,7 +106,12 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             return calendarItems ?? [];
         }
 
-        private static string BuildCalendarRequestUrl(ArrServiceType serviceType, string url, DateTime startDate, DateTime endDate)
+        private static string BuildCalendarRequestUrl(
+            ArrServiceType serviceType,
+            string url,
+            DateTime startDate,
+            DateTime endDate
+        )
         {
             var culture = System.Globalization.CultureInfo.InvariantCulture;
             string startParam = startDate.ToString("yyyy-MM-ddTHH:mm:ssZ", culture);
@@ -108,7 +122,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 ArrServiceType.Radarr => ($"start={startParam}&end={endParam}", "v3"),
                 ArrServiceType.Lidarr => ($"start={startParam}&end={endParam}", "v1"),
                 ArrServiceType.Readarr => ($"includeAuthor=true&start={startParam}&end={endParam}", "v1"),
-                _ => ($"start={startParam}&end={endParam}", "v3")
+                _ => ($"start={startParam}&end={endParam}", "v3"),
             };
             return $"{url.TrimEnd('/')}/api/{apiVersion}/calendar?{queryParams}";
         }
@@ -121,7 +135,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 ArrServiceType.Radarr => (Config.Radarr.Url, Config.Radarr.ApiKey, "Radarr"),
                 ArrServiceType.Lidarr => (Config.Lidarr.Url, Config.Lidarr.ApiKey, "Lidarr"),
                 ArrServiceType.Readarr => (Config.Readarr.Url, Config.Readarr.ApiKey, "Readarr"),
-                _ => throw new ArgumentOutOfRangeException(nameof(serviceType), serviceType, "Unsupported service type")
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(serviceType),
+                    serviceType,
+                    "Unsupported service type"
+                ),
             };
         }
 
@@ -133,7 +151,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 TimeframeUnit.Weeks => startDate.AddDays(timeframeValue * 7),
                 TimeframeUnit.Months => startDate.AddMonths(timeframeValue),
                 TimeframeUnit.Years => startDate.AddYears(timeframeValue),
-                _ => startDate.AddDays(timeframeValue)
+                _ => startDate.AddDays(timeframeValue),
             };
         }
 
@@ -147,7 +165,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 "MM/DD/YYYY" => date.ToString($"MM{delimiter}dd{delimiter}yyyy", culture),
                 "DD/MM" => date.ToString($"dd{delimiter}MM", culture),
                 "MM/DD" => date.ToString($"MM{delimiter}dd", culture),
-                _ => date.ToString($"yyyy{delimiter}MM{delimiter}dd", culture)
+                _ => date.ToString($"yyyy{delimiter}MM{delimiter}dd", culture),
             };
         }
     }

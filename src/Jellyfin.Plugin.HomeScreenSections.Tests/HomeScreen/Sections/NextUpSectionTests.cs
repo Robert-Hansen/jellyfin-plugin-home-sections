@@ -37,32 +37,36 @@ public class NextUpSectionTests
             _dtoService.Object,
             _libraryManager.Object,
             _sessionManager.Object,
-            _tvSeriesManager.Object);
+            _tvSeriesManager.Object
+        );
     }
 
     private void SetupNextUp(params BaseItem[] items)
     {
-        _userManager
-            .Setup(manager => manager.GetUserById(_userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(_userId)).Returns(_user);
 
         _tvSeriesManager
             .Setup(manager => manager.GetNextUp(It.IsAny<NextUpQuery>(), It.IsAny<DtoOptions>()))
-            .Callback<NextUpQuery, DtoOptions>((query, options) =>
-            {
-                _capturedQuery = query;
-                _capturedOptions = options;
-            })
+            .Callback<NextUpQuery, DtoOptions>(
+                (query, options) =>
+                {
+                    _capturedQuery = query;
+                    _capturedOptions = options;
+                }
+            )
             .Returns(new QueryResult<BaseItem>(items));
 
         // GetBaseItemDtos' fourth parameter is optional, and expression trees cannot be
         // compiled against optional arguments, so it is matched explicitly.
         _dtoService
-            .Setup(service => service.GetBaseItemDtos(
-                It.IsAny<IReadOnlyList<BaseItem>>(),
-                It.IsAny<DtoOptions>(),
-                It.IsAny<User>(),
-                It.IsAny<BaseItem>()))
+            .Setup(service =>
+                service.GetBaseItemDtos(
+                    It.IsAny<IReadOnlyList<BaseItem>>(),
+                    It.IsAny<DtoOptions>(),
+                    It.IsAny<User>(),
+                    It.IsAny<BaseItem>()
+                )
+            )
             .Returns(items.Select(_ => new BaseItemDto { Id = Guid.NewGuid() }).ToArray());
     }
 
@@ -72,7 +76,10 @@ public class NextUpSectionTests
         SetupNextUp();
         NextUpSection section = MakeSection();
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.NotNull(result);
         Assert.NotNull(_capturedQuery);
@@ -89,10 +96,7 @@ public class NextUpSectionTests
     {
         SetupNextUp();
         NextUpSection section = MakeSection();
-        FakeQueryCollection query = new FakeQueryCollection
-        {
-            ["EnableRewatching"] = "false"
-        };
+        FakeQueryCollection query = new FakeQueryCollection { ["EnableRewatching"] = "false" };
 
         section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, query);
 
@@ -104,10 +108,7 @@ public class NextUpSectionTests
     {
         SetupNextUp();
         NextUpSection section = MakeSection();
-        FakeQueryCollection query = new FakeQueryCollection
-        {
-            ["EnableRewatching"] = "TRUE"
-        };
+        FakeQueryCollection query = new FakeQueryCollection { ["EnableRewatching"] = "TRUE" };
 
         section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, query);
 
@@ -120,10 +121,7 @@ public class NextUpSectionTests
     {
         SetupNextUp();
         NextUpSection section = MakeSection();
-        FakeQueryCollection query = new FakeQueryCollection
-        {
-            ["NextUpDateCutoff"] = "2026-01-05"
-        };
+        FakeQueryCollection query = new FakeQueryCollection { ["NextUpDateCutoff"] = "2026-01-05" };
 
         section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, query);
 
@@ -135,10 +133,7 @@ public class NextUpSectionTests
     {
         SetupNextUp();
         NextUpSection section = MakeSection();
-        FakeQueryCollection query = new FakeQueryCollection
-        {
-            ["NextUpDateCutoff"] = "not-a-date"
-        };
+        FakeQueryCollection query = new FakeQueryCollection { ["NextUpDateCutoff"] = "not-a-date" };
 
         section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, query);
 
@@ -151,7 +146,10 @@ public class NextUpSectionTests
         SetupNextUp(new MediaBrowser.Controller.Entities.Movies.Movie());
         NextUpSection section = MakeSection();
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Single(result.Items);
         Assert.Equal(1, result.TotalRecordCount);
@@ -186,7 +184,10 @@ public class NextUpSectionTests
     {
         NextUpSection section = MakeSection();
 
-        List<Jellyfin.Plugin.HomeScreenSections.Library.IHomeScreenSection> instances = [.. section.CreateInstances(_userId, 5)];
+        List<Jellyfin.Plugin.HomeScreenSections.Library.IHomeScreenSection> instances =
+        [
+            .. section.CreateInstances(_userId, 5),
+        ];
 
         Assert.Single(instances);
         Assert.Same(section, instances[0]);

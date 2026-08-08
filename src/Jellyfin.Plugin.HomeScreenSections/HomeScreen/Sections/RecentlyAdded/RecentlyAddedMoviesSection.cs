@@ -25,10 +25,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.RecentlyAdded
         protected override BaseItemKind SectionItemKind => BaseItemKind.Movie;
 
         protected override CollectionType CollectionType => CollectionType.movies;
-        
+
         protected override CollectionTypeOptions CollectionTypeOptions => CollectionTypeOptions.movies;
 
-        protected override string? LibraryId => HomeScreenSectionsPlugin.Instance?.Configuration?.DefaultMoviesLibraryId;
+        protected override string? LibraryId =>
+            HomeScreenSectionsPlugin.Instance?.Configuration?.DefaultMoviesLibraryId;
 
         protected override SectionViewMode DefaultViewMode => SectionViewMode.Landscape;
 
@@ -39,12 +40,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.RecentlyAdded
         /// <param name="userManager">Instance of <see href="IUserManager" /> interface.</param>
         /// <param name="libraryManager"></param>
         /// <param name="dtoService">Instance of <see href="IDtoService" /> interface.</param>
-        public RecentlyAddedMoviesSection(IUserViewManager userViewManager,
+        public RecentlyAddedMoviesSection(
+            IUserViewManager userViewManager,
             IUserManager userManager,
             ILibraryManager libraryManager,
             IDtoService dtoService,
-            IServiceProvider serviceProvider) : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider)
-        {
-        }
+            IServiceProvider serviceProvider
+        )
+            : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider) { }
     }
 }

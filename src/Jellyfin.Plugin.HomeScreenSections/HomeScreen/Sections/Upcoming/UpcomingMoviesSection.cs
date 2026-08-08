@@ -12,13 +12,18 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
     public class UpcomingMoviesSection : UpcomingSectionBase<RadarrCalendarDto>
     {
         public override string? Section => "UpcomingMovies";
-        
+
         public override string? DisplayText { get; set; } = "Upcoming Movies";
 
-        public UpcomingMoviesSection(IUserManager userManager, ILibraryManager libraryManager, IDtoService dtoService, ArrApiService arrApiService, ImageCacheService imageCacheService, ILogger<UpcomingMoviesSection> logger)
-            : base(userManager, libraryManager, dtoService, arrApiService, imageCacheService, logger)
-        {
-        }
+        public UpcomingMoviesSection(
+            IUserManager userManager,
+            ILibraryManager libraryManager,
+            IDtoService dtoService,
+            ArrApiService arrApiService,
+            ImageCacheService imageCacheService,
+            ILogger<UpcomingMoviesSection> logger
+        )
+            : base(userManager, libraryManager, dtoService, arrApiService, imageCacheService, logger) { }
 
         protected override (string? url, string? apiKey) GetServiceConfiguration(PluginConfiguration config)
         {
@@ -41,7 +46,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
             {
                 config.Radarr.ConsiderCinemaRelease ? item.InCinemas : null,
                 config.Radarr.ConsiderPhysicalRelease ? item.PhysicalRelease : null,
-                config.Radarr.ConsiderDigitalRelease ? item.DigitalRelease : null
+                config.Radarr.ConsiderDigitalRelease ? item.DigitalRelease : null,
             };
             return candidates.Where(date => date.HasValue).Select(date => date!.Value).Min();
         }
@@ -50,18 +55,18 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
         {
             var config = HomeScreenSectionsPlugin.Instance.Configuration;
             return items
-                .Where(item => 
+                .Where(item =>
                 {
                     if (!item.Monitored || item.HasFile)
                     {
                         return false;
                     }
-                    
-                    bool hasValidRelease = 
-                        (config.Radarr.ConsiderCinemaRelease && item.InCinemas.HasValue) ||
-                        (config.Radarr.ConsiderPhysicalRelease && item.PhysicalRelease.HasValue) ||
-                        (config.Radarr.ConsiderDigitalRelease && item.DigitalRelease.HasValue);
-                    
+
+                    bool hasValidRelease =
+                        (config.Radarr.ConsiderCinemaRelease && item.InCinemas.HasValue)
+                        || (config.Radarr.ConsiderPhysicalRelease && item.PhysicalRelease.HasValue)
+                        || (config.Radarr.ConsiderDigitalRelease && item.DigitalRelease.HasValue);
+
                     return hasValidRelease;
                 })
                 .OrderBy(item => GetEarliestReleaseDate(item, config));
@@ -81,18 +86,20 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
 
             string yearInfo = calendarItem.Year > 0 ? $" ({calendarItem.Year})" : "";
 
-            ArrImageDto? posterImage = calendarItem.Images?.FirstOrDefault(img => 
-                string.Equals(img.CoverType, "poster", StringComparison.OrdinalIgnoreCase));
+            ArrImageDto? posterImage = calendarItem.Images?.FirstOrDefault(img =>
+                string.Equals(img.CoverType, "poster", StringComparison.OrdinalIgnoreCase)
+            );
 
             string sourceImageUrl = posterImage?.RemoteUrl ?? GetFallbackCoverUrl(calendarItem);
             string cachedImageUrl = GetCachedImageUrl(sourceImageUrl);
 
             // Create provider IDs to store external image URL and metadata
-            Dictionary<string, string> providerIds = new(StringComparer.Ordinal) {
+            Dictionary<string, string> providerIds = new(StringComparer.Ordinal)
+            {
                 { "RadarrMovieId", calendarItem.Id.ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 { "YearInfo", yearInfo },
                 { "FormattedDate", countdownText },
-                { "RadarrPoster", cachedImageUrl }
+                { "RadarrPoster", cachedImageUrl },
             };
 
             return new BaseItemDto
@@ -107,8 +114,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
                 {
                     Key = $"upcoming-movie-{calendarItem.Id}",
                     PlaybackPositionTicks = 0,
-                    IsFavorite = false
-                }
+                    IsFavorite = false,
+                },
             };
         }
 
@@ -118,14 +125,21 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
 
         public override IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
         {
-            yield return new UpcomingMoviesSection(UserManager, LibraryManager, DtoService, ArrApiService, ImageCacheService, (ILogger<UpcomingMoviesSection>)Logger)
+            yield return new UpcomingMoviesSection(
+                UserManager,
+                LibraryManager,
+                DtoService,
+                ArrApiService,
+                ImageCacheService,
+                (ILogger<UpcomingMoviesSection>)Logger
+            )
             {
                 DisplayText = DisplayText,
                 AdditionalData = AdditionalData,
-                OriginalPayload = OriginalPayload
+                OriginalPayload = OriginalPayload,
             };
         }
-        
+
         public override HomeScreenSectionInfo GetInfo()
         {
             return new HomeScreenSectionInfo
@@ -138,7 +152,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Portrait,
                 AllowViewModeChange = false,
-                ContainerClass = "upcoming-movies-section"
+                ContainerClass = "upcoming-movies-section",
             };
         }
     }

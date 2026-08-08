@@ -51,12 +51,14 @@ public class HomeScreenControllerTests
             _libraryManager.Object,
             _dtoService.Object,
             new CollectionManagerProxy(_collectionManager.Object),
-            _playlistManager.Object);
+            _playlistManager.Object
+        );
 
         ImageCacheService imageCacheService = new ImageCacheService(
             NullLogger<ImageCacheService>.Instance,
             _fixture.Paths,
-            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound)));
+            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound))
+        );
 
         HomeScreenController controller = new HomeScreenController(
             _homeScreenManager.Object,
@@ -64,12 +66,10 @@ public class HomeScreenControllerTests
             _serverApplicationHost.Object,
             _fixture.Paths,
             sectionService,
-            imageCacheService);
+            imageCacheService
+        );
 
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext()
-        };
+        controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
 
         return controller;
     }
@@ -93,7 +93,8 @@ public class HomeScreenControllerTests
         Assert.Equal("application/javascript", fileResult.ContentType);
         Assert.Equal(
             $"public, max-age={HomeScreenSectionsPlugin.Instance.Configuration.CacheTimeoutSeconds}",
-            controller.HttpContext.Response.Headers.CacheControl.ToString());
+            controller.HttpContext.Response.Headers.CacheControl.ToString()
+        );
         Assert.False(string.IsNullOrEmpty(controller.HttpContext.Response.Headers.ETag.ToString()));
     }
 
@@ -120,7 +121,10 @@ public class HomeScreenControllerTests
 
             controller.GetPluginScript();
 
-            Assert.Equal("no-cache, no-store, must-revalidate", controller.HttpContext.Response.Headers.CacheControl.ToString());
+            Assert.Equal(
+                "no-cache, no-store, must-revalidate",
+                controller.HttpContext.Response.Headers.CacheControl.ToString()
+            );
         }
         finally
         {
@@ -139,9 +143,7 @@ public class HomeScreenControllerTests
         try
         {
             HomeScreenController controller = MakeController();
-            _homeScreenManager
-                .Setup(manager => manager.GetSectionTypes())
-                .Returns(Array.Empty<IHomeScreenSection>());
+            _homeScreenManager.Setup(manager => manager.GetSectionTypes()).Returns(Array.Empty<IHomeScreenSection>());
 
             ActionResult result = controller.GetDiagnostics();
 
@@ -182,14 +184,12 @@ public class HomeScreenControllerTests
         config.SectionSettings =
         [
             new SectionSettings { SectionId = "On", Enabled = true },
-            new SectionSettings { SectionId = "Off", Enabled = false }
+            new SectionSettings { SectionId = "Off", Enabled = false },
         ];
         try
         {
             HomeScreenController controller = MakeController();
-            _homeScreenManager
-                .Setup(manager => manager.GetSectionTypes())
-                .Returns(Array.Empty<IHomeScreenSection>());
+            _homeScreenManager.Setup(manager => manager.GetSectionTypes()).Returns(Array.Empty<IHomeScreenSection>());
 
             ActionResult result = controller.GetDiagnostics();
 
@@ -226,8 +226,14 @@ public class HomeScreenControllerTests
         OkObjectResult ok = Assert.IsType<OkObjectResult>(result.Result);
         JObject meta = JObject.FromObject(ok.Value!);
         Assert.Equal(HomeScreenSectionsPlugin.Instance.Configuration.Enabled, meta.Value<bool>("Enabled"));
-        Assert.Equal(HomeScreenSectionsPlugin.Instance.Configuration.AllowUserOverride, meta.Value<bool>("AllowUserOverride"));
-        Assert.Equal(HomeScreenSectionsPlugin.Instance.Configuration.NumSectionsPerPage, meta.Value<int>("NumResultsPerPage"));
+        Assert.Equal(
+            HomeScreenSectionsPlugin.Instance.Configuration.AllowUserOverride,
+            meta.Value<bool>("AllowUserOverride")
+        );
+        Assert.Equal(
+            HomeScreenSectionsPlugin.Instance.Configuration.NumSectionsPerPage,
+            meta.Value<int>("NumResultsPerPage")
+        );
     }
 
     [Fact]
@@ -250,7 +256,11 @@ public class HomeScreenControllerTests
 
         OkObjectResult expiredOk = Assert.IsType<OkObjectResult>(expired);
         OkObjectResult allOk = Assert.IsType<OkObjectResult>(all);
-        Assert.Contains("Expired", JObject.FromObject(expiredOk.Value!).Value<string>("message"), StringComparison.Ordinal);
+        Assert.Contains(
+            "Expired",
+            JObject.FromObject(expiredOk.Value!).Value<string>("message"),
+            StringComparison.Ordinal
+        );
         Assert.Contains("All", JObject.FromObject(allOk.Value!).Value<string>("message"), StringComparison.Ordinal);
     }
 
@@ -283,7 +293,7 @@ public class HomeScreenControllerTests
             Lidarr = new ArrConfig { Url = "http://lidarr", ApiKey = "key" },
             Readarr = new ArrConfig { Url = "http://readarr", ApiKey = "key" },
             JellyseerrUrl = "http://jellyseerr",
-            JellyseerrApiKey = "key"
+            JellyseerrApiKey = "key",
         };
         List<object> noneChecks = [];
         InvokeControllerStatic("AppendIntegrationChecks", configured, noneChecks);
@@ -318,18 +328,21 @@ public class HomeScreenControllerTests
         PluginConfiguration allDisabled = new PluginConfiguration
         {
             Enabled = true,
-            SectionSettings = [new SectionSettings { SectionId = "A", Enabled = false }]
+            SectionSettings = [new SectionSettings { SectionId = "A", Enabled = false }],
         };
         List<object> disabledChecks = [];
         InvokeControllerStatic("AppendPluginAndSectionChecks", allDisabled, disabledChecks);
         Assert.Equal(2, disabledChecks.Count);
-        Assert.Contains(disabledChecks, c => string.Equals(GetCheckId(c), "all-sections-disabled", StringComparison.Ordinal));
+        Assert.Contains(
+            disabledChecks,
+            c => string.Equals(GetCheckId(c), "all-sections-disabled", StringComparison.Ordinal)
+        );
 
         // Plugin disabled adds its own warning.
         PluginConfiguration pluginOff = new PluginConfiguration
         {
             Enabled = false,
-            SectionSettings = [new SectionSettings { SectionId = "A", Enabled = true }]
+            SectionSettings = [new SectionSettings { SectionId = "A", Enabled = true }],
         };
         List<object> offChecks = [];
         InvokeControllerStatic("AppendPluginAndSectionChecks", pluginOff, offChecks);
@@ -338,9 +351,14 @@ public class HomeScreenControllerTests
 
     private static object? InvokeControllerStatic(string name, params object?[] args)
     {
-        System.Reflection.MethodInfo method = typeof(HomeScreenController)
-            .GetMethod(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
-            ?? throw new InvalidOperationException($"Private static '{name}' not found on {nameof(HomeScreenController)}.");
+        System.Reflection.MethodInfo method =
+            typeof(HomeScreenController).GetMethod(
+                name,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static
+            )
+            ?? throw new InvalidOperationException(
+                $"Private static '{name}' not found on {nameof(HomeScreenController)}."
+            );
         return method.Invoke(null, args);
     }
 

@@ -12,13 +12,18 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
     public class UpcomingShowsSection : UpcomingSectionBase<SonarrCalendarDto>
     {
         public override string? Section => "UpcomingShows";
-        
+
         public override string? DisplayText { get; set; } = "Upcoming Shows";
 
-        public UpcomingShowsSection(IUserManager userManager, ILibraryManager libraryManager, IDtoService dtoService, ArrApiService arrApiService, ImageCacheService imageCacheService, ILogger<UpcomingShowsSection> logger)
-            : base(userManager, libraryManager, dtoService, arrApiService, imageCacheService, logger)
-        {
-        }
+        public UpcomingShowsSection(
+            IUserManager userManager,
+            ILibraryManager libraryManager,
+            IDtoService dtoService,
+            ArrApiService arrApiService,
+            ImageCacheService imageCacheService,
+            ILogger<UpcomingShowsSection> logger
+        )
+            : base(userManager, libraryManager, dtoService, arrApiService, imageCacheService, logger) { }
 
         protected override (string? url, string? apiKey) GetServiceConfiguration(PluginConfiguration config)
         {
@@ -54,21 +59,24 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
             DateTime airDate = calendarItem.AirDateUtc ?? DateTime.Now;
             string countdownText = CalculateCountdown(airDate, config);
 
-            string episodeInfo = $"S{calendarItem.SeasonNumber:D2}E{calendarItem.EpisodeNumber:D2} - {calendarItem.Title}";
+            string episodeInfo =
+                $"S{calendarItem.SeasonNumber:D2}E{calendarItem.EpisodeNumber:D2} - {calendarItem.Title}";
 
-            ArrImageDto? posterImage = calendarItem.Series?.Images?.FirstOrDefault(img => 
-                string.Equals(img.CoverType, "poster", StringComparison.OrdinalIgnoreCase));
+            ArrImageDto? posterImage = calendarItem.Series?.Images?.FirstOrDefault(img =>
+                string.Equals(img.CoverType, "poster", StringComparison.OrdinalIgnoreCase)
+            );
 
             string sourceImageUrl = posterImage?.RemoteUrl ?? GetFallbackCoverUrl(calendarItem);
             string cachedImageUrl = GetCachedImageUrl(sourceImageUrl);
 
             // Create provider IDs to store external image URL and metadata
-            Dictionary<string, string> providerIds = new(StringComparer.Ordinal) {
+            Dictionary<string, string> providerIds = new(StringComparer.Ordinal)
+            {
                 { "SonarrSeriesId", calendarItem.SeriesId.ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 { "SonarrEpisodeId", calendarItem.Id.ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 { "EpisodeInfo", episodeInfo },
                 { "FormattedDate", countdownText },
-                { "SonarrPoster", cachedImageUrl }
+                { "SonarrPoster", cachedImageUrl },
             };
 
             return new BaseItemDto
@@ -85,8 +93,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
                 {
                     Key = $"upcoming-{calendarItem.Id}",
                     PlaybackPositionTicks = 0,
-                    IsFavorite = false
-                }
+                    IsFavorite = false,
+                },
             };
         }
 
@@ -96,14 +104,21 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
 
         public override IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
         {
-            yield return new UpcomingShowsSection(UserManager, LibraryManager, DtoService, ArrApiService, ImageCacheService, (ILogger<UpcomingShowsSection>)Logger)
+            yield return new UpcomingShowsSection(
+                UserManager,
+                LibraryManager,
+                DtoService,
+                ArrApiService,
+                ImageCacheService,
+                (ILogger<UpcomingShowsSection>)Logger
+            )
             {
                 DisplayText = DisplayText,
                 AdditionalData = AdditionalData,
-                OriginalPayload = OriginalPayload
+                OriginalPayload = OriginalPayload,
             };
         }
-        
+
         public override HomeScreenSectionInfo GetInfo()
         {
             return new HomeScreenSectionInfo
@@ -116,7 +131,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Portrait,
                 AllowViewModeChange = false,
-                ContainerClass = "upcoming-shows-section"
+                ContainerClass = "upcoming-shows-section",
             };
         }
     }

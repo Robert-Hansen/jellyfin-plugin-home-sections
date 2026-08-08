@@ -13,27 +13,42 @@ using Newtonsoft.Json.Linq;
 
 namespace Jellyfin.Plugin.HomeScreenSections
 {
-    public class HomeScreenSectionsPlugin : BasePlugin<PluginConfiguration>, IPlugin, IHasPluginConfiguration, IHasWebPages
+    public class HomeScreenSectionsPlugin
+        : BasePlugin<PluginConfiguration>,
+            IPlugin,
+            IHasPluginConfiguration,
+            IHasWebPages
     {
         internal IServerConfigurationManager ServerConfigurationManager { get; private set; }
-        
+
         public override Guid Id => Guid.Parse("b8298e01-2697-407a-b44d-aa8dc795e850");
 
         public override string Name => "Home Screen Sections";
 
         public static HomeScreenSectionsPlugin Instance { get; private set; } = null!;
-        
+
         internal IServiceProvider ServiceProvider { get; set; }
-    
-        public HomeScreenSectionsPlugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, IServerConfigurationManager serverConfigurationManager, IServiceProvider serviceProvider, IHomeScreenManager homeScreenManager, ITranslationManager translationManager) : base(applicationPaths, xmlSerializer)
+
+        public HomeScreenSectionsPlugin(
+            IApplicationPaths applicationPaths,
+            IXmlSerializer xmlSerializer,
+            IServerConfigurationManager serverConfigurationManager,
+            IServiceProvider serviceProvider,
+            IHomeScreenManager homeScreenManager,
+            ITranslationManager translationManager
+        )
+            : base(applicationPaths, xmlSerializer)
         {
             Instance = this;
             ServerConfigurationManager = serverConfigurationManager;
             ServiceProvider = serviceProvider;
-            
+
             homeScreenManager.RegisterBuiltInResultsDelegates();
 
-            string homeScreenSectionsConfigDir = Path.Combine(applicationPaths.PluginConfigurationsPath, "Jellyfin.Plugin.HomeScreenSections");
+            string homeScreenSectionsConfigDir = Path.Combine(
+                applicationPaths.PluginConfigurationsPath,
+                "Jellyfin.Plugin.HomeScreenSections"
+            );
             Directory.CreateDirectory(homeScreenSectionsConfigDir);
 
             translationManager.Initialize();
@@ -43,7 +58,11 @@ namespace Jellyfin.Plugin.HomeScreenSections
         private void EnsurePluginPagesRegistration(string pluginConfigurationsPath)
         {
             const int pluginPageConfigVersion = 1;
-            string pluginPagesConfig = Path.Combine(pluginConfigurationsPath, "Jellyfin.Plugin.PluginPages", "config.json");
+            string pluginPagesConfig = Path.Combine(
+                pluginConfigurationsPath,
+                "Jellyfin.Plugin.PluginPages",
+                "config.json"
+            );
 
             JObject config = LoadOrCreatePluginPagesConfig(pluginPagesConfig);
             if (!config.ContainsKey("pages"))
@@ -52,14 +71,30 @@ namespace Jellyfin.Plugin.HomeScreenSections
             }
 
             JArray pages = config.Value<JArray>("pages")!;
-            if (pages.FirstOrDefault(x =>
-                    string.Equals(x.Value<string>("Id"), typeof(HomeScreenSectionsPlugin).Namespace, StringComparison.Ordinal)) is JObject hssPageConfig
-                && (hssPageConfig.Value<int?>("Version") ?? 0) < pluginPageConfigVersion)
+            if (
+                pages.FirstOrDefault(x =>
+                    string.Equals(
+                        x.Value<string>("Id"),
+                        typeof(HomeScreenSectionsPlugin).Namespace,
+                        StringComparison.Ordinal
+                    )
+                )
+                    is JObject hssPageConfig
+                && (hssPageConfig.Value<int?>("Version") ?? 0) < pluginPageConfigVersion
+            )
             {
                 pages.Remove(hssPageConfig);
             }
 
-            if (pages.Any(x => string.Equals(x.Value<string>("Id"), typeof(HomeScreenSectionsPlugin).Namespace, StringComparison.Ordinal)))
+            if (
+                pages.Any(x =>
+                    string.Equals(
+                        x.Value<string>("Id"),
+                        typeof(HomeScreenSectionsPlugin).Namespace,
+                        StringComparison.Ordinal
+                    )
+                )
+            )
             {
                 return;
             }
@@ -81,13 +116,15 @@ namespace Jellyfin.Plugin.HomeScreenSections
 
         private JObject CreatePluginPageEntry(int pluginPageConfigVersion)
         {
-            Assembly? pluginPagesAssembly = AssemblyLoadContext.All
-                .SelectMany(x => x.Assemblies)
-                .FirstOrDefault(x => x.FullName?.Contains("Jellyfin.Plugin.PluginPages", StringComparison.Ordinal) ?? false);
+            Assembly? pluginPagesAssembly = AssemblyLoadContext
+                .All.SelectMany(x => x.Assemblies)
+                .FirstOrDefault(x =>
+                    x.FullName?.Contains("Jellyfin.Plugin.PluginPages", StringComparison.Ordinal) ?? false
+                );
 
             Version earliestVersionWithSubUrls = new Version("2.4.1.0");
-            bool supportsSubUrls = pluginPagesAssembly != null
-                && pluginPagesAssembly.GetName().Version >= earliestVersionWithSubUrls;
+            bool supportsSubUrls =
+                pluginPagesAssembly != null && pluginPagesAssembly.GetName().Version >= earliestVersionWithSubUrls;
 
             string rootUrl = ServerConfigurationManager.GetNetworkConfiguration().BaseUrl.TrimStart('/').Trim();
             if (!string.IsNullOrEmpty(rootUrl))
@@ -101,7 +138,7 @@ namespace Jellyfin.Plugin.HomeScreenSections
                 { "Url", $"{(supportsSubUrls ? "" : rootUrl)}/ModularHomeViews/settings" },
                 { "DisplayText", "Modular Home" },
                 { "Icon", "ballot" },
-                { "Version", pluginPageConfigVersion }
+                { "Version", pluginPageConfigVersion },
             };
         }
 
@@ -113,7 +150,7 @@ namespace Jellyfin.Plugin.HomeScreenSections
             {
                 Name = Name,
                 EmbeddedResourcePath = $"{prefix}.Configuration.config.html",
-                EnableInMainMenu = true
+                EnableInMainMenu = true,
             };
         }
 
@@ -128,8 +165,8 @@ namespace Jellyfin.Plugin.HomeScreenSections
                 new PluginPageInfo
                 {
                     Name = "settings",
-                    EmbeddedResourcePath = $"{GetType().Namespace}.Config.settings.html"
-                }
+                    EmbeddedResourcePath = $"{GetType().Namespace}.Config.settings.html",
+                },
             };
         }
 

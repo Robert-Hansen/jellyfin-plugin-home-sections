@@ -22,18 +22,27 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 string resources = string.Join(
                     ',',
-                    HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceNames());
+                    HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceNames()
+                );
                 PluginLog.AvailableResources(_logger, resources);
             }
-            
+
             // Get all the json files from the embedded resources
-            string[] locJsonFiles = HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceNames()
-                .Where(x => x.EndsWith(".json", StringComparison.Ordinal) && x.Contains("_Localization.", StringComparison.Ordinal)).ToArray();
+            string[] locJsonFiles = HomeScreenSectionsPlugin
+                .Instance.GetType()
+                .Assembly.GetManifestResourceNames()
+                .Where(x =>
+                    x.EndsWith(".json", StringComparison.Ordinal)
+                    && x.Contains("_Localization.", StringComparison.Ordinal)
+                )
+                .ToArray();
 
             foreach (string locFile in locJsonFiles)
             {
                 PluginLog.LoadingTranslationFile(_logger, locFile);
-                using Stream? locStream = HomeScreenSectionsPlugin.Instance.GetType().Assembly.GetManifestResourceStream(locFile);
+                using Stream? locStream = HomeScreenSectionsPlugin
+                    .Instance.GetType()
+                    .Assembly.GetManifestResourceStream(locFile);
 
                 if (locStream != null)
                 {
@@ -54,13 +63,25 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
         }
 
-        public string Translate(string key, string desiredLanguage, string fallbackText, TranslationMetadata? metadata = null)
+        public string Translate(
+            string key,
+            string desiredLanguage,
+            string fallbackText,
+            TranslationMetadata? metadata = null
+        )
         {
             PluginLog.TranslatingKey(_logger, key, desiredLanguage);
             string languageKey = ResolveLanguageKey(desiredLanguage);
             JObject translationPack = _translationPacks[languageKey];
 
-            string translatedText = LookupTranslation(key, fallbackText, desiredLanguage, languageKey, translationPack, ref metadata);
+            string translatedText = LookupTranslation(
+                key,
+                fallbackText,
+                desiredLanguage,
+                languageKey,
+                translationPack,
+                ref metadata
+            );
             if (metadata != null)
             {
                 translatedText = ApplyTranslationMetadata(translatedText, desiredLanguage, metadata);
@@ -98,7 +119,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             string desiredLanguage,
             string languageKey,
             JObject translationPack,
-            ref TranslationMetadata? metadata)
+            ref TranslationMetadata? metadata
+        )
         {
             string fullTextKey = fallbackText.Replace(" ", "").Replace("-", "");
             if (!string.Equals(key, fullTextKey, StringComparison.Ordinal) && translationPack.ContainsKey(fullTextKey))
@@ -115,18 +137,29 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
 
             PluginLog.NoTranslationFound(_logger, key, languageKey);
-            string? libreTranslateVersion = LibreTranslateHelper.TranslateAsync(fallbackText, "en", desiredLanguage).GetAwaiter().GetResult();
+            string? libreTranslateVersion = LibreTranslateHelper
+                .TranslateAsync(fallbackText, "en", desiredLanguage)
+                .GetAwaiter()
+                .GetResult();
             return libreTranslateVersion ?? _translationPacks["en"].Value<string>(key) ?? fallbackText;
         }
 
-        private string ApplyTranslationMetadata(string translatedText, string desiredLanguage, TranslationMetadata metadata)
+        private string ApplyTranslationMetadata(
+            string translatedText,
+            string desiredLanguage,
+            TranslationMetadata metadata
+        )
         {
             PluginLog.ApplyingTranslationMetadata(_logger, translatedText);
 
             string? additionalContent = metadata.AdditionalContent;
             if (metadata.TranslateAdditionalContent && !string.IsNullOrEmpty(additionalContent))
             {
-                additionalContent = Translate(additionalContent.Replace(" ", "").Replace("-", ""), desiredLanguage, additionalContent);
+                additionalContent = Translate(
+                    additionalContent.Replace(" ", "").Replace("-", ""),
+                    desiredLanguage,
+                    additionalContent
+                );
             }
 
             if (metadata.Type == TranslationType.Prefix)

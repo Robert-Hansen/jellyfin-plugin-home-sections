@@ -1,11 +1,11 @@
 using System.Reflection;
+using Jellyfin.Data.Enums;
 using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections;
 using Jellyfin.Plugin.HomeScreenSections.Library;
 using Jellyfin.Plugin.HomeScreenSections.Model.Dto;
 using Jellyfin.Plugin.HomeScreenSections.Tests.Support;
-using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -37,9 +37,7 @@ public class ContinueWatchingNextUpSectionTests
 
     private ContinueWatchingNextUpSection MakeSection(params BaseItemDto[] nextUpDtos)
     {
-        _userManager
-            .Setup(manager => manager.GetUserById(s_userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(s_userId)).Returns(_user);
 
         _tvSeriesManager
             .Setup(manager => manager.GetNextUp(It.IsAny<NextUpQuery>(), It.IsAny<DtoOptions>()))
@@ -48,11 +46,14 @@ public class ContinueWatchingNextUpSectionTests
         // NextUpSection pipes GetNextUp items through IDtoService; returning the DTOs we
         // control here lets the merge section see scripted Next Up results.
         _dtoService
-            .Setup(service => service.GetBaseItemDtos(
-                It.IsAny<IReadOnlyList<BaseItem>>(),
-                It.IsAny<DtoOptions>(),
-                It.IsAny<User>(),
-                It.IsAny<BaseItem>()))
+            .Setup(service =>
+                service.GetBaseItemDtos(
+                    It.IsAny<IReadOnlyList<BaseItem>>(),
+                    It.IsAny<DtoOptions>(),
+                    It.IsAny<User>(),
+                    It.IsAny<BaseItem>()
+                )
+            )
             .Returns(nextUpDtos);
 
         NextUpSection nextUp = new NextUpSection(
@@ -61,31 +62,45 @@ public class ContinueWatchingNextUpSectionTests
             _dtoService.Object,
             _libraryManager.Object,
             new Mock<ISessionManager>().Object,
-            _tvSeriesManager.Object);
+            _tvSeriesManager.Object
+        );
 
         // Continue Watching resolves to null, covering the missing-section branch.
-        _homeScreenManager
-            .Setup(manager => manager.GetSection("ContinueWatching"))
-            .Returns((IHomeScreenSection?)null);
-        _homeScreenManager
-            .Setup(manager => manager.GetSection("NextUp"))
-            .Returns(nextUp);
+        _homeScreenManager.Setup(manager => manager.GetSection("ContinueWatching")).Returns((IHomeScreenSection?)null);
+        _homeScreenManager.Setup(manager => manager.GetSection("NextUp")).Returns(nextUp);
 
         return new ContinueWatchingNextUpSection(
             _homeScreenManager.Object,
             _libraryManager.Object,
             _userManager.Object,
-            _userDataManager.Object);
+            _userDataManager.Object
+        );
     }
 
     [Fact]
     public void GetResults_returns_next_up_items_when_continue_watching_absent()
     {
         ContinueWatchingNextUpSection section = MakeSection(
-            new BaseItemDto { Id = Guid.NewGuid(), Name = "Episode A", Type = BaseItemKind.Episode, DateCreated = DateTime.UtcNow.AddHours(-1) },
-            new BaseItemDto { Id = Guid.NewGuid(), Name = "Episode B", Type = BaseItemKind.Episode, DateCreated = DateTime.UtcNow.AddHours(-2) });
+            new BaseItemDto
+            {
+                Id = Guid.NewGuid(),
+                Name = "Episode A",
+                Type = BaseItemKind.Episode,
+                DateCreated = DateTime.UtcNow.AddHours(-1),
+            },
+            new BaseItemDto
+            {
+                Id = Guid.NewGuid(),
+                Name = "Episode B",
+                Type = BaseItemKind.Episode,
+                DateCreated = DateTime.UtcNow.AddHours(-2),
+            }
+        );
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = s_userId }, QueryWithUserId());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = s_userId },
+            QueryWithUserId()
+        );
 
         Assert.Equal(2, result.Items.Count);
         Assert.Contains(result.Items, item => string.Equals(item.Name, "Episode A", StringComparison.Ordinal));
@@ -99,7 +114,7 @@ public class ContinueWatchingNextUpSectionTests
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "ContinueWatchingNextUp", HideWatchedItems = true }
+            new SectionSettings { SectionId = "ContinueWatchingNextUp", HideWatchedItems = true },
         ];
         try
         {
@@ -109,18 +124,21 @@ public class ContinueWatchingNextUpSectionTests
                 Name = "Watched",
                 Type = BaseItemKind.Episode,
                 DateCreated = DateTime.UtcNow,
-                UserData = new UserItemDataDto { Key = "watched", Played = true }
+                UserData = new UserItemDataDto { Key = "watched", Played = true },
             };
             BaseItemDto unwatched = new BaseItemDto
             {
                 Id = Guid.NewGuid(),
                 Name = "Unwatched",
                 Type = BaseItemKind.Episode,
-                DateCreated = DateTime.UtcNow
+                DateCreated = DateTime.UtcNow,
             };
             ContinueWatchingNextUpSection section = MakeSection(watched, unwatched);
 
-            QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = s_userId }, QueryWithUserId());
+            QueryResult<BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = s_userId },
+                QueryWithUserId()
+            );
 
             BaseItemDto kept = Assert.Single(result.Items);
             Assert.Equal("Unwatched", kept.Name);
@@ -144,21 +162,21 @@ public class ContinueWatchingNextUpSectionTests
             Id = Guid.NewGuid(),
             Name = "Playing Now",
             Type = BaseItemKind.Episode,
-            UserData = new UserItemDataDto { Key = "playing-now", LastPlayedDate = recentPlay }
+            UserData = new UserItemDataDto { Key = "playing-now", LastPlayedDate = recentPlay },
         };
         BaseItemDto fromSeries = new BaseItemDto
         {
             Id = Guid.NewGuid(),
             Name = "From Series",
             Type = BaseItemKind.Episode,
-            SeriesId = seriesId
+            SeriesId = seriesId,
         };
         BaseItemDto freshItem = new BaseItemDto
         {
             Id = Guid.NewGuid(),
             Name = "Fresh",
             Type = BaseItemKind.Episode,
-            DateCreated = DateTime.UtcNow.AddDays(-1)
+            DateCreated = DateTime.UtcNow.AddDays(-1),
         };
 
         ContinueWatchingNextUpSection section = MakeSection(fromSeries, freshItem, playingNow);
@@ -172,7 +190,10 @@ public class ContinueWatchingNextUpSectionTests
             .Setup(manager => manager.GetUserData(_user, playedEpisode))
             .Returns(new UserItemData { Key = "played-episode", LastPlayedDate = seriesPlay });
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = s_userId }, QueryWithUserId());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = s_userId },
+            QueryWithUserId()
+        );
 
         Assert.Equal(3, result.Items.Count);
         Assert.Equal("Playing Now", result.Items[0].Name);
@@ -188,7 +209,7 @@ public class ContinueWatchingNextUpSectionTests
         {
             SeriesId = Guid.NewGuid(),
             DateCreated = DateTime.UtcNow.AddDays(-1),
-            UserData = new UserItemDataDto { Key = "sort-case", LastPlayedDate = lastPlayed }
+            UserData = new UserItemDataDto { Key = "sort-case", LastPlayedDate = lastPlayed },
         };
 
         Assert.Equal(lastPlayed, InvokeGetSortDate(item, []));
@@ -199,15 +220,8 @@ public class ContinueWatchingNextUpSectionTests
     {
         Guid seriesId = Guid.NewGuid();
         DateTime seriesDate = DateTime.UtcNow.AddDays(-2);
-        BaseItemDto item = new BaseItemDto
-        {
-            SeriesId = seriesId,
-            DateCreated = DateTime.UtcNow.AddDays(-1)
-        };
-        Dictionary<Guid, DateTime> lookup = new Dictionary<Guid, DateTime>
-        {
-            [seriesId] = seriesDate
-        };
+        BaseItemDto item = new BaseItemDto { SeriesId = seriesId, DateCreated = DateTime.UtcNow.AddDays(-1) };
+        Dictionary<Guid, DateTime> lookup = new Dictionary<Guid, DateTime> { [seriesId] = seriesDate };
 
         Assert.Equal(seriesDate, InvokeGetSortDate(item, lookup));
     }
@@ -242,16 +256,15 @@ public class ContinueWatchingNextUpSectionTests
 
     private static FakeQueryCollection QueryWithUserId()
     {
-        return new FakeQueryCollection
-        {
-            ["UserId"] = s_userId.ToString()
-        };
+        return new FakeQueryCollection { ["UserId"] = s_userId.ToString() };
     }
 
     private static DateTime InvokeGetSortDate(BaseItemDto item, Dictionary<Guid, DateTime> lookup)
     {
-        MethodInfo method = typeof(ContinueWatchingNextUpSection)
-            .GetMethod("GetSortDate", BindingFlags.NonPublic | BindingFlags.Static)!;
+        MethodInfo method = typeof(ContinueWatchingNextUpSection).GetMethod(
+            "GetSortDate",
+            BindingFlags.NonPublic | BindingFlags.Static
+        )!;
         return (DateTime)method.Invoke(null, [item, lookup])!;
     }
 }

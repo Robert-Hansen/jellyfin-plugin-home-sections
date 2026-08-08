@@ -9,7 +9,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers
         public static string GetCachedImageUrl(
             ImageCacheService imageCacheService,
             string? sourceUrl,
-            ILogger? logger = null)
+            ILogger? logger = null
+        )
         {
             if (string.IsNullOrEmpty(sourceUrl))
             {
@@ -21,9 +22,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers
                 PluginConfiguration? config = HomeScreenSectionsPlugin.Instance?.Configuration;
                 int cacheTimeout = config?.CacheTimeoutSeconds ?? 86400;
 
-                string? cacheKey = imageCacheService.GetOrCacheImage(sourceUrl, cacheTimeout)
-                    .GetAwaiter()
-                    .GetResult();
+                string? cacheKey = imageCacheService.GetOrCacheImage(sourceUrl, cacheTimeout).GetAwaiter().GetResult();
 
                 if (!string.IsNullOrEmpty(cacheKey))
                 {
@@ -37,7 +36,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Helpers
 
                 return sourceUrl;
             }
-            catch (Exception ex) when (ex is HttpRequestException or IOException or TaskCanceledException or InvalidOperationException)
+            catch (Exception ex)
+                when (ex is HttpRequestException or IOException or TaskCanceledException or InvalidOperationException)
             {
                 if (logger != null)
                 {

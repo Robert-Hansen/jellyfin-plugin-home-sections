@@ -22,7 +22,7 @@ public sealed class FakeHttpMessageHandler : HttpMessageHandler
     {
         return new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+            Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"),
         });
     }
 
@@ -30,11 +30,14 @@ public sealed class FakeHttpMessageHandler : HttpMessageHandler
     {
         return new FakeHttpMessageHandler(_ => new HttpResponseMessage(statusCode)
         {
-            Content = new StringContent(string.Empty)
+            Content = new StringContent(string.Empty),
         });
     }
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    )
     {
         _requests.Add(request);
         return Task.FromResult(_responder(request));

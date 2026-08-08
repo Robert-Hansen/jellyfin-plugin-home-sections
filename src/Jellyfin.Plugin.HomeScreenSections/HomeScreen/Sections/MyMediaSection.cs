@@ -32,7 +32,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public string? AdditionalData { get; set; }
 
         public object? OriginalPayload => null;
-        
+
         private readonly IUserViewManager _userViewManager;
         private readonly IUserManager _userManager;
         private readonly IDtoService _dtoService;
@@ -43,9 +43,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         /// <param name="userViewManager">Instance of <see href="IUserViewManager" /> interface.</param>
         /// <param name="userManager">Instance of <see href="IUserManager" /> interface.</param>
         /// <param name="dtoService">Instance of <see href="IDtoService" /> interface.</param>
-        public MyMediaSection(IUserViewManager userViewManager,
-            IUserManager userManager,
-            IDtoService dtoService)
+        public MyMediaSection(IUserViewManager userViewManager, IUserManager userManager, IDtoService dtoService)
         {
             _userViewManager = userViewManager;
             _userManager = userManager;
@@ -61,23 +59,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             {
                 return new QueryResult<BaseItemDto>();
             }
-            
-            UserViewQuery query = new UserViewQuery
-            {
-                User = user,
-                IncludeHidden = false
-            };
+
+            UserViewQuery query = new UserViewQuery { User = user, IncludeHidden = false };
 
             Folder[]? folders = _userViewManager.GetUserViews(query);
 
             DtoOptions dtoOptions = new DtoOptions();
-            List<ItemFields> f = [ItemFields.PrimaryImageAspectRatio,
-                ItemFields.DisplayPreferencesId];
+            List<ItemFields> f = [ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId];
 
             dtoOptions.Fields = f.ToArray();
 
-            BaseItemDto[] dtos = folders.Select(i => _dtoService.GetBaseItemDto(i, dtoOptions, user))
-                .ToArray();
+            BaseItemDto[] dtos = folders.Select(i => _dtoService.GetBaseItemDto(i, dtoOptions, user)).ToArray();
 
             return new QueryResult<BaseItemDto>(dtos);
         }
@@ -87,7 +79,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         {
             yield return this;
         }
-        
+
         public HomeScreenSectionInfo GetInfo()
         {
             return new HomeScreenSectionInfo
@@ -99,7 +91,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 Limit = Limit ?? 1,
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Landscape,
-                AllowViewModeChange = true // NOTE: Change this to allowed view modes
+                AllowViewModeChange = true, // NOTE: Change this to allowed view modes
             };
         }
     }

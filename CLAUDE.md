@@ -18,6 +18,11 @@ dotnet test src/Jellyfin.Plugin.HomeScreenSections.Tests/ --filter "FullyQualifi
 # With coverage (CI uses 80% line gate)
 dotnet test src/Jellyfin.Plugin.HomeScreenSections.Tests/Jellyfin.Plugin.HomeScreenSections.Tests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults
 
+# Format (CSharpier — .csharpierrc.json + .editorconfig, 1.3.0 via .config/dotnet-tools.json)
+dotnet tool restore
+dotnet csharpier format .
+dotnet csharpier check .
+
 # Release zips (stamps version, builds per-JF zip)
 ./build-release.sh 2.5.18.0 10.10.7,10.11.5,10.11.11 ./dist
 
@@ -42,7 +47,7 @@ Jellyfin server plugin (C#) that replaces the vanilla home screen with configura
 - **Client injection**: `Inject/HomeScreenSections.{js,css}` + `Controllers/loadSections.js` embedded resources patched in via `File Transformation` (Harmony `Lib.Harmony`).
 - **Version shims**: `JellyfinVersionSpecific/{10.10.7,10.11.0,10.11}/` — conditionally compiled per `JellyfinVersion` property (`<Compile Remove>` in csproj).
 - **Localization**: `src/Jellyfin.Plugin.HomeScreenSections/_Localization/*.json` (en, de, pl, da with CI key-parity check).
-- **CI**: `.github/workflows/ci.yml` (build both TFMs + test + 80% line coverage gate), `build-release.yml` (matrix build → zips → GitHub Release → manifest commit).
+- **CI**: `.github/workflows/ci.yml` (build both TFMs + test + 80% line coverage gate), `build-release.yml` (matrix build → zips → GitHub Release → manifest commit), `csharpier.yml` (PR auto-format via `dotnet csharpier format .` + `.csharpierrc.json` — commits back to PR branch).
 
 ## Conventions
 
@@ -53,6 +58,7 @@ Jellyfin server plugin (C#) that replaces the vanilla home screen with configura
   - Public / protected / internal members, types, methods, properties: `PascalCase`
   - Local variables and parameters: `camelCase`
   - Do not use Hungarian notation or prefixes such as `m_`, `c_`, etc.
+- Formatting: CSharpier via `dotnet csharpier format .` (config `.csharpierrc.json`: `printWidth: 120`, `indentSize: 4`, `useTabs: false`, `endOfLine: "lf"`; `.editorconfig` `MA0051.maximum_lines_per_method = 120` accommodates formatted length). CI auto-formats PRs.
 - Braces on new lines (Allman style) even for single-line blocks.
 - Prefer explicit types over `var` unless the type is immediately obvious from the right-hand side or needed for namespace disambiguation.
 - No whitespace-only diffs.

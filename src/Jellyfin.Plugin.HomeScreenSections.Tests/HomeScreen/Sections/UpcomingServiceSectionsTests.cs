@@ -1,10 +1,10 @@
+using Jellyfin.Data.Enums;
 using Jellyfin.Plugin.HomeScreenSections.Configuration;
 using Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming;
 using Jellyfin.Plugin.HomeScreenSections.Library;
 using Jellyfin.Plugin.HomeScreenSections.Model.Dto;
 using Jellyfin.Plugin.HomeScreenSections.Services;
 using Jellyfin.Plugin.HomeScreenSections.Tests.Support;
-using Jellyfin.Data.Enums;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Library;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -42,9 +42,15 @@ public class UpcomingServiceSectionsTests
                     { "id": 1, "title": "Digital Soon", "monitored": true, "hasFile": false, "year": 2026,
                       "digitalRelease": "{{digitalSoon:O}}",
                       "images": [ { "coverType": "poster", "remoteUrl": "https://img.test/1.jpg" } ] },
-                    { "id": 2, "title": "Unmonitored", "monitored": false, "digitalRelease": "{{DateTime.UtcNow.AddDays(3):O}}" },
-                    { "id": 3, "title": "Already Have", "monitored": true, "hasFile": true, "digitalRelease": "{{DateTime.UtcNow.AddDays(2):O}}" },
-                    { "id": 4, "title": "Cinema Only", "monitored": true, "hasFile": false, "inCinemas": "{{DateTime.UtcNow.AddDays(4):O}}" },
+                    { "id": 2, "title": "Unmonitored", "monitored": false, "digitalRelease": "{{DateTime.UtcNow.AddDays(
+                    3
+                ):O}}" },
+                    { "id": 3, "title": "Already Have", "monitored": true, "hasFile": true, "digitalRelease": "{{DateTime.UtcNow.AddDays(
+                    2
+                ):O}}" },
+                    { "id": 4, "title": "Cinema Only", "monitored": true, "hasFile": false, "inCinemas": "{{DateTime.UtcNow.AddDays(
+                    4
+                ):O}}" },
                     { "id": 5, "title": "Digital First", "monitored": true, "hasFile": false, "year": 0,
                       "digitalRelease": "{{digitalFirst:O}}" }
                 ]
@@ -52,8 +58,10 @@ public class UpcomingServiceSectionsTests
 
             UpcomingMoviesSection section = MakeMoviesSection(json);
 
-            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result =
-                section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             // Only monitored, file-less items with a release type enabled in config survive;
             // default config considers digital releases only.
@@ -90,8 +98,10 @@ public class UpcomingServiceSectionsTests
 
             UpcomingMoviesSection section = MakeMoviesSection(json);
 
-            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result =
-                section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             MediaBrowser.Model.Dto.BaseItemDto dto = Assert.Single(result.Items);
             Assert.Equal("Cinema Only", dto.Name);
@@ -125,8 +135,10 @@ public class UpcomingServiceSectionsTests
 
             UpcomingMoviesSection section = MakeMoviesSection(json);
 
-            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result =
-                section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             MediaBrowser.Model.Dto.BaseItemDto dto = Assert.Single(result.Items);
             Assert.Equal("Mapped Movie", dto.Name);
@@ -172,8 +184,10 @@ public class UpcomingServiceSectionsTests
 
             UpcomingMoviesSection section = MakeMoviesSection(json);
 
-            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result =
-                section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             // The image cache fake responds 404, so ImageCacheHelper falls back to the source URL.
             Assert.Equal("https://img.test/poster.jpg", Assert.Single(result.Items).ProviderIds["RadarrPoster"]);
@@ -237,8 +251,10 @@ public class UpcomingServiceSectionsTests
 
             UpcomingShowsSection section = MakeShowsSection(json);
 
-            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result =
-                section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             MediaBrowser.Model.Dto.BaseItemDto dto = Assert.Single(result.Items);
             Assert.Equal(BaseItemKind.Episode, dto.Type);
@@ -262,7 +278,8 @@ public class UpcomingServiceSectionsTests
             new Mock<IDtoService>().Object,
             MakeArrService(calendarJson),
             MakeImageCacheService(),
-            NullLogger<UpcomingMoviesSection>.Instance);
+            NullLogger<UpcomingMoviesSection>.Instance
+        );
     }
 
     private UpcomingShowsSection MakeShowsSection(string calendarJson)
@@ -273,7 +290,8 @@ public class UpcomingServiceSectionsTests
             new Mock<IDtoService>().Object,
             MakeArrService(calendarJson),
             MakeImageCacheService(),
-            NullLogger<UpcomingShowsSection>.Instance);
+            NullLogger<UpcomingShowsSection>.Instance
+        );
     }
 
     [Fact]
@@ -296,14 +314,18 @@ public class UpcomingServiceSectionsTests
                       "releaseDate": "{{DateTime.UtcNow.AddDays(2):O}}",
                       "statistics": { "sizeOnDisk": 123 }, "artist": { "artistName": "X" } },
                     { "id": 5, "title": "Not Monitored", "monitored": false,
-                      "releaseDate": "{{DateTime.UtcNow.AddDays(1):O}}", "artist": { "artistName": "Y" } }
+                      "releaseDate": "{{DateTime.UtcNow.AddDays(
+                    1
+                ):O}}", "artist": { "artistName": "Y" } }
                 ]
                 """;
 
             UpcomingMusicSection section = MakeMusicSection(json);
 
-            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result =
-                section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             MediaBrowser.Model.Dto.BaseItemDto dto = Assert.Single(result.Items);
             Assert.Equal("The Album", dto.Name);
@@ -357,8 +379,10 @@ public class UpcomingServiceSectionsTests
 
             UpcomingBooksSection section = MakeBooksSection(json);
 
-            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result =
-                section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+            MediaBrowser.Model.Querying.QueryResult<MediaBrowser.Model.Dto.BaseItemDto> result = section.GetResults(
+                new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+                new FakeQueryCollection()
+            );
 
             MediaBrowser.Model.Dto.BaseItemDto dto = Assert.Single(result.Items);
             Assert.Equal("The Book", dto.Name);
@@ -397,7 +421,8 @@ public class UpcomingServiceSectionsTests
             new Mock<IDtoService>().Object,
             MakeArrService(calendarJson),
             MakeImageCacheService(),
-            NullLogger<UpcomingMusicSection>.Instance);
+            NullLogger<UpcomingMusicSection>.Instance
+        );
     }
 
     private UpcomingBooksSection MakeBooksSection(string calendarJson)
@@ -408,14 +433,16 @@ public class UpcomingServiceSectionsTests
             new Mock<IDtoService>().Object,
             MakeArrService(calendarJson),
             MakeImageCacheService(),
-            NullLogger<UpcomingBooksSection>.Instance);
+            NullLogger<UpcomingBooksSection>.Instance
+        );
     }
 
     private static ArrApiService MakeArrService(string calendarJson)
     {
         return new ArrApiService(
             NullLogger<ArrApiService>.Instance,
-            new HttpClient(FakeHttpMessageHandler.RespondingWithJson(calendarJson)));
+            new HttpClient(FakeHttpMessageHandler.RespondingWithJson(calendarJson))
+        );
     }
 
     private ImageCacheService MakeImageCacheService()
@@ -423,6 +450,7 @@ public class UpcomingServiceSectionsTests
         return new ImageCacheService(
             NullLogger<ImageCacheService>.Instance,
             _fixture.Paths,
-            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound)));
+            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound))
+        );
     }
 }

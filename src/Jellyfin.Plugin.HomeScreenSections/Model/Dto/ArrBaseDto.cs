@@ -6,7 +6,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Model.Dto
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }
-        
+
         [JsonPropertyName("title")]
         public string? Title { get; set; }
 

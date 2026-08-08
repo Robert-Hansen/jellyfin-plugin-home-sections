@@ -56,7 +56,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             ITVSeriesManager tvSeriesManager,
             ILibraryManager libraryManager,
             CollectionManagerProxy collectionManagerProxy,
-            IUserViewManager userViewManager)
+            IUserViewManager userViewManager
+        )
         {
             CollectionManager = collectionManager;
             UserManager = userManager;
@@ -97,7 +98,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 Route = Route,
                 Limit = Limit ?? 1,
                 OriginalPayload = OriginalPayload,
-                ViewMode = SectionViewMode.Landscape
+                ViewMode = SectionViewMode.Landscape,
             };
         }
 
@@ -107,9 +108,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             {
                 Fields = [ItemFields.PrimaryImageAspectRatio],
                 ImageTypeLimit = 1,
-                ImageTypes = [ImageType.Thumb,
-                    ImageType.Backdrop,
-                    ImageType.Primary,]
+                ImageTypes = [ImageType.Thumb, ImageType.Backdrop, ImageType.Primary],
             };
         }
 
@@ -117,30 +116,39 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             User user,
             DtoOptions dtoOptions,
             DateTime cutoffDate,
-            List<(BaseItem Item, DateTime? LastPlayed)> results)
+            List<(BaseItem Item, DateTime? LastPlayed)> results
+        )
         {
             // === Process Box Sets ===
-            VirtualFolderInfo[] folders = LibraryManager.GetVirtualFolders()
+            VirtualFolderInfo[] folders = LibraryManager
+                .GetVirtualFolders()
                 .Where(x => x.CollectionType == CollectionTypeOptions.boxsets)
                 .FilterToUserPermitted(LibraryManager, user);
 
-            var boxSets = folders.SelectMany(x =>
-            {
-                var item = LibraryManager.GetParentItem(Guid.Parse(x.ItemId), user?.Id);
-
-                if (item is not Folder folder)
+            var boxSets = folders
+                .SelectMany(x =>
                 {
-                    folder = LibraryManager.GetUserRootFolder();
-                }
+                    var item = LibraryManager.GetParentItem(Guid.Parse(x.ItemId), user?.Id);
 
-                return folder.GetItems(new InternalItemsQuery(user)
-                {
-                    ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
-                    Recursive = true,
-                    IncludeItemTypes = [BaseItemKind.BoxSet],
-                    DtoOptions = dtoOptions
-                }).Items;
-            }).OfType<BoxSet>().ToArray();
+                    if (item is not Folder folder)
+                    {
+                        folder = LibraryManager.GetUserRootFolder();
+                    }
+
+                    return folder
+                        .GetItems(
+                            new InternalItemsQuery(user)
+                            {
+                                ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
+                                Recursive = true,
+                                IncludeItemTypes = [BaseItemKind.BoxSet],
+                                DtoOptions = dtoOptions,
+                            }
+                        )
+                        .Items;
+                })
+                .OfType<BoxSet>()
+                .ToArray();
 
             foreach (var boxSet in boxSets)
             {
@@ -152,7 +160,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             User user,
             BoxSet boxSet,
             DateTime cutoffDate,
-            List<(BaseItem Item, DateTime? LastPlayed)> results)
+            List<(BaseItem Item, DateTime? LastPlayed)> results
+        )
         {
             var children = boxSet.GetChildren(user, true, new InternalItemsQuery(user)).ToList();
             var movies = children.OfType<Movie>().ToList();
@@ -187,31 +196,40 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         private void CollectMovieCandidates(
             User user,
             DateTime cutoffDate,
-            List<(BaseItem Item, DateTime? LastPlayed)> results)
+            List<(BaseItem Item, DateTime? LastPlayed)> results
+        )
         {
             // === Process Movies ===
-            VirtualFolderInfo[] movieFolders = LibraryManager.GetVirtualFolders()
+            VirtualFolderInfo[] movieFolders = LibraryManager
+                .GetVirtualFolders()
                 .Where(x => x.CollectionType == CollectionTypeOptions.movies)
                 .FilterToUserPermitted(LibraryManager, user);
 
-            var playedMovies = movieFolders.SelectMany(x =>
-            {
-                var item = LibraryManager.GetParentItem(Guid.Parse(x.ItemId), user?.Id);
-
-                if (item is not Folder folder)
+            var playedMovies = movieFolders
+                .SelectMany(x =>
                 {
-                    folder = LibraryManager.GetUserRootFolder();
-                }
+                    var item = LibraryManager.GetParentItem(Guid.Parse(x.ItemId), user?.Id);
 
-                return folder.GetItems(new InternalItemsQuery(user)
-                {
-                    ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
-                    IncludeItemTypes = [BaseItemKind.Movie],
-                    IsPlayed = true,
-                    Recursive = true,
-                    DtoOptions = new DtoOptions { Fields = [], EnableImages = false }
-                }).Items;
-            }).OfType<Movie>().ToList();
+                    if (item is not Folder folder)
+                    {
+                        folder = LibraryManager.GetUserRootFolder();
+                    }
+
+                    return folder
+                        .GetItems(
+                            new InternalItemsQuery(user)
+                            {
+                                ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
+                                IncludeItemTypes = [BaseItemKind.Movie],
+                                IsPlayed = true,
+                                Recursive = true,
+                                DtoOptions = new DtoOptions { Fields = [], EnableImages = false },
+                            }
+                        )
+                        .Items;
+                })
+                .OfType<Movie>()
+                .ToList();
 
             foreach (var movie in playedMovies)
             {
@@ -226,11 +244,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         private void CollectSeriesCandidates(
             User user,
             DateTime cutoffDate,
-            List<(BaseItem Item, DateTime? LastPlayed)> results)
+            List<(BaseItem Item, DateTime? LastPlayed)> results
+        )
         {
             // === Process TV Series ===
             // Phase 1: Get candidates from played episodes
-            VirtualFolderInfo[] tvFolders = LibraryManager.GetVirtualFolders()
+            VirtualFolderInfo[] tvFolders = LibraryManager
+                .GetVirtualFolders()
                 .Where(x => x.CollectionType == CollectionTypeOptions.tvshows)
                 .FilterToUserPermitted(LibraryManager, user);
 
@@ -239,14 +259,19 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             // Phase 2: Single batch query for unplayed episodes across all candidates
             var candidateSeriesIds = candidates.Select(c => c.Series.Id).ToArray();
 
-            var unplayedEpisodes = LibraryManager.GetItemList(new InternalItemsQuery(user)
-            {
-                IncludeItemTypes = [BaseItemKind.Episode],
-                AncestorIds = candidateSeriesIds,
-                IsPlayed = false,
-                IsVirtualItem = false,
-                DtoOptions = new DtoOptions { Fields = [], EnableImages = false }
-            }).OfType<Episode>().ToList();
+            var unplayedEpisodes = LibraryManager
+                .GetItemList(
+                    new InternalItemsQuery(user)
+                    {
+                        IncludeItemTypes = [BaseItemKind.Episode],
+                        AncestorIds = candidateSeriesIds,
+                        IsPlayed = false,
+                        IsVirtualItem = false,
+                        DtoOptions = new DtoOptions { Fields = [], EnableImages = false },
+                    }
+                )
+                .OfType<Episode>()
+                .ToList();
 
             // Get set of series IDs that have unplayed episodes
             var seriesWithUnplayed = unplayedEpisodes
@@ -272,36 +297,44 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         private List<(Series Series, int PlayedCount, DateTime? LastPlayedDate)> GetSeriesCandidatesFromPlayedEpisodes(
             User user,
             VirtualFolderInfo[] tvFolders,
-            DateTime cutoffDate)
+            DateTime cutoffDate
+        )
         {
-            var playedEpisodes = tvFolders.SelectMany(x =>
-            {
-                return LibraryManager.GetItemList(new InternalItemsQuery(user)
+            var playedEpisodes = tvFolders
+                .SelectMany(x =>
                 {
-                    ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
-                    IncludeItemTypes = [BaseItemKind.Episode],
-                    IsPlayed = true,
-                    OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Ascending)],
-                    Limit = 1000,
-                    IsVirtualItem = false,
-                    Recursive = true,
-                    DtoOptions = new DtoOptions { Fields = [], EnableImages = false }
-                });
-            }).OfType<Episode>().ToList();
+                    return LibraryManager.GetItemList(
+                        new InternalItemsQuery(user)
+                        {
+                            ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
+                            IncludeItemTypes = [BaseItemKind.Episode],
+                            IsPlayed = true,
+                            OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Ascending)],
+                            Limit = 1000,
+                            IsVirtualItem = false,
+                            Recursive = true,
+                            DtoOptions = new DtoOptions { Fields = [], EnableImages = false },
+                        }
+                    );
+                })
+                .OfType<Episode>()
+                .ToList();
 
             // Group by series and get candidates
             return playedEpisodes
                 .Where(ep => ep.Series != null)
                 .GroupBy(ep => ep.Series!.Id)
-                .Select(g => (
-                    Series: g.First().Series!,
-                    PlayedCount: g.Count(),
-                    LastPlayedDate: g.Max(ep =>
-                    {
-                        var ud = UserDataManager.GetUserData(user, ep);
-                        return ud?.LastPlayedDate;
-                    })
-                ))
+                .Select(g =>
+                    (
+                        Series: g.First().Series!,
+                        PlayedCount: g.Count(),
+                        LastPlayedDate: g.Max(ep =>
+                        {
+                            var ud = UserDataManager.GetUserData(user, ep);
+                            return ud?.LastPlayedDate;
+                        })
+                    )
+                )
                 .Where(x => x.LastPlayedDate < cutoffDate)
                 .Where(x => x.PlayedCount >= 3)
                 .OrderBy(x => x.LastPlayedDate)
@@ -312,22 +345,18 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         private QueryResult<BaseItemDto> BuildShuffledResult(
             User user,
             DtoOptions dtoOptions,
-            List<(BaseItem Item, DateTime? LastPlayed)> results)
+            List<(BaseItem Item, DateTime? LastPlayed)> results
+        )
         {
             // Shuffle results for variety, then take top 16
             var random = new Random();
-            var shuffledResults = results
-                .OrderBy(x => random.Next())
-                .Take(16)
-                .ToList();
+            var shuffledResults = results.OrderBy(x => random.Next()).Take(16).ToList();
 
             // Fetch full items with images
             var itemIds = shuffledResults.Select(r => r.Item.Id).ToArray();
-            var fullItems = LibraryManager.GetItemList(new InternalItemsQuery(user)
-            {
-                ItemIds = itemIds,
-                DtoOptions = dtoOptions
-            });
+            var fullItems = LibraryManager.GetItemList(
+                new InternalItemsQuery(user) { ItemIds = itemIds, DtoOptions = dtoOptions }
+            );
 
             // Maintain order
             var orderedItems = itemIds

@@ -36,16 +36,17 @@ public class HomeScreenSectionServiceTests
         _ = fixture;
 
         _translationManager
-            .Setup(manager => manager.Translate(
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<string>(),
-                It.IsAny<TranslationMetadata?>()))
+            .Setup(manager =>
+                manager.Translate(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<TranslationMetadata?>()
+                )
+            )
             .Returns((string key, string language, string fallback, TranslationMetadata? metadata) => fallback);
 
-        _serverConfigurationManager
-            .Setup(manager => manager.Configuration)
-            .Returns(new ServerConfiguration());
+        _serverConfigurationManager.Setup(manager => manager.Configuration).Returns(new ServerConfiguration());
     }
 
     private HomeScreenSectionService MakeService()
@@ -60,15 +61,13 @@ public class HomeScreenSectionServiceTests
             _libraryManager.Object,
             _dtoService.Object,
             new CollectionManagerProxy(_collectionManager.Object),
-            _playlistManager.Object);
+            _playlistManager.Object
+        );
     }
 
     private static PluginDefinedSection MakeSection(string sectionId, string displayText)
     {
-        return new PluginDefinedSection(sectionId, displayText)
-        {
-            OnGetResults = _ => new QueryResult<BaseItemDto>()
-        };
+        return new PluginDefinedSection(sectionId, displayText) { OnGetResults = _ => new QueryResult<BaseItemDto>() };
     }
 
     private static UserSectionsData SeedPage(Guid userId, params (int Order, IHomeScreenSection Section)[] sections)
@@ -76,7 +75,7 @@ public class HomeScreenSectionServiceTests
         UserSectionsData data = new UserSectionsData
         {
             UserId = userId,
-            MaxOrderIndex = sections.Length > 0 ? sections.Max(s => s.Order) : 0
+            MaxOrderIndex = sections.Length > 0 ? sections.Max(s => s.Order) : 0,
         };
         foreach ((int order, IHomeScreenSection section) in sections)
         {
@@ -102,7 +101,8 @@ public class HomeScreenSectionServiceTests
         _dataCache.Cache[pageHash] = SeedPage(
             userId,
             (0, MakeSection("First", "First Section")),
-            (1, MakeSection("Second", "Second Section")));
+            (1, MakeSection("Second", "Second Section"))
+        );
 
         IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(userId, "en", 1, 10, pageHash);
 
@@ -124,7 +124,8 @@ public class HomeScreenSectionServiceTests
         _dataCache.Cache[pageHash] = SeedPage(
             userId,
             (0, MakeSection("First", "First")),
-            (2, MakeSection("Third", "Third")));
+            (2, MakeSection("Third", "Third"))
+        );
 
         Assert.Null(service.GetCachedSectionsForUser(userId, "en", 1, 10, pageHash));
     }
@@ -139,7 +140,8 @@ public class HomeScreenSectionServiceTests
         UserSectionsData data = SeedPage(
             userId,
             (1, MakeSection("First", "First")),
-            (3, MakeSection("Third", "Third")));
+            (3, MakeSection("Third", "Third"))
+        );
         data.OrderIndicesWithoutSections.Add(new IntRange { Start = 2, End = 2 });
         _dataCache.Cache[pageHash] = data;
 
@@ -174,7 +176,8 @@ public class HomeScreenSectionServiceTests
         UserSectionsData data = SeedPage(
             userId,
             (0, MakeSection("First", "First")),
-            (1, MakeSection("Second", "Second")));
+            (1, MakeSection("Second", "Second"))
+        );
         data.MaxOrderIndex = 2;
         data.SectionsInProgress[2] = true;
         _dataCache.Cache[pageHash] = data;
@@ -196,7 +199,12 @@ public class HomeScreenSectionServiceTests
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "TestSection", Enabled = true, OrderIndex = 0 }
+            new SectionSettings
+            {
+                SectionId = "TestSection",
+                Enabled = true,
+                OrderIndex = 0,
+            },
         ];
         try
         {
@@ -209,7 +217,13 @@ public class HomeScreenSectionServiceTests
 
             service.CacheSectionsForUser(userId, pageHash);
 
-            IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(userId, "en", 1, 10, pageHash);
+            IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(
+                userId,
+                "en",
+                1,
+                10,
+                pageHash
+            );
             Assert.NotNull(result);
             HomeScreenSectionInfo info = Assert.Single(result!);
             Assert.Equal("TestSection", info.Section);
@@ -247,7 +261,12 @@ public class HomeScreenSectionServiceTests
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "LiveSection", Enabled = true, OrderIndex = 0 }
+            new SectionSettings
+            {
+                SectionId = "LiveSection",
+                Enabled = true,
+                OrderIndex = 0,
+            },
         ];
         try
         {
@@ -324,7 +343,8 @@ public class HomeScreenSectionServiceTests
             // Bounded wait: if the busy-wait regression comes back this fails instead of
             // hanging the whole test run.
             Task<IReadOnlyList<HomeScreenSectionInfo>?> work = Task.Run(() =>
-                service.MonitorLiveUpdatedSectionsForUser(userId, "en", 1, 10, Guid.NewGuid()));
+                service.MonitorLiveUpdatedSectionsForUser(userId, "en", 1, 10, Guid.NewGuid())
+            );
             Task finished = await Task.WhenAny(work, Task.Delay(TimeSpan.FromSeconds(20)));
             Assert.True(finished == work, "Home screen section request did not return in time (busy-wait regression).");
 
@@ -349,27 +369,45 @@ public class HomeScreenSectionServiceTests
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "B", Enabled = true, OrderIndex = 0 },
-            new SectionSettings { SectionId = "A", Enabled = true, OrderIndex = 1 }
+            new SectionSettings
+            {
+                SectionId = "B",
+                Enabled = true,
+                OrderIndex = 0,
+            },
+            new SectionSettings
+            {
+                SectionId = "A",
+                Enabled = true,
+                OrderIndex = 1,
+            },
         ];
         try
         {
             // User puts "A" first despite admin ordering.
             _homeScreenManager
                 .Setup(manager => manager.GetUserSettings(userId))
-                .Returns(new ModularHomeUserSettings
-                {
-                    UserId = userId,
-                    EnabledSections = ["A", "B"],
-                    SectionOrder = ["A", "B"]
-                });
+                .Returns(
+                    new ModularHomeUserSettings
+                    {
+                        UserId = userId,
+                        EnabledSections = ["A", "B"],
+                        SectionOrder = ["A", "B"],
+                    }
+                );
             _homeScreenManager
                 .Setup(manager => manager.GetSectionTypes())
                 .Returns(new[] { MakeSection("A", "Section A"), MakeSection("B", "Section B") });
 
             service.CacheSectionsForUser(userId, pageHash);
 
-            IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(userId, "en", 1, 10, pageHash);
+            IReadOnlyList<HomeScreenSectionInfo>? result = service.GetCachedSectionsForUser(
+                userId,
+                "en",
+                1,
+                10,
+                pageHash
+            );
             Assert.NotNull(result);
             Assert.Equal(2, result!.Count);
             Assert.Equal("A", result[0].Section);
@@ -435,11 +473,7 @@ public class HomeScreenSectionServiceTests
     [Fact]
     public void FillOrderIndicesWithoutSections_records_gaps_between_in_progress_indices()
     {
-        UserSectionsData data = new UserSectionsData
-        {
-            UserId = Guid.NewGuid(),
-            MaxOrderIndex = 5
-        };
+        UserSectionsData data = new UserSectionsData { UserId = Guid.NewGuid(), MaxOrderIndex = 5 };
         data.SectionsInProgress.TryAdd(0, true);
         data.SectionsInProgress.TryAdd(3, true);
         data.SectionsInProgress.TryAdd(5, true);
@@ -459,7 +493,7 @@ public class HomeScreenSectionServiceTests
         config.SectionSettings =
         [
             new SectionSettings { SectionId = "A", OrderIndex = 5 },
-            new SectionSettings { SectionId = "B", OrderIndex = 1 }
+            new SectionSettings { SectionId = "B", OrderIndex = 1 },
         ];
         try
         {
@@ -482,14 +516,11 @@ public class HomeScreenSectionServiceTests
         [
             new SectionSettings { SectionId = "A", OrderIndex = 0 },
             new SectionSettings { SectionId = "B", OrderIndex = 1 },
-            new SectionSettings { SectionId = "C", OrderIndex = 2 }
+            new SectionSettings { SectionId = "C", OrderIndex = 2 },
         ];
         try
         {
-            ModularHomeUserSettings settings = new ModularHomeUserSettings
-            {
-                SectionOrder = ["C", "A", "B"]
-            };
+            ModularHomeUserSettings settings = new ModularHomeUserSettings { SectionOrder = ["C", "A", "B"] };
 
             object? result = InvokeServiceStatic("BuildOrderedSectionGroups", settings);
 
@@ -503,9 +534,14 @@ public class HomeScreenSectionServiceTests
 
     private static object? InvokeServiceStatic(string name, params object?[] args)
     {
-        System.Reflection.MethodInfo method = typeof(HomeScreenSectionService)
-            .GetMethod(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
-            ?? throw new InvalidOperationException($"Private static '{name}' not found on {nameof(HomeScreenSectionService)}.");
+        System.Reflection.MethodInfo method =
+            typeof(HomeScreenSectionService).GetMethod(
+                name,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static
+            )
+            ?? throw new InvalidOperationException(
+                $"Private static '{name}' not found on {nameof(HomeScreenSectionService)}."
+            );
         return method.Invoke(null, args);
     }
 
