@@ -234,8 +234,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         private static string GenerateCacheKey(string sourceUrl)
         {
             byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(sourceUrl));
-            // ponytail: stdlib already lowercases, avoid extra allocation
-            return Convert.ToHexStringLower(hashBytes);
+            return Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
         private byte[] ProcessImage(byte[] imageData)
         {
