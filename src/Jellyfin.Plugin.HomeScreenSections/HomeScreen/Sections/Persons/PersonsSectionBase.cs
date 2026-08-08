@@ -101,7 +101,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
 
             people.Shuffle();
 
-            List<IHomeScreenSection> sections = new List<IHomeScreenSection>();
+            List<IHomeScreenSection> sections = [];
             
             VirtualFolderInfo[] folders = m_libraryManager.GetVirtualFolders()
                 .FilterToUserPermitted(m_libraryManager, user);

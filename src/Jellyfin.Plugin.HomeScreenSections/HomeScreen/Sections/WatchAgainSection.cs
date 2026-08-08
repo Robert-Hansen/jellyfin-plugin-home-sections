@@ -74,7 +74,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             User user = UserManager.GetUserById(payload.UserId)!;
             var cutoffDate = DateTime.Now.Subtract(TimeSpan.FromDays(28));
 
-            List<(BaseItem Item, DateTime? LastPlayed)> results = new List<(BaseItem, DateTime?)>();
+            List<(BaseItem Item, DateTime? LastPlayed)> results = [];
             CollectBoxSetCandidates(user, dtoOptions, cutoffDate, results);
             CollectMovieCandidates(user, cutoffDate, results);
             CollectSeriesCandidates(user, cutoffDate, results);

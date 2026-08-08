@@ -184,7 +184,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
 		private IEnumerable<BaseItem> PickMoviesAvoidingCollections(User? user, List<BaseItem> recentlyPlayedMovies, int instanceCount)
 		{
-			List<BaseItem> pickedMovies = new List<BaseItem>();
+			List<BaseItem> pickedMovies = [];
 			Queue<BaseItem> queue = new Queue<BaseItem>(recentlyPlayedMovies);
 
 			while (pickedMovies.Count < instanceCount && queue.Count > 0)

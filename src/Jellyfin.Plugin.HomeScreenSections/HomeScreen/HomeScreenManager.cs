@@ -172,7 +172,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
                     settings = settingsArray.Select(x => JsonConvert.DeserializeObject<ModularHomeUserSettings>(x.ToString())).First(x => x != null && x.UserId.Equals(userId));
                     if (settings != null && settings.SectionOrder == null)
                     {
-                        settings.SectionOrder = new List<string>();
+                        settings.SectionOrder = [];
                     }
                 }
             }

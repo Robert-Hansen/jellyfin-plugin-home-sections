@@ -52,7 +52,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             
             IReadOnlyList<BaseItemDto>? nuResults = m_nextUpSection?.GetResults(payload, new QueryCollection(nuQuery)).Items;
             
-            List<BaseItemDto> returnItems = new List<BaseItemDto>();
+            List<BaseItemDto> returnItems = [];
 
             if (cwResults != null)
             {

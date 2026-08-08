@@ -199,7 +199,7 @@ public class GenreSection : IHomeScreenSection
     private static IEnumerable<string> PickWeightedGenres((string Genre, int Score)[] userGenreScores, int instanceCount)
     {
         Random rnd = new Random();
-        List<string> pickedGenres = new List<string>();
+        List<string> pickedGenres = [];
         (string Genre, int Score)[] availableGenres = userGenreScores.ToArray();
 
         while (pickedGenres.Count < instanceCount && availableGenres.Length > 0)

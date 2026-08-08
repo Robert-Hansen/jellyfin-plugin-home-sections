@@ -88,7 +88,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Latest
             VirtualFolderInfo[] folders,
             bool? isPlayed)
         {
-            List<(Series Series, DateTime? LatestPremiereDate)> selectedSeries = new List<(Series, DateTime?)>();
+            List<(Series Series, DateTime? LatestPremiereDate)> selectedSeries = [];
             int dayIncrement = 30;
             DateTime currentDate = DateTime.Now;
             DateTime stopDate = DateTime.Parse("01/01/1925", System.Globalization.CultureInfo.InvariantCulture); // The first show ever was 1925 so this should be safe, we never expect to get as far back as this but we need an escape.

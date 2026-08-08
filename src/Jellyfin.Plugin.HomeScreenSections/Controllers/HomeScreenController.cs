@@ -144,7 +144,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         public ActionResult GetDiagnostics()
         {
             PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
-            List<object> checks = new List<object>();
+            List<object> checks = [];
             AppendPluginAndSectionChecks(config, checks);
             AppendIntegrationChecks(config, checks);
             AppendLibraryChecks(config, checks);

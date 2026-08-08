@@ -168,7 +168,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             int[] orderedKeys,
             out bool isComplete)
         {
-            List<(IHomeScreenSection Section, int ConfiguredOrder)> sectionsToReturn = new List<(IHomeScreenSection, int)>();
+            List<(IHomeScreenSection Section, int ConfiguredOrder)> sectionsToReturn = [];
             isComplete = true;
 
             for (int i = 0; i < orderedKeys.Length; i++)
@@ -480,6 +480,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
     public class UserHomeSections
     {
         public Guid PageHash { get; set; }
-        public IList<HomeScreenSectionInfo> Sections { get; set; } = new List<HomeScreenSectionInfo>();
+        public IList<HomeScreenSectionInfo> Sections { get; set; } = [];
     }
 }

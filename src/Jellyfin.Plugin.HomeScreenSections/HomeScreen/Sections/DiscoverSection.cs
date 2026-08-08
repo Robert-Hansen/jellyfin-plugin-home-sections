@@ -72,7 +72,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
         private List<BaseItemDto> FetchDiscoverItems(HttpClient client, string jellyseerrDisplayUrl)
         {
-            List<BaseItemDto> returnItems = new List<BaseItemDto>();
+            List<BaseItemDto> returnItems = [];
             int page = 1;
             do
             {

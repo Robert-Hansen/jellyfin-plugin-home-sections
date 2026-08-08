@@ -114,7 +114,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
         private List<(BaseItem Item, DateTime? PremiereDate)> SearchLatestItems(User? user, VirtualFolderInfo[] folders, bool? isPlayed)
         {
-            List<(BaseItem Item, DateTime? PremiereDate)> selectedItems = new List<(BaseItem, DateTime?)>();
+            List<(BaseItem Item, DateTime? PremiereDate)> selectedItems = [];
             int dayIncrement = 30;
             DateTime currentDate = DateTime.Now;
             DateTime stopDate = DateTime.Parse("01/01/1887", System.Globalization.CultureInfo.InvariantCulture); // The first movie ever was 1888 so this should be safe, we never expect to get as far back as this but we need an escape.

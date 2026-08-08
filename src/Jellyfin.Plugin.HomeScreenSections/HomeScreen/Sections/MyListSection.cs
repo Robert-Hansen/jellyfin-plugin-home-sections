@@ -67,7 +67,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 			IEnumerable<Playlist> playlists = PlaylistManager.GetPlaylists(user.Id);
 			Playlist? myListPlaylist = playlists.FirstOrDefault(x => string.Equals(x.Name, "My List", StringComparison.Ordinal));
 
-			List<BaseItem> results = new List<BaseItem>();
+			List<BaseItem> results = [];
 
 			if (myListPlaylist != null)
 			{

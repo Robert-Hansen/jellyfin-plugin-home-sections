@@ -120,7 +120,7 @@ public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
 
     private List<BoxSet> FindPartialCollections(User user)
     {
-        List<BoxSet> partial = new List<BoxSet>();
+        List<BoxSet> partial = [];
         foreach (BoxSet boxSet in m_collectionManagerProxy.GetCollections(user))
         {
             List<BaseItem> children = boxSet.GetChildren(user, true, new InternalItemsQuery(user)).ToList();
