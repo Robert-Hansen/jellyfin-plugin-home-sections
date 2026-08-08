@@ -73,33 +73,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         
         public IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
         {
-            User? user = m_userManager.GetUserById(userId ?? Guid.Empty);
-
-            BaseItemDto? originalPayload = null;
-            
-            // Get only collection folders for the section type that the user can access
-            var libraryFolders = m_libraryManager.GetUserRootFolder()
-                .GetChildren(user, true)
-                .OfType<Folder>()
-                .Where(x => (x as ICollectionFolder)?.CollectionType == CollectionType)
-                .ToArray();
-            
-            // Check if there's a configured default library, otherwise use first available
-            var folder = !string.IsNullOrEmpty(LibraryId)
-                ? libraryFolders.FirstOrDefault(x => string.Equals(x.Id.ToString(), LibraryId, StringComparison.Ordinal))
-                : null;
-            
-            // Fall back to first movies library if no configured library found
-            folder ??= libraryFolders.FirstOrDefault();
-            
-            if (folder != null)
-            {
-                DtoOptions dtoOptions = new DtoOptions();
-                dtoOptions.Fields =
-                    [..dtoOptions.Fields, ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId];
-                
-                originalPayload = Array.ConvertAll(new[] { folder }, i => m_dtoService.GetBaseItemDto(i, dtoOptions, user)).First();
-            }
+            BaseItemDto? originalPayload = LibrarySectionHelper.ResolveLibraryFolderDto(m_libraryManager, m_userManager, m_dtoService, userId, CollectionType, LibraryId);
 
             LatestSectionBase sectionBase = CreateInstance();
             sectionBase.DisplayText = DisplayText;

@@ -97,37 +97,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
         public IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
         {
-            User? user = m_userManager.GetUserById(userId ?? Guid.Empty);
-
-            BaseItemDto? originalPayload = null;
-            
-            Folder[] itemFolders = m_libraryManager.GetUserRootFolder()
-                .GetChildren(user, true)
-                .OfType<Folder>()
-                .Where(x => (x as ICollectionFolder)?.CollectionType == CollectionType)
-                .ToArray();
-            
-            Folder? folder = !string.IsNullOrEmpty(LibraryId)
-                ? itemFolders.FirstOrDefault(x => string.Equals(x.Id.ToString(), LibraryId, StringComparison.Ordinal))
-                : null;
-            
-            folder ??= itemFolders.FirstOrDefault();
-            
-            if (folder != null)
-            {
-                DtoOptions dtoOptions = new DtoOptions();
-                dtoOptions.Fields =
-                    [..dtoOptions.Fields, ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId];
-
-                originalPayload = Array.ConvertAll(new[] { folder }, i => m_dtoService.GetBaseItemDto(i, dtoOptions, user)).First();
-            }
+            BaseItemDto? originalPayload = LibrarySectionHelper.ResolveLibraryFolderDto(m_libraryManager, m_userManager, m_dtoService, userId, CollectionType, LibraryId);
 
             RecentlyAddedSectionBase instance = (ActivatorUtilities.CreateInstance(ServiceProvider, GetType(), m_userViewManager, m_userManager, m_libraryManager, m_dtoService) as RecentlyAddedSectionBase)!;
-            
+
             instance.AdditionalData = AdditionalData;
             instance.DisplayText = DisplayText;
             instance.OriginalPayload = originalPayload;
-            
+
             yield return instance;
         }
         
