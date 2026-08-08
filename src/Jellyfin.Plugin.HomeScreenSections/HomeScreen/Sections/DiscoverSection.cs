@@ -8,6 +8,7 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Querying;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
 
 namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
@@ -72,7 +73,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
 
         private static HttpClient CreateJellyseerrClient(string jellyseerrUrl)
         {
-            HttpClient client = new HttpClient { BaseAddress = new Uri(jellyseerrUrl) };
+            // ponytail: reuse pooled handler when available — fallback to new for tests
+            IHttpClientFactory? factory = HomeScreenSectionsPlugin.Instance.ServiceProvider.GetService<IHttpClientFactory>();
+            HttpClient client = factory?.CreateClient() ?? new HttpClient();
+            client.BaseAddress = new Uri(jellyseerrUrl);
             client.DefaultRequestHeaders.Add("X-Api-Key", HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrApiKey);
             return client;
         }

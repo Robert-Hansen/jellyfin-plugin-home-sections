@@ -21,6 +21,7 @@ using MediaBrowser.Model.Querying;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -373,8 +374,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
 
                     string? publishedServerUrl = m_serverApplicationHost.GetType()
                         .GetProperty("PublishedServerUrl", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(m_serverApplicationHost) as string;
-                
-                    HttpClient client = new HttpClient();
+
+                    HttpClient client = HomeScreenSectionsPlugin.Instance.ServiceProvider.GetService<IHttpClientFactory>()?.CreateClient() ?? new HttpClient();
                     client.BaseAddress = new Uri(publishedServerUrl ?? $"http://localhost:{m_serverApplicationHost.HttpPort}");
                     
                     HttpResponseMessage responseMessage = client.PostAsync(payload.ResultsEndpoint, 
@@ -411,8 +412,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
             {
                 return BadRequest();
             }
-            
-            HttpClient client = new HttpClient();
+
+            HttpClient client = HomeScreenSectionsPlugin.Instance.ServiceProvider.GetService<IHttpClientFactory>()?.CreateClient() ?? new HttpClient();
             client.BaseAddress = new Uri(jellyseerrUrl);
             client.DefaultRequestHeaders.Add("X-Api-Key", HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrApiKey);
             
