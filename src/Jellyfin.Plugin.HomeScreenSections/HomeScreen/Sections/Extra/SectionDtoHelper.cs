@@ -12,16 +12,17 @@ internal static class SectionDtoHelper
     {
         return new DtoOptions
         {
-            Fields = [ItemFields.PrimaryImageAspectRatio,
-                ItemFields.MediaSourceCount],
+            Fields = [ItemFields.PrimaryImageAspectRatio, ItemFields.MediaSourceCount],
             ImageTypeLimit = 1,
-            ImageTypes = [ImageType.Primary,
-                ImageType.Thumb,
-                ImageType.Backdrop]
+            ImageTypes = [ImageType.Primary, ImageType.Thumb, ImageType.Backdrop],
         };
     }
 
-    public static HomeScreenSectionInfo CreateInfo(IHomeScreenSection section, SectionViewMode viewMode = SectionViewMode.Landscape, bool allowHideWatched = false)
+    public static HomeScreenSectionInfo CreateInfo(
+        IHomeScreenSection section,
+        SectionViewMode viewMode = SectionViewMode.Landscape,
+        bool allowHideWatched = false
+    )
     {
         return new HomeScreenSectionInfo
         {
@@ -32,35 +33,17 @@ internal static class SectionDtoHelper
             Limit = section.Limit ?? 1,
             OriginalPayload = section.OriginalPayload,
             ViewMode = viewMode,
-            AllowHideWatched = allowHideWatched
+            AllowHideWatched = allowHideWatched,
         };
     }
 
-    public static BaseItemKind[] MovieAndSeriesKinds { get; } =
-    {
-        BaseItemKind.Movie,
-        BaseItemKind.Series
-    };
+    public static BaseItemKind[] MovieAndSeriesKinds { get; } = { BaseItemKind.Movie, BaseItemKind.Series };
 
     public static BaseItemKind[] MovieSeriesEpisodeKinds { get; } =
-    {
-        BaseItemKind.Movie,
-        BaseItemKind.Series,
-        BaseItemKind.Episode
-    };
+        { BaseItemKind.Movie, BaseItemKind.Series, BaseItemKind.Episode };
 
     /// <summary>
     /// Kid-friendly official ratings used for the Kids section filter.
     /// </summary>
-    public static string[] KidsOfficialRatings { get; } =
-    {
-        "G",
-        "PG",
-        "TV-Y",
-        "TV-Y7",
-        "TV-G",
-        "TV-PG",
-        "U",
-        "PG-13"
-    };
+    public static string[] KidsOfficialRatings { get; } = { "G", "PG", "TV-Y", "TV-Y7", "TV-G", "TV-PG", "U", "PG-13" };
 }

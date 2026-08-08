@@ -18,19 +18,20 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.RecentlyAdded
         protected override BaseItemKind SectionItemKind => BaseItemKind.Book;
 
         protected override CollectionType CollectionType => CollectionType.books;
-        
+
         protected override CollectionTypeOptions CollectionTypeOptions => CollectionTypeOptions.books;
 
         protected override string? LibraryId => HomeScreenSectionsPlugin.Instance?.Configuration?.DefaultBooksLibraryId;
 
         protected override SectionViewMode DefaultViewMode => SectionViewMode.Portrait;
 
-        public RecentlyAddedBooksSection(IUserViewManager userViewManager,
+        public RecentlyAddedBooksSection(
+            IUserViewManager userViewManager,
             IUserManager userManager,
             ILibraryManager libraryManager,
             IDtoService dtoService,
-            IServiceProvider serviceProvider) : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider)
-        {
-        }
+            IServiceProvider serviceProvider
+        )
+            : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider) { }
     }
 }

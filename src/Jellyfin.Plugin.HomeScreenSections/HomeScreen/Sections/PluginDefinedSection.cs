@@ -10,7 +10,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
     public class PluginDefinedSection : IHomeScreenSection
     {
         public delegate QueryResult<BaseItemDto> GetResultsHandler(HomeScreenSectionPayload payload);
-        
+
         public string? Section { get; }
         public string? DisplayText { get; set; }
         public int? Limit { get; }
@@ -21,10 +21,16 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         /// Optional item used as the section title link target (e.g. the full BoxSet/Playlist).
         /// </summary>
         public object? OriginalPayload { get; set; }
-        
+
         public required GetResultsHandler OnGetResults { get; set; }
-        
-        public PluginDefinedSection(string sectionUuid, string displayText, string? route = null, string? additionalData = null, object? originalPayload = null)
+
+        public PluginDefinedSection(
+            string sectionUuid,
+            string displayText,
+            string? route = null,
+            string? additionalData = null,
+            object? originalPayload = null
+        )
         {
             Section = sectionUuid;
             DisplayText = displayText;
@@ -33,7 +39,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             AdditionalData = additionalData;
             OriginalPayload = originalPayload;
         }
-        
+
         public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
         {
             return OnGetResults(payload);
@@ -43,7 +49,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         {
             yield return this;
         }
-        
+
         public HomeScreenSectionInfo GetInfo()
         {
             return new HomeScreenSectionInfo
@@ -54,7 +60,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 Route = Route,
                 Limit = Limit ?? 1,
                 OriginalPayload = OriginalPayload,
-                ViewMode = SectionViewMode.Landscape
+                ViewMode = SectionViewMode.Landscape,
             };
         }
     }

@@ -62,6 +62,8 @@ dotnet_diagnostic.CA1507.severity = suggestion
 
 # --- Structural (fixed) ---
 dotnet_diagnostic.MA0051.severity = warning
+MA0051.maximum_lines_per_method = 120
+MA0051.maximum_statements_per_method = 60
 dotnet_diagnostic.CA1051.severity = warning
 dotnet_diagnostic.CA1031.severity = warning
 dotnet_diagnostic.MA0016.severity = warning

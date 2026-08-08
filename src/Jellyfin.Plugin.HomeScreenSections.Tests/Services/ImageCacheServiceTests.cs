@@ -70,8 +70,11 @@ public class ImageCacheServiceTests
         {
             Content = new ByteArrayContent(payload)
             {
-                Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream") }
-            }
+                Headers =
+                {
+                    ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream"),
+                },
+            },
         });
         ImageCacheService service = MakeService(handler);
 
@@ -91,7 +94,7 @@ public class ImageCacheServiceTests
         const string sourceUrl = "http://images.test/cached.bin";
         FakeHttpMessageHandler handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new ByteArrayContent([9, 9, 9])
+            Content = new ByteArrayContent([9, 9, 9]),
         });
         ImageCacheService service = MakeService(handler);
 
@@ -109,7 +112,7 @@ public class ImageCacheServiceTests
         const string sourceUrl = "http://images.test/cleared.bin";
         FakeHttpMessageHandler handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new ByteArrayContent([1, 2, 3])
+            Content = new ByteArrayContent([1, 2, 3]),
         });
         ImageCacheService service = MakeService(handler);
         string? cacheKey = await service.GetOrCacheImage(sourceUrl, 3600);
@@ -127,15 +130,16 @@ public class ImageCacheServiceTests
         byte[] payload = [7, 7, 7];
         FakeHttpMessageHandler handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new ByteArrayContent(payload)
+            Content = new ByteArrayContent(payload),
         });
 
         ImageCacheService firstService = MakeService(handler);
         string? cacheKey = await firstService.GetOrCacheImage(sourceUrl, 3600);
         Assert.NotNull(cacheKey);
 
-        ImageCacheService secondService = MakeService(new FakeHttpMessageHandler(_ =>
-            throw new InvalidOperationException("restart must not re-download")));
+        ImageCacheService secondService = MakeService(
+            new FakeHttpMessageHandler(_ => throw new InvalidOperationException("restart must not re-download"))
+        );
 
         (byte[]? data, _) = secondService.GetCachedImage(cacheKey!);
         Assert.Equal(payload, data);
@@ -147,7 +151,7 @@ public class ImageCacheServiceTests
         const string sourceUrl = "http://images.test/expired.bin";
         FakeHttpMessageHandler handler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new ByteArrayContent([5, 5, 5])
+            Content = new ByteArrayContent([5, 5, 5]),
         });
         ImageCacheService service = MakeService(handler);
 
@@ -260,8 +264,8 @@ public class ImageCacheServiceTests
         {
             Content = new ByteArrayContent(payload)
             {
-                Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mediaType) }
-            }
+                Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mediaType) },
+            },
         });
     }
 
@@ -275,10 +279,7 @@ public class ImageCacheServiceTests
 
     private ImageCacheService MakeService(FakeHttpMessageHandler handler)
     {
-        return new ImageCacheService(
-            NullLogger<ImageCacheService>.Instance,
-            _fixture.Paths,
-            new HttpClient(handler));
+        return new ImageCacheService(NullLogger<ImageCacheService>.Instance, _fixture.Paths, new HttpClient(handler));
     }
 
     private static string ExpectedKey(string sourceUrl)

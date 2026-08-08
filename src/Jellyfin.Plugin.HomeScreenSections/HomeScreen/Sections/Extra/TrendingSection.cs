@@ -48,17 +48,19 @@ public class TrendingSection : IHomeScreenSection
         }
 
         DtoOptions dtoOptions = SectionDtoHelper.CreateDefaultDtoOptions();
-        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(new InternalItemsQuery(user)
-        {
-            IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
-            Recursive = true,
-            IsPlayed = true,
-            Limit = 16,
-            OrderBy = [(ItemSortBy.PlayCount, SortOrder.Descending)],
-            DtoOptions = dtoOptions,
-            EnableTotalRecordCount = false,
-            IsVirtualItem = false
-        });
+        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(
+            new InternalItemsQuery(user)
+            {
+                IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
+                Recursive = true,
+                IsPlayed = true,
+                Limit = 16,
+                OrderBy = [(ItemSortBy.PlayCount, SortOrder.Descending)],
+                DtoOptions = dtoOptions,
+                EnableTotalRecordCount = false,
+                IsVirtualItem = false,
+            }
+        );
 
         return new QueryResult<BaseItemDto>(_dtoService.GetBaseItemDtos(items.Items, dtoOptions, user));
     }
@@ -68,5 +70,5 @@ public class TrendingSection : IHomeScreenSection
         yield return this;
     }
 
-public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
+    public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
 }

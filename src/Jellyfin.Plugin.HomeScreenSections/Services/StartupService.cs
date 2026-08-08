@@ -23,16 +23,20 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         public string Name => "HomeScreenSections Startup";
 
         public string Key => "Jellyfin.Plugin.HomeScreenSections.Startup";
-        
+
         public string Description => "Startup Service for HomeScreenSections";
-        
+
         public string Category => "Startup Services";
-        
+
         private readonly IServerApplicationHost _serverApplicationHost;
         private readonly IApplicationPaths _applicationPaths;
         private readonly ILogger<HomeScreenSectionsPlugin> _logger;
 
-        public StartupService(IServerApplicationHost serverApplicationHost, IApplicationPaths applicationPaths, ILogger<HomeScreenSectionsPlugin> logger)
+        public StartupService(
+            IServerApplicationHost serverApplicationHost,
+            IApplicationPaths applicationPaths,
+            ILogger<HomeScreenSectionsPlugin> logger
+        )
         {
             _serverApplicationHost = serverApplicationHost;
             _applicationPaths = applicationPaths;
@@ -42,7 +46,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
             PatchHelpers.SetupPatches();
-            
+
             // Look through the web path and find the file that contains `",loadSections:`
             List<JObject> payloads = [];
             {
@@ -54,19 +58,31 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 payload.Add("callbackMethod", nameof(TransformationPatches.IndexHtml));
                 payloads.Add(payload);
             }
-            
-            string[] allJsChunks = Directory.GetFiles(_applicationPaths.WebPath, "*.chunk.js", SearchOption.AllDirectories);
+
+            string[] allJsChunks = Directory.GetFiles(
+                _applicationPaths.WebPath,
+                "*.chunk.js",
+                SearchOption.AllDirectories
+            );
             foreach (string jsChunk in allJsChunks)
             {
-                if ((await File.ReadAllTextAsync(jsChunk, cancellationToken)).Contains(",loadSections:", StringComparison.Ordinal))
+                if (
+                    (await File.ReadAllTextAsync(jsChunk, cancellationToken)).Contains(
+                        ",loadSections:",
+                        StringComparison.Ordinal
+                    )
+                )
                 {
-                    
                     string fileName = Path.GetFileName(jsChunk);
-                    Regex r = new Regex(@"(?<base>[^.]+)\.(?<hash>[^.]+)\.chunk.js", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromMilliseconds(250));
-                    
+                    Regex r = new Regex(
+                        @"(?<base>[^.]+)\.(?<hash>[^.]+)\.chunk.js",
+                        RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
+                        TimeSpan.FromMilliseconds(250)
+                    );
+
                     Guid guid = Guid.NewGuid();
                     PluginLog.FoundLoadSections(_logger, fileName, guid);
-                    
+
                     JObject payload = new JObject();
                     payload.Add("id", guid.ToString());
                     payload.Add("fileNamePattern", r.Match(fileName).Groups["base"].Value + "\\.[^.]+\\.chunk\\.js");
@@ -76,20 +92,24 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     payloads.Add(payload);
                 }
             }
-            
-            Assembly? fileTransformationAssembly =
-                AssemblyLoadContext.All.SelectMany(x => x.Assemblies).FirstOrDefault(x =>
-                    x.FullName?.Contains(".FileTransformation", StringComparison.Ordinal) ?? false);
+
+            Assembly? fileTransformationAssembly = AssemblyLoadContext
+                .All.SelectMany(x => x.Assemblies)
+                .FirstOrDefault(x => x.FullName?.Contains(".FileTransformation", StringComparison.Ordinal) ?? false);
 
             if (fileTransformationAssembly != null)
             {
-                Type? pluginInterfaceType = fileTransformationAssembly.GetType("Jellyfin.Plugin.FileTransformation.PluginInterface");
+                Type? pluginInterfaceType = fileTransformationAssembly.GetType(
+                    "Jellyfin.Plugin.FileTransformation.PluginInterface"
+                );
 
                 if (pluginInterfaceType != null)
                 {
                     foreach (JObject payload in payloads)
                     {
-                        pluginInterfaceType.GetMethod("RegisterTransformation")?.Invoke(null, new object?[] { payload });
+                        pluginInterfaceType
+                            .GetMethod("RegisterTransformation")
+                            ?.Invoke(null, new object?[] { payload });
                     }
                 }
             }

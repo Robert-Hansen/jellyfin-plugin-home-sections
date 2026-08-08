@@ -48,11 +48,10 @@ public class JellyseerrSectionsTests : IDisposable
         _imageCacheService = new ImageCacheService(
             NullLogger<ImageCacheService>.Instance,
             fixture.Paths,
-            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound)));
+            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound))
+        );
 
-        _userManager
-            .Setup(manager => manager.GetUserById(_userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(_userId)).Returns(_user);
 
         TestDtos.StubPassthrough(_dtoService);
 
@@ -93,15 +92,20 @@ public class JellyseerrSectionsTests : IDisposable
     {
         if (pathAndQuery.StartsWith("/api/v1/user?", StringComparison.Ordinal))
         {
-            return (200, $$"""
+            return (
+                200,
+                $$"""
                 { "results": [ { "id": 7, "jellyfinUsername": "{{Username}}" } ] }
-                """);
+                """
+            );
         }
 
         if (pathAndQuery.StartsWith("/api/v1/user/7/requests", StringComparison.Ordinal))
         {
             Guid libraryItemId = RequestedLibraryItemId;
-            return (200, $$"""
+            return (
+                200,
+                $$"""
                 {
                     "results": [
                         { "media": { "jellyfinMediaId": "{{libraryItemId}}" } },
@@ -109,7 +113,8 @@ public class JellyseerrSectionsTests : IDisposable
                         { "media": null }
                     ]
                 }
-                """);
+                """
+            );
         }
 
         if (pathAndQuery.StartsWith("/api/v1/discover/", StringComparison.Ordinal))
@@ -117,34 +122,40 @@ public class JellyseerrSectionsTests : IDisposable
             JArray results = [];
             for (int index = 0; index < 22; index++)
             {
-                results.Add(new JObject
-                {
-                    ["id"] = 100 + index,
-                    ["mediaType"] = "movie",
-                    ["title"] = $"Discover Item {index}",
-                    ["originalLanguage"] = "en",
-                    ["releaseDate"] = "2026-05-01",
-                    ["posterPath"] = $"/poster{index}.jpg",
-                    ["vote_average"] = 7.5
-                });
+                results.Add(
+                    new JObject
+                    {
+                        ["id"] = 100 + index,
+                        ["mediaType"] = "movie",
+                        ["title"] = $"Discover Item {index}",
+                        ["originalLanguage"] = "en",
+                        ["releaseDate"] = "2026-05-01",
+                        ["posterPath"] = $"/poster{index}.jpg",
+                        ["vote_average"] = 7.5,
+                    }
+                );
             }
 
             // Filtered: wrong language.
-            results.Add(new JObject
-            {
-                ["id"] = 900,
-                ["title"] = "Foreign Item",
-                ["originalLanguage"] = "fr",
-                ["releaseDate"] = "2026-05-01"
-            });
+            results.Add(
+                new JObject
+                {
+                    ["id"] = 900,
+                    ["title"] = "Foreign Item",
+                    ["originalLanguage"] = "fr",
+                    ["releaseDate"] = "2026-05-01",
+                }
+            );
             // Skipped: already has media info (exists in Jellyfin).
-            results.Add(new JObject
-            {
-                ["id"] = 901,
-                ["title"] = "Already Requested",
-                ["originalLanguage"] = "en",
-                ["mediaInfo"] = new JObject { ["id"] = 1 }
-            });
+            results.Add(
+                new JObject
+                {
+                    ["id"] = 901,
+                    ["title"] = "Already Requested",
+                    ["originalLanguage"] = "en",
+                    ["mediaInfo"] = new JObject { ["id"] = 1 },
+                }
+            );
 
             return (200, new JObject { ["results"] = results }.ToString());
         }
@@ -159,7 +170,10 @@ public class JellyseerrSectionsTests : IDisposable
     {
         DiscoverSection section = new DiscoverSection(_userManager.Object, _imageCacheService);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         // 22 english items pass; the fr item and the mediaInfo item are dropped.
         Assert.Equal(22, result.Items.Count);
@@ -180,7 +194,10 @@ public class JellyseerrSectionsTests : IDisposable
         HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrExternalUrl = "https://requests.example.com/";
         DiscoverSection section = new DiscoverSection(_userManager.Object, _imageCacheService);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Equal("https://requests.example.com/", result.Items[0].ProviderIds!["JellyseerrRoot"]);
     }
@@ -191,7 +208,10 @@ public class JellyseerrSectionsTests : IDisposable
         HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrPreferredLanguages = "en, fr";
         DiscoverSection section = new DiscoverSection(_userManager.Object, _imageCacheService);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         // The fr item is allowed now; only the mediaInfo item stays skipped.
         Assert.Equal(23, result.Items.Count);
@@ -203,7 +223,9 @@ public class JellyseerrSectionsTests : IDisposable
         HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrUrl = string.Empty;
         DiscoverSection section = new DiscoverSection(_userManager.Object, _imageCacheService);
 
-        Assert.Empty(section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items);
+        Assert.Empty(
+            section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items
+        );
     }
 
     [Fact]
@@ -212,7 +234,9 @@ public class JellyseerrSectionsTests : IDisposable
         _userManager.Setup(manager => manager.GetUserById(_userId)).Returns((User?)null);
         DiscoverSection section = new DiscoverSection(_userManager.Object, _imageCacheService);
 
-        Assert.Empty(section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items);
+        Assert.Empty(
+            section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items
+        );
     }
 
     [Theory]
@@ -224,10 +248,16 @@ public class JellyseerrSectionsTests : IDisposable
             ? new DiscoverMoviesSection(_userManager.Object, _imageCacheService)
             : new DiscoverTvSection(_userManager.Object, _imageCacheService);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Equal(22, result.Items.Count);
-        Assert.Contains(_server.RequestsReceived, request => request.StartsWith(expectedEndpoint, StringComparison.Ordinal));
+        Assert.Contains(
+            _server.RequestsReceived,
+            request => request.StartsWith(expectedEndpoint, StringComparison.Ordinal)
+        );
     }
 
     [Fact]
@@ -252,18 +282,35 @@ public class JellyseerrSectionsTests : IDisposable
         InternalItemsQuery? capturedQuery = null;
         _libraryManager
             .Setup(manager => manager.GetVirtualFolders())
-            .Returns([new MediaBrowser.Model.Entities.VirtualFolderInfo { ItemId = folderId.ToString(), Name = "Movies", Locations = ["/media/movies"] }]);
+            .Returns([
+                new MediaBrowser.Model.Entities.VirtualFolderInfo
+                {
+                    ItemId = folderId.ToString(),
+                    Name = "Movies",
+                    Locations = ["/media/movies"],
+                },
+            ]);
         _libraryManager
             .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
             .Callback<InternalItemsQuery>(query => capturedQuery = query)
             .Returns(new BaseItem[] { requestedMovie });
 
-        MyRequestsSection section = new MyRequestsSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        MyRequestsSection section = new MyRequestsSection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Equal("Requested Movie", Assert.Single(result.Items).Name);
-        Assert.Contains(_server.RequestsReceived, request => request.StartsWith("/api/v1/user/7/requests", StringComparison.Ordinal));
+        Assert.Contains(
+            _server.RequestsReceived,
+            request => request.StartsWith("/api/v1/user/7/requests", StringComparison.Ordinal)
+        );
         // The library lookup must be constrained to the requested Jellyfin media ids, not the whole library.
         Assert.NotNull(capturedQuery);
         Assert.NotNull(capturedQuery!.ItemIds);
@@ -274,36 +321,56 @@ public class JellyseerrSectionsTests : IDisposable
     public void MyRequests_returns_empty_when_jellyseerr_not_configured()
     {
         HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrUrl = string.Empty;
-        MyRequestsSection section = new MyRequestsSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        MyRequestsSection section = new MyRequestsSection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
-        Assert.Empty(section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items);
+        Assert.Empty(
+            section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items
+        );
     }
 
     [Fact]
     public void MyRequests_returns_empty_when_user_unknown()
     {
         _userManager.Setup(manager => manager.GetUserById(_userId)).Returns((User?)null);
-        MyRequestsSection section = new MyRequestsSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        MyRequestsSection section = new MyRequestsSection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
-        Assert.Empty(section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items);
+        Assert.Empty(
+            section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items
+        );
     }
 
     [Fact]
     public void MyRequests_returns_empty_when_no_library_items_match()
     {
-        _libraryManager
-            .Setup(manager => manager.GetVirtualFolders())
-            .Returns([]);
+        _libraryManager.Setup(manager => manager.GetVirtualFolders()).Returns([]);
 
-        MyRequestsSection section = new MyRequestsSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        MyRequestsSection section = new MyRequestsSection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
-        Assert.Empty(section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items);
+        Assert.Empty(
+            section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items
+        );
     }
 
     [Fact]
     public void MyRequests_GetInfo_reports_landscape_row()
     {
-        MyRequestsSection section = new MyRequestsSection(_userManager.Object, _libraryManager.Object, _dtoService.Object);
+        MyRequestsSection section = new MyRequestsSection(
+            _userManager.Object,
+            _libraryManager.Object,
+            _dtoService.Object
+        );
 
         HomeScreenSectionInfo info = section.GetInfo();
 

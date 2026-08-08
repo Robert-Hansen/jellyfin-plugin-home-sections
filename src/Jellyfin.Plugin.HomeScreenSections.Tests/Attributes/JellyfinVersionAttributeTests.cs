@@ -8,7 +8,8 @@ public class JellyfinVersionAttributeTests
     private static readonly Regex s_versionRegex = new(
         @"^\d+\.\d+(\.\d+){0,2}$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
-        TimeSpan.FromMilliseconds(250));
+        TimeSpan.FromMilliseconds(250)
+    );
 
     [Fact]
     public void GetVersion_returns_the_version_stamped_at_build_time()
@@ -30,8 +31,10 @@ public class JellyfinVersionAttributeTests
     [Fact]
     public void Attribute_is_assembly_scoped()
     {
-        AttributeUsageAttribute? usage = ((AttributeUsageAttribute[])typeof(JellyfinVersionAttribute)
-            .GetCustomAttributes(typeof(AttributeUsageAttribute), inherit: false)).FirstOrDefault();
+        AttributeUsageAttribute? usage = (
+            (AttributeUsageAttribute[])
+                typeof(JellyfinVersionAttribute).GetCustomAttributes(typeof(AttributeUsageAttribute), inherit: false)
+        ).FirstOrDefault();
 
         Assert.NotNull(usage);
         Assert.Equal(AttributeTargets.Assembly, usage!.ValidOn);

@@ -22,8 +22,11 @@ public static class LibreTranslateHelper
 
                 HttpResponseMessage response = await s_client.PostAsync(
                     $"{HomeScreenSectionsPlugin.Instance.Configuration.LibreTranslateUrl}/translate",
-                    new StringContent(jsonPayload.ToString(Formatting.None),
-                        MediaTypeHeaderValue.Parse("application/json")));
+                    new StringContent(
+                        jsonPayload.ToString(Formatting.None),
+                        MediaTypeHeaderValue.Parse("application/json")
+                    )
+                );
 
                 JObject responseObj = JObject.Parse(await response.Content.ReadAsStringAsync());
 
@@ -33,15 +36,9 @@ public static class LibreTranslateHelper
             {
                 // Translation is best-effort; fall back to original text.
             }
-            catch (TaskCanceledException)
-            {
-            }
-            catch (Newtonsoft.Json.JsonException)
-            {
-            }
-            catch (InvalidOperationException)
-            {
-            }
+            catch (TaskCanceledException) { }
+            catch (Newtonsoft.Json.JsonException) { }
+            catch (InvalidOperationException) { }
         }
 
         return null;

@@ -12,13 +12,18 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
     public class UpcomingMusicSection : UpcomingSectionBase<LidarrCalendarDto>
     {
         public override string? Section => "UpcomingMusic";
-        
+
         public override string? DisplayText { get; set; } = "Upcoming Music";
 
-        public UpcomingMusicSection(IUserManager userManager, ILibraryManager libraryManager, IDtoService dtoService, ArrApiService arrApiService, ImageCacheService imageCacheService, ILogger<UpcomingMusicSection> logger)
-            : base(userManager, libraryManager, dtoService, arrApiService, imageCacheService, logger)
-        {
-        }
+        public UpcomingMusicSection(
+            IUserManager userManager,
+            ILibraryManager libraryManager,
+            IDtoService dtoService,
+            ArrApiService arrApiService,
+            ImageCacheService imageCacheService,
+            ILogger<UpcomingMusicSection> logger
+        )
+            : base(userManager, libraryManager, dtoService, arrApiService, imageCacheService, logger) { }
 
         protected override (string? url, string? apiKey) GetServiceConfiguration(PluginConfiguration config)
         {
@@ -51,20 +56,21 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
 
         protected override BaseItemDto CreateDto(LidarrCalendarDto calendarItem, PluginConfiguration config)
         {
-
             DateTime releaseDate = calendarItem.ReleaseDate ?? DateTime.Now;
             string countdownText = CalculateCountdown(releaseDate, config);
 
-            ArrImageDto? albumImage = calendarItem.Images?.FirstOrDefault(img => 
-                string.Equals(img.CoverType, "cover", StringComparison.OrdinalIgnoreCase));
+            ArrImageDto? albumImage = calendarItem.Images?.FirstOrDefault(img =>
+                string.Equals(img.CoverType, "cover", StringComparison.OrdinalIgnoreCase)
+            );
 
             string sourceImageUrl = albumImage?.RemoteUrl ?? GetFallbackCoverUrl(calendarItem);
             string cachedImageUrl = GetCachedImageUrl(sourceImageUrl);
 
-            Dictionary<string, string> providerIds = new(StringComparer.Ordinal) {
+            Dictionary<string, string> providerIds = new(StringComparer.Ordinal)
+            {
                 { "LidarrAlbumId", calendarItem.Id.ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 { "FormattedDate", countdownText },
-                { "LidarrPoster", cachedImageUrl }
+                { "LidarrPoster", cachedImageUrl },
             };
 
             return new BaseItemDto
@@ -80,20 +86,28 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
                     Key = $"upcoming-album-{calendarItem.Id}",
                     PlaybackPositionTicks = 0,
                     IsFavorite = false,
-                }
+                },
             };
         }
 
         protected override string GetServiceName() => "Lidarr";
+
         protected override string GetSectionName() => "upcoming music";
 
         public override IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
         {
-            yield return new UpcomingMusicSection(UserManager, LibraryManager, DtoService, ArrApiService, ImageCacheService, (ILogger<UpcomingMusicSection>)Logger)
+            yield return new UpcomingMusicSection(
+                UserManager,
+                LibraryManager,
+                DtoService,
+                ArrApiService,
+                ImageCacheService,
+                (ILogger<UpcomingMusicSection>)Logger
+            )
             {
                 DisplayText = DisplayText,
                 AdditionalData = AdditionalData,
-                OriginalPayload = OriginalPayload
+                OriginalPayload = OriginalPayload,
             };
         }
 
@@ -109,7 +123,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Square,
                 AllowViewModeChange = false,
-                ContainerClass = "upcoming-music-section"
+                ContainerClass = "upcoming-music-section",
             };
         }
     }

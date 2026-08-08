@@ -34,13 +34,9 @@ public sealed class PluginFixture : IDisposable
         TranslationManagerMock = new Mock<ITranslationManager>();
 
         Mock<IServiceProvider> serviceProvider = new Mock<IServiceProvider>();
-        serviceProvider
-            .Setup(p => p.GetService(typeof(UserSectionsDataCache)))
-            .Returns(SectionsCache);
+        serviceProvider.Setup(p => p.GetService(typeof(UserSectionsDataCache))).Returns(SectionsCache);
         // PluginInterface and friends resolve these through Instance.ServiceProvider.
-        serviceProvider
-            .Setup(p => p.GetService(typeof(IHomeScreenManager)))
-            .Returns(HomeScreenManagerMock.Object);
+        serviceProvider.Setup(p => p.GetService(typeof(IHomeScreenManager))).Returns(HomeScreenManagerMock.Object);
         serviceProvider
             .Setup(p => p.GetService(typeof(IServerApplicationHost)))
             .Returns(ServerApplicationHostMock.Object);
@@ -56,7 +52,8 @@ public sealed class PluginFixture : IDisposable
             serverConfigurationManager.Object,
             serviceProvider.Object,
             HomeScreenManagerMock.Object,
-            TranslationManagerMock.Object);
+            TranslationManagerMock.Object
+        );
     }
 
     public string TempRoot { get; }
@@ -81,6 +78,4 @@ public sealed class PluginFixture : IDisposable
 }
 
 [CollectionDefinition("Plugin Instance")]
-public sealed class PluginInstanceCollectionDefinition : ICollectionFixture<PluginFixture>
-{
-}
+public sealed class PluginInstanceCollectionDefinition : ICollectionFixture<PluginFixture> { }

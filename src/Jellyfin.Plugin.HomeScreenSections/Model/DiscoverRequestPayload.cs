@@ -6,10 +6,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.Model
     {
         [JsonPropertyName("UserId")]
         public Guid UserId { get; set; }
-        
+
         [JsonPropertyName("MediaType")]
         public string MediaType { get; set; } = string.Empty;
-        
+
         [JsonPropertyName("MediaId")]
         public int MediaId { get; set; }
     }
@@ -30,7 +30,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Model
 
         [JsonPropertyName("mediaId")]
         public int MediaId { get; set; }
-        
+
         [JsonPropertyName("seasons")]
         public string? Seasons { get; set; }
     }

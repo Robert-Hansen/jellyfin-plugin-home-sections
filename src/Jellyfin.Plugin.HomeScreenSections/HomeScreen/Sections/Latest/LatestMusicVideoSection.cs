@@ -12,20 +12,28 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Latest
         public override SectionViewMode DefaultViewMode => SectionViewMode.Landscape;
         protected override BaseItemKind SectionItemKind => BaseItemKind.MusicVideo;
         protected override CollectionType CollectionType => CollectionType.musicvideos;
-        protected override string? LibraryId => HomeScreenSectionsPlugin.Instance?.Configuration?.DefaultMusicVideosLibraryId;
+        protected override string? LibraryId =>
+            HomeScreenSectionsPlugin.Instance?.Configuration?.DefaultMusicVideosLibraryId;
         protected override CollectionTypeOptions CollectionTypeOptions => CollectionTypeOptions.musicvideos;
 
-        public LatestMusicVideoSection(IUserViewManager userViewManager, 
-            IUserManager userManager, 
-            ILibraryManager libraryManager, 
-            IDtoService dtoService, 
-            IServiceProvider serviceProvider) : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider)
-        {
-        }
-        
+        public LatestMusicVideoSection(
+            IUserViewManager userViewManager,
+            IUserManager userManager,
+            ILibraryManager libraryManager,
+            IDtoService dtoService,
+            IServiceProvider serviceProvider
+        )
+            : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider) { }
+
         protected override LatestSectionBase CreateInstance()
         {
-            return new LatestMusicVideoSection(_userViewManager, _userManager, _libraryManager, _dtoService, _serviceProvider);
+            return new LatestMusicVideoSection(
+                _userViewManager,
+                _userManager,
+                _libraryManager,
+                _dtoService,
+                _serviceProvider
+            );
         }
     }
 }

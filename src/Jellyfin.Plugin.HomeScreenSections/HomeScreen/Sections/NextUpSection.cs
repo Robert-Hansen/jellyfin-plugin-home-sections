@@ -35,7 +35,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public string? AdditionalData { get; set; }
 
         public object? OriginalPayload => null;
-        
+
         private readonly IUserViewManager _userViewManager;
         private readonly IUserManager _userManager;
         private readonly IDtoService _dtoService;
@@ -52,12 +52,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         /// <param name="libraryManager">Instance of <see href="ILibraryManager" /> interface.</param>
         /// <param name="sessionManager">Instance of <see href="ISessionManager" /> interface.</param>
         /// <param name="tvSeriesManager">Instance of <see href="ITVSeriesManager" /> interface.</param>
-        public NextUpSection(IUserViewManager userViewManager,
+        public NextUpSection(
+            IUserViewManager userViewManager,
             IUserManager userManager,
             IDtoService dtoService,
             ILibraryManager libraryManager,
             ISessionManager sessionManager,
-            ITVSeriesManager tvSeriesManager)
+            ITVSeriesManager tvSeriesManager
+        )
         {
             _userViewManager = userViewManager;
             _userManager = userManager;
@@ -71,32 +73,40 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
         {
             User? user = _userManager.GetUserById(payload.UserId);
-            
-            List<ItemFields> fields = [ItemFields.PrimaryImageAspectRatio,
+
+            List<ItemFields> fields =
+            [
+                ItemFields.PrimaryImageAspectRatio,
                 ItemFields.DateCreated,
                 ItemFields.Path,
-                ItemFields.MediaSourceCount];
+                ItemFields.MediaSourceCount,
+            ];
 
             DtoOptions options = new DtoOptions { Fields = fields };
             options.ImageTypeLimit = 1;
-            options.ImageTypes = [ImageType.Thumb,
-                ImageType.Backdrop,
-                ImageType.Primary,];
+            options.ImageTypes = [ImageType.Thumb, ImageType.Backdrop, ImageType.Primary];
 
             bool enableRewatching = true; // Enabled by default
             if (queryCollection.TryGetValue("EnableRewatching", out StringValues enableRewatchingValue))
             {
-                enableRewatching = string.Equals(enableRewatchingValue.FirstOrDefault(), "true", StringComparison.Ordinal);
+                enableRewatching = string.Equals(
+                    enableRewatchingValue.FirstOrDefault(),
+                    "true",
+                    StringComparison.Ordinal
+                );
             }
-            
+
             DateTime nextUpDateCutoff = DateTime.MinValue;
             if (queryCollection.TryGetValue("NextUpDateCutoff", out StringValues nextUpDateCutoffValue))
             {
-                if (DateTime.TryParse(
+                if (
+                    DateTime.TryParse(
                         nextUpDateCutoffValue.FirstOrDefault(),
                         System.Globalization.CultureInfo.InvariantCulture,
                         System.Globalization.DateTimeStyles.None,
-                        out DateTime nextUpDateCutoffParsed))
+                        out DateTime nextUpDateCutoffParsed
+                    )
+                )
                 {
                     nextUpDateCutoff = nextUpDateCutoffParsed;
                 }
@@ -112,16 +122,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                     EnableTotalRecordCount = false,
                     //DisableFirstEpisode = true,
                     NextUpDateCutoff = nextUpDateCutoff,
-                    EnableRewatching = enableRewatching
+                    EnableRewatching = enableRewatching,
                 },
-                options);
+                options
+            );
 
             IReadOnlyList<BaseItemDto> returnItems = _dtoService.GetBaseItemDtos(result.Items, options, user);
 
-            return new QueryResult<BaseItemDto>(
-                null,
-                result.TotalRecordCount,
-                returnItems);
+            return new QueryResult<BaseItemDto>(null, result.TotalRecordCount, returnItems);
         }
 
         /// <inheritdoc/>
@@ -129,7 +137,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         {
             yield return this;
         }
-        
+
         public HomeScreenSectionInfo GetInfo()
         {
             return new HomeScreenSectionInfo
@@ -140,7 +148,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 Route = Route,
                 Limit = Limit ?? 1,
                 OriginalPayload = OriginalPayload,
-                ViewMode = SectionViewMode.Landscape
+                ViewMode = SectionViewMode.Landscape,
             };
         }
     }

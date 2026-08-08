@@ -16,7 +16,11 @@ public class ModuleInitializer
         Assembly assembly = typeof(HomeScreenSectionsPlugin).Assembly;
         AssemblyLoadContext assemblyLoadContext = new("Jellyfin.Plugin.HomeScreenSections");
 
-        foreach (string resource in assembly.GetManifestResourceNames().Where(x => x.EndsWith(".dll", StringComparison.Ordinal)))
+        foreach (
+            string resource in assembly
+                .GetManifestResourceNames()
+                .Where(x => x.EndsWith(".dll", StringComparison.Ordinal))
+        )
         {
             using Stream? assemblyStream = assembly.GetManifestResourceStream(resource);
             if (assemblyStream == null)

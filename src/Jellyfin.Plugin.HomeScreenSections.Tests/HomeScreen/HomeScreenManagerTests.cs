@@ -59,7 +59,7 @@ public class HomeScreenManagerTests : IDisposable
         "Decade",
         "Studio",
         "Playlists",
-        "UnwatchedCollections"
+        "UnwatchedCollections",
     ];
 
     private readonly FakeApplicationPaths _paths;
@@ -131,7 +131,11 @@ public class HomeScreenManagerTests : IDisposable
     {
         HomeScreenManager manager = MakeManager();
 
-        QueryResult<BaseItemDto> result = manager.InvokeResultsDelegate("missing", new HomeScreenSectionPayload(), new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = manager.InvokeResultsDelegate(
+            "missing",
+            new HomeScreenSectionPayload(),
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -147,7 +151,7 @@ public class HomeScreenManagerTests : IDisposable
             {
                 received = payload;
                 return new QueryResult<BaseItemDto>([new BaseItemDto()]);
-            }
+            },
         };
         manager.RegisterResultsDelegate(section);
 
@@ -162,10 +166,9 @@ public class HomeScreenManagerTests : IDisposable
     public void RegisterResultsDelegate_by_type_throws_on_duplicate_section_id()
     {
         HomeScreenManager manager = MakeManager();
-        manager.RegisterResultsDelegate(new PluginDefinedSection("NextUp", "Collision")
-        {
-            OnGetResults = _ => new QueryResult<BaseItemDto>()
-        });
+        manager.RegisterResultsDelegate(
+            new PluginDefinedSection("NextUp", "Collision") { OnGetResults = _ => new QueryResult<BaseItemDto>() }
+        );
 
         // The Type overload is exercised deliberately here: it is the only overload that
         // rejects duplicate registrations, which is the behaviour under test.
@@ -182,11 +185,11 @@ public class HomeScreenManagerTests : IDisposable
         HomeScreenManager manager = MakeManager();
         PluginDefinedSection original = new PluginDefinedSection("Duplicate", "Original")
         {
-            OnGetResults = _ => new QueryResult<BaseItemDto>()
+            OnGetResults = _ => new QueryResult<BaseItemDto>(),
         };
         PluginDefinedSection impostor = new PluginDefinedSection("Duplicate", "Impostor")
         {
-            OnGetResults = _ => new QueryResult<BaseItemDto>([new BaseItemDto()])
+            OnGetResults = _ => new QueryResult<BaseItemDto>([new BaseItemDto()]),
         };
 
         manager.RegisterResultsDelegate(original);
@@ -200,10 +203,9 @@ public class HomeScreenManagerTests : IDisposable
     {
         HomeScreenManager manager = MakeManager();
 
-        manager.RegisterResultsDelegate(new PluginDefinedSection(null!, "No Id")
-        {
-            OnGetResults = _ => new QueryResult<BaseItemDto>()
-        });
+        manager.RegisterResultsDelegate(
+            new PluginDefinedSection(null!, "No Id") { OnGetResults = _ => new QueryResult<BaseItemDto>() }
+        );
 
         Assert.Empty(manager.GetSectionTypes());
     }
@@ -232,9 +234,24 @@ public class HomeScreenManagerTests : IDisposable
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "One", Enabled = true, AllowUserOverride = true },
-            new SectionSettings { SectionId = "Two", Enabled = true, AllowUserOverride = false },
-            new SectionSettings { SectionId = "Three", Enabled = false, AllowUserOverride = true }
+            new SectionSettings
+            {
+                SectionId = "One",
+                Enabled = true,
+                AllowUserOverride = true,
+            },
+            new SectionSettings
+            {
+                SectionId = "Two",
+                Enabled = true,
+                AllowUserOverride = false,
+            },
+            new SectionSettings
+            {
+                SectionId = "Three",
+                Enabled = false,
+                AllowUserOverride = true,
+            },
         ];
         try
         {
@@ -262,7 +279,7 @@ public class HomeScreenManagerTests : IDisposable
         {
             UserId = userId,
             EnabledSections = ["ContinueWatching", "NextUp"],
-            SectionOrder = ["NextUp", "ContinueWatching"]
+            SectionOrder = ["NextUp", "ContinueWatching"],
         };
 
         Assert.True(manager.UpdateUserSettings(userId, saved));
@@ -300,17 +317,26 @@ public class HomeScreenManagerTests : IDisposable
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "LockedEnabled", Enabled = true, AllowUserOverride = false },
-            new SectionSettings { SectionId = "LockedDisabled", Enabled = false, AllowUserOverride = false }
+            new SectionSettings
+            {
+                SectionId = "LockedEnabled",
+                Enabled = true,
+                AllowUserOverride = false,
+            },
+            new SectionSettings
+            {
+                SectionId = "LockedDisabled",
+                Enabled = false,
+                AllowUserOverride = false,
+            },
         ];
         try
         {
             // User tries to disable the locked-enabled section and enable the locked-disabled one.
-            manager.UpdateUserSettings(userId, new ModularHomeUserSettings
-            {
-                UserId = userId,
-                EnabledSections = ["LockedDisabled"]
-            });
+            manager.UpdateUserSettings(
+                userId,
+                new ModularHomeUserSettings { UserId = userId, EnabledSections = ["LockedDisabled"] }
+            );
 
             ModularHomeUserSettings? loaded = manager.GetUserSettings(userId);
 
@@ -333,7 +359,12 @@ public class HomeScreenManagerTests : IDisposable
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "DefaultOn", Enabled = true, AllowUserOverride = true }
+            new SectionSettings
+            {
+                SectionId = "DefaultOn",
+                Enabled = true,
+                AllowUserOverride = true,
+            },
         ];
         try
         {

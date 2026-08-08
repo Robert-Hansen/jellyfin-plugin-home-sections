@@ -48,7 +48,7 @@ public class UserSectionsDataCacheTests
         [
             new IntRange { Start = 1, End = 2 },
             new IntRange { Start = 1, End = 2 },
-            new IntRange { Start = 3, End = 4 }
+            new IntRange { Start = 3, End = 4 },
         ];
 
         Assert.Equal(2, ranges.Count);
@@ -113,10 +113,6 @@ public class UserSectionsDataCacheTests
 
     private static UserSectionsData MakeData(Guid userId)
     {
-        return new UserSectionsData
-        {
-            UserId = userId,
-            MaxOrderIndex = 10
-        };
+        return new UserSectionsData { UserId = userId, MaxOrderIndex = 10 };
     }
 }

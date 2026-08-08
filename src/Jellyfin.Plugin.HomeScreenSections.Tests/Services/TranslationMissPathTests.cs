@@ -13,7 +13,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Services;
 [Collection("Plugin Instance")]
 public class TranslationMissPathTests
 {
-
     public TranslationMissPathTests(PluginFixture fixture)
     {
         _ = fixture;
@@ -23,11 +22,16 @@ public class TranslationMissPathTests
     public void Translate_missing_key_falls_back_to_fallback_text_when_no_translation_service_configured()
     {
         TranslationManager manager = new TranslationManager(NullLogger<ITranslationManager>.Instance);
-        manager.UpdateTranslationPack("en", JObject.Parse("""
-            {
-                "Known": "Known Value"
-            }
-            """));
+        manager.UpdateTranslationPack(
+            "en",
+            JObject.Parse(
+                """
+                {
+                    "Known": "Known Value"
+                }
+                """
+            )
+        );
 
         // LibreTranslateUrl is empty in the fixture config, so the remote lookup yields nothing
         // and the fallback text is returned untouched.
@@ -40,11 +44,16 @@ public class TranslationMissPathTests
     public void Translate_missing_key_prefers_english_pack_value_over_fallback()
     {
         TranslationManager manager = new TranslationManager(NullLogger<ITranslationManager>.Instance);
-        manager.UpdateTranslationPack("en", JObject.Parse("""
-            {
-                "UnknownKey": "English Value"
-            }
-            """));
+        manager.UpdateTranslationPack(
+            "en",
+            JObject.Parse(
+                """
+                {
+                    "UnknownKey": "English Value"
+                }
+                """
+            )
+        );
         manager.UpdateTranslationPack("de", JObject.Parse("{}"));
 
         string result = manager.Translate("UnknownKey", "de", "Fallback Text");

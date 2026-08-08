@@ -42,9 +42,7 @@ public class StandaloneSectionsTests
     {
         _ = fixture;
 
-        _userManager
-            .Setup(manager => manager.GetUserById(_userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(_userId)).Returns(_user);
 
         TestDtos.StubPassthrough(_dtoService);
     }
@@ -62,7 +60,10 @@ public class StandaloneSectionsTests
 
         MyMediaSection section = new MyMediaSection(_userViewManager.Object, _userManager.Object, _dtoService.Object);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Equal("Movies", Assert.Single(result.Items).Name);
     }
@@ -73,7 +74,9 @@ public class StandaloneSectionsTests
         _userManager.Setup(manager => manager.GetUserById(_userId)).Returns((User?)null);
         MyMediaSection section = new MyMediaSection(_userViewManager.Object, _userManager.Object, _dtoService.Object);
 
-        Assert.Empty(section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items);
+        Assert.Empty(
+            section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items
+        );
     }
 
     [Fact]
@@ -102,9 +105,13 @@ public class StandaloneSectionsTests
             _userManager.Object,
             _dtoService.Object,
             _libraryManager.Object,
-            _sessionManager.Object);
+            _sessionManager.Object
+        );
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Single(result.Items);
         Assert.NotNull(captured);
@@ -120,7 +127,8 @@ public class StandaloneSectionsTests
             _userManager.Object,
             _dtoService.Object,
             _libraryManager.Object,
-            _sessionManager.Object);
+            _sessionManager.Object
+        );
 
         HomeScreenSectionInfo info = section.GetInfo();
 
@@ -132,23 +140,29 @@ public class StandaloneSectionsTests
     [Fact]
     public void MyList_returns_children_of_the_my_list_playlist()
     {
-        TestPlaylist myList = new(new BaseItem[] { new Movie { Id = Guid.NewGuid(), Name = "Saved Movie" } })
+        TestPlaylist myList = new(
+            new BaseItem[]
+            {
+                new Movie { Id = Guid.NewGuid(), Name = "Saved Movie" },
+            }
+        )
         {
             Id = Guid.NewGuid(),
-            Name = "My List"
+            Name = "My List",
         };
         TestPlaylist other = new(new BaseItem[] { new Movie { Id = Guid.NewGuid() } })
         {
             Id = Guid.NewGuid(),
-            Name = "Something Else"
+            Name = "Something Else",
         };
-        _playlistManager
-            .Setup(manager => manager.GetPlaylists(_user.Id))
-            .Returns(new[] { other, myList });
+        _playlistManager.Setup(manager => manager.GetPlaylists(_user.Id)).Returns(new[] { other, myList });
 
         MyListSection section = new MyListSection(_userManager.Object, _dtoService.Object, _playlistManager.Object);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Equal("Saved Movie", Assert.Single(result.Items).Name);
     }
@@ -156,13 +170,13 @@ public class StandaloneSectionsTests
     [Fact]
     public void MyList_returns_empty_without_my_list_playlist()
     {
-        _playlistManager
-            .Setup(manager => manager.GetPlaylists(_user.Id))
-            .Returns(Array.Empty<Playlist>());
+        _playlistManager.Setup(manager => manager.GetPlaylists(_user.Id)).Returns(Array.Empty<Playlist>());
 
         MyListSection section = new MyListSection(_userManager.Object, _dtoService.Object, _playlistManager.Object);
 
-        Assert.Empty(section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items);
+        Assert.Empty(
+            section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items
+        );
     }
 
     [Fact]
@@ -182,12 +196,21 @@ public class StandaloneSectionsTests
     {
         QueryResult<BaseItemDto> expected = new QueryResult<BaseItemDto>([new BaseItemDto { Name = "Live Now" }]);
         _liveTvManager
-            .Setup(manager => manager.GetRecommendedProgramsAsync(It.IsAny<InternalItemsQuery>(), It.IsAny<DtoOptions>(), It.IsAny<CancellationToken>()))
+            .Setup(manager =>
+                manager.GetRecommendedProgramsAsync(
+                    It.IsAny<InternalItemsQuery>(),
+                    It.IsAny<DtoOptions>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
             .ReturnsAsync(expected);
 
         LiveTvSection section = new LiveTvSection(_userManager.Object, _dtoService.Object, _liveTvManager.Object);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Equal("Live Now", Assert.Single(result.Items).Name);
     }
@@ -209,23 +232,21 @@ public class StandaloneSectionsTests
     {
         Movie movie = new Movie { Id = Guid.NewGuid(), Name = "Top Movie" };
         Series show = new Series { Id = Guid.NewGuid(), Name = "Top Show" };
-        TestBoxSet topTen = new(new BaseItem[] { movie, show })
-        {
-            Id = Guid.NewGuid(),
-            Name = "Top Ten"
-        };
+        TestBoxSet topTen = new(new BaseItem[] { movie, show }) { Id = Guid.NewGuid(), Name = "Top Ten" };
         FakeCollectionManager collectionManager = new FakeCollectionManager([topTen]);
 
         TopTenSection section = new TopTenSection(_userManager.Object, collectionManager, _dtoService.Object);
 
         QueryResult<BaseItemDto> movies = section.GetResults(
             new HomeScreenSectionPayload { UserId = _userId, AdditionalData = "Movies" },
-            new FakeQueryCollection());
+            new FakeQueryCollection()
+        );
         Assert.Equal("Top Movie", Assert.Single(movies.Items).Name);
 
         QueryResult<BaseItemDto> shows = section.GetResults(
             new HomeScreenSectionPayload { UserId = _userId, AdditionalData = "Shows" },
-            new FakeQueryCollection());
+            new FakeQueryCollection()
+        );
         Assert.Equal("Top Show", Assert.Single(shows.Items).Name);
     }
 
@@ -235,7 +256,9 @@ public class StandaloneSectionsTests
         FakeCollectionManager collectionManager = new FakeCollectionManager(Array.Empty<BoxSet>());
         TopTenSection section = new TopTenSection(_userManager.Object, collectionManager, _dtoService.Object);
 
-        Assert.Empty(section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items);
+        Assert.Empty(
+            section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection()).Items
+        );
     }
 
     [Fact]
@@ -244,9 +267,12 @@ public class StandaloneSectionsTests
         FakeCollectionManager collectionManager = new FakeCollectionManager(Array.Empty<BoxSet>());
         TopTenSection section = new TopTenSection(_userManager.Object, collectionManager, _dtoService.Object);
 
-        Assert.Throws<ArgumentException>(() => section.GetResults(
-            new HomeScreenSectionPayload { UserId = _userId, AdditionalData = "Documentaries" },
-            new FakeQueryCollection()));
+        Assert.Throws<ArgumentException>(() =>
+            section.GetResults(
+                new HomeScreenSectionPayload { UserId = _userId, AdditionalData = "Documentaries" },
+                new FakeQueryCollection()
+            )
+        );
     }
 
     [Fact]
@@ -255,7 +281,7 @@ public class StandaloneSectionsTests
         FakeCollectionManager collectionManager = new FakeCollectionManager(Array.Empty<BoxSet>());
         TopTenSection section = new TopTenSection(_userManager.Object, collectionManager, _dtoService.Object)
         {
-            DisplayText = "Top Ten"
+            DisplayText = "Top Ten",
         };
 
         List<IHomeScreenSection> instances = [.. section.CreateInstances(_userId, 5)];
@@ -293,16 +319,15 @@ public class StandaloneSectionsTests
     [Fact]
     public void WatchAgain_GetResults_without_libraries_returns_empty()
     {
-        _libraryManager
-            .Setup(manager => manager.GetVirtualFolders())
-            .Returns([]);
-        _libraryManager
-            .Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>()))
-            .Returns([]);
+        _libraryManager.Setup(manager => manager.GetVirtualFolders()).Returns([]);
+        _libraryManager.Setup(manager => manager.GetItemList(It.IsAny<InternalItemsQuery>())).Returns([]);
 
         WatchAgainSection section = MakeWatchAgainSection();
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = _userId }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = _userId },
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -325,8 +350,10 @@ public class StandaloneSectionsTests
     public void WatchAgain_boxset_candidates_require_multiple_fully_played_old_movies()
     {
         WatchAgainSection section = MakeWatchAgainSection();
-        MethodInfo tryAdd = typeof(WatchAgainSection)
-            .GetMethod("TryAddBoxSetCandidate", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        MethodInfo tryAdd = typeof(WatchAgainSection).GetMethod(
+            "TryAddBoxSetCandidate",
+            BindingFlags.NonPublic | BindingFlags.Instance
+        )!;
 
         DateTime oldDate = DateTime.Now.Subtract(TimeSpan.FromDays(60));
         DateTime recentDate = DateTime.Now.Subtract(TimeSpan.FromDays(2));
@@ -339,23 +366,48 @@ public class StandaloneSectionsTests
         // Fully played and old enough -> candidate.
         SetupPlayed(first, oldDate);
         SetupPlayed(second, oldDate);
-        tryAdd.Invoke(section, [_user, new TestBoxSet(new BaseItem[] { first, second }), DateTime.Now.Subtract(TimeSpan.FromDays(28)), results]);
+        tryAdd.Invoke(
+            section,
+            [
+                _user,
+                new TestBoxSet(new BaseItem[] { first, second }),
+                DateTime.Now.Subtract(TimeSpan.FromDays(28)),
+                results,
+            ]
+        );
         Assert.Single(results);
 
         // Too recently played -> rejected.
         SetupPlayed(third, recentDate);
-        tryAdd.Invoke(section, [_user, new TestBoxSet(new BaseItem[] { second, third }), DateTime.Now.Subtract(TimeSpan.FromDays(28)), results]);
+        tryAdd.Invoke(
+            section,
+            [
+                _user,
+                new TestBoxSet(new BaseItem[] { second, third }),
+                DateTime.Now.Subtract(TimeSpan.FromDays(28)),
+                results,
+            ]
+        );
         Assert.Single(results);
 
         // Not all movies played -> rejected.
-        _userDataManager
-            .Setup(manager => manager.GetUserData(_user, third))
-            .Returns((UserItemData?)null);
-        tryAdd.Invoke(section, [_user, new TestBoxSet(new BaseItem[] { second, third }), DateTime.Now.Subtract(TimeSpan.FromDays(28)), results]);
+        _userDataManager.Setup(manager => manager.GetUserData(_user, third)).Returns((UserItemData?)null);
+        tryAdd.Invoke(
+            section,
+            [
+                _user,
+                new TestBoxSet(new BaseItem[] { second, third }),
+                DateTime.Now.Subtract(TimeSpan.FromDays(28)),
+                results,
+            ]
+        );
         Assert.Single(results);
 
         // Single-movie box sets are skipped.
-        tryAdd.Invoke(section, [_user, new TestBoxSet(new BaseItem[] { first }), DateTime.Now.Subtract(TimeSpan.FromDays(28)), results]);
+        tryAdd.Invoke(
+            section,
+            [_user, new TestBoxSet(new BaseItem[] { first }), DateTime.Now.Subtract(TimeSpan.FromDays(28)), results]
+        );
         Assert.Single(results);
     }
 
@@ -363,7 +415,14 @@ public class StandaloneSectionsTests
     {
         _userDataManager
             .Setup(manager => manager.GetUserData(_user, movie))
-            .Returns(new UserItemData { Key = movie.Id.ToString("N"), Played = true, LastPlayedDate = lastPlayed });
+            .Returns(
+                new UserItemData
+                {
+                    Key = movie.Id.ToString("N"),
+                    Played = true,
+                    LastPlayedDate = lastPlayed,
+                }
+            );
     }
 
     private WatchAgainSection MakeWatchAgainSection()
@@ -376,6 +435,7 @@ public class StandaloneSectionsTests
             _tvSeriesManager.Object,
             _libraryManager.Object,
             new CollectionManagerProxy(_collectionManager.Object),
-            _userViewManager.Object);
+            _userViewManager.Object
+        );
     }
 }

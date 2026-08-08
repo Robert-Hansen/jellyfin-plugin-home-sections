@@ -18,7 +18,11 @@ public sealed class TestPlaylist : Playlist
         _children = children;
     }
 
-    public override IReadOnlyList<BaseItem> GetChildren(User user, bool includeLinkedChildren, InternalItemsQuery? query)
+    public override IReadOnlyList<BaseItem> GetChildren(
+        User user,
+        bool includeLinkedChildren,
+        InternalItemsQuery? query
+    )
     {
         return _children;
     }
@@ -36,7 +40,11 @@ public sealed class TestBoxSet : BoxSet
         _children = children;
     }
 
-    public override IReadOnlyList<BaseItem> GetChildren(User user, bool includeLinkedChildren, InternalItemsQuery? query)
+    public override IReadOnlyList<BaseItem> GetChildren(
+        User user,
+        bool includeLinkedChildren,
+        InternalItemsQuery? query
+    )
     {
         return _children;
     }

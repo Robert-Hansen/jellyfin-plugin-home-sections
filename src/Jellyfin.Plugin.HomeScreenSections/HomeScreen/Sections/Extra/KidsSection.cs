@@ -50,18 +50,20 @@ public class KidsSection : IHomeScreenSection
         DtoOptions dtoOptions = SectionDtoHelper.CreateDefaultDtoOptions();
         bool? isPlayed = GetHideWatchedIsPlayed();
 
-        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(new InternalItemsQuery(user)
-        {
-            IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
-            Recursive = true,
-            OfficialRatings = SectionDtoHelper.KidsOfficialRatings,
-            IsPlayed = isPlayed,
-            Limit = 24,
-            OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
-            DtoOptions = dtoOptions,
-            EnableTotalRecordCount = false,
-            IsVirtualItem = false
-        });
+        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(
+            new InternalItemsQuery(user)
+            {
+                IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
+                Recursive = true,
+                OfficialRatings = SectionDtoHelper.KidsOfficialRatings,
+                IsPlayed = isPlayed,
+                Limit = 24,
+                OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
+                DtoOptions = dtoOptions,
+                EnableTotalRecordCount = false,
+                IsVirtualItem = false,
+            }
+        );
 
         return new QueryResult<BaseItemDto>(_dtoService.GetBaseItemDtos(items.Items, dtoOptions, user));
     }
@@ -71,12 +73,13 @@ public class KidsSection : IHomeScreenSection
         yield return this;
     }
 
-public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this, allowHideWatched: true);
+    public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this, allowHideWatched: true);
 
     private static bool? GetHideWatchedIsPlayed()
     {
-        SectionSettings? settings = HomeScreenSectionsPlugin.Instance?.Configuration?.SectionSettings
-            .FirstOrDefault(x => string.Equals(x.SectionId, "Kids", StringComparison.Ordinal));
+        SectionSettings? settings = HomeScreenSectionsPlugin.Instance?.Configuration?.SectionSettings.FirstOrDefault(
+            x => string.Equals(x.SectionId, "Kids", StringComparison.Ordinal)
+        );
         return settings?.HideWatchedItems == true ? false : null;
     }
 }

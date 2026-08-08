@@ -9,7 +9,8 @@ public class LocalizationFilesTests
     private static readonly Regex PlaceholderRegex = new(
         @"\{[^}]+\}",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture,
-        TimeSpan.FromMilliseconds(250));
+        TimeSpan.FromMilliseconds(250)
+    );
 
     [Fact]
     public void All_localization_files_are_valid_json_objects()
@@ -61,12 +62,21 @@ public class LocalizationFilesTests
             string enText = prop.Value.Value<string>() ?? string.Empty;
             string daText = da.Value<string>(prop.Name) ?? string.Empty;
 
-            string[] enPlaceholders = PlaceholderRegex.Matches(enText).Select(m => m.Value).OrderBy(x => x, StringComparer.Ordinal).ToArray();
-            string[] daPlaceholders = PlaceholderRegex.Matches(daText).Select(m => m.Value).OrderBy(x => x, StringComparer.Ordinal).ToArray();
+            string[] enPlaceholders = PlaceholderRegex
+                .Matches(enText)
+                .Select(m => m.Value)
+                .OrderBy(x => x, StringComparer.Ordinal)
+                .ToArray();
+            string[] daPlaceholders = PlaceholderRegex
+                .Matches(daText)
+                .Select(m => m.Value)
+                .OrderBy(x => x, StringComparer.Ordinal)
+                .ToArray();
 
             Assert.True(
                 enPlaceholders.SequenceEqual(daPlaceholders, StringComparer.Ordinal),
-                $"Placeholder mismatch for '{prop.Name}': en=[{string.Join(",", enPlaceholders)}] da=[{string.Join(",", daPlaceholders)}]");
+                $"Placeholder mismatch for '{prop.Name}': en=[{string.Join(",", enPlaceholders)}] da=[{string.Join(",", daPlaceholders)}]"
+            );
         }
     }
 
@@ -81,7 +91,7 @@ public class LocalizationFilesTests
             "WatchAgain",
             "MyMedia",
             "AdminModularHomeSettings",
-            "AdminSave"
+            "AdminSave",
         ];
 
         foreach (string key in required)

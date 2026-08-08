@@ -17,8 +17,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests;
 
 public class PluginServiceRegistratorTests : IDisposable
 {
-    private readonly FakeApplicationPaths _paths =
-        new(Path.Combine(Path.GetTempPath(), "hss-registrator-tests", Guid.NewGuid().ToString("N")));
+    private readonly FakeApplicationPaths _paths = new(
+        Path.Combine(Path.GetTempPath(), "hss-registrator-tests", Guid.NewGuid().ToString("N"))
+    );
 
     [Fact]
     public void RegisterServices_registers_all_plugin_services()
@@ -34,7 +35,10 @@ public class PluginServiceRegistratorTests : IDisposable
         Assert.Contains(descriptors, d => d.ServiceType == typeof(ArrApiService));
         Assert.Contains(descriptors, d => d.ServiceType == typeof(ImageCacheService));
         Assert.Contains(descriptors, d => d.ServiceType == typeof(UserSectionsDataCache));
-        Assert.Contains(descriptors, d => d.ServiceType == typeof(ITranslationManager) && d.ImplementationType == typeof(TranslationManager));
+        Assert.Contains(
+            descriptors,
+            d => d.ServiceType == typeof(ITranslationManager) && d.ImplementationType == typeof(TranslationManager)
+        );
         Assert.Contains(descriptors, d => d.ServiceType == typeof(IHomeScreenManager));
         Assert.Contains(descriptors, d => d.ServiceType == typeof(IHttpClientFactory));
     }
@@ -67,7 +71,9 @@ public class PluginServiceRegistratorTests : IDisposable
         // the temp directory has none, so the built-in manager must come back cleanly.
         IHomeScreenManager homeScreenManager = provider.GetRequiredService<IHomeScreenManager>();
         Assert.IsType<HomeScreenManager>(homeScreenManager);
-        Assert.True(Directory.Exists(Path.Combine(_paths.PluginConfigurationsPath, "Jellyfin.Plugin.HomeScreenSections")));
+        Assert.True(
+            Directory.Exists(Path.Combine(_paths.PluginConfigurationsPath, "Jellyfin.Plugin.HomeScreenSections"))
+        );
     }
 
     public void Dispose()

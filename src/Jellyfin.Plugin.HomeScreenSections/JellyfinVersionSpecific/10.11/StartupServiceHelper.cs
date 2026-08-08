@@ -6,10 +6,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.JellyfinVersionSpecific
     {
         public static IEnumerable<TaskTriggerInfo> GetStartupTrigger()
         {
-            yield return new TaskTriggerInfo()
-            {
-                Type = TaskTriggerInfoType.StartupTrigger
-            };
+            yield return new TaskTriggerInfo() { Type = TaskTriggerInfoType.StartupTrigger };
         }
 
         public static IEnumerable<TaskTriggerInfo> GetDailyTrigger(TimeSpan timeOfDay)
@@ -17,7 +14,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.JellyfinVersionSpecific
             yield return new TaskTriggerInfo()
             {
                 Type = TaskTriggerInfoType.DailyTrigger,
-                TimeOfDayTicks = timeOfDay.Ticks
+                TimeOfDayTicks = timeOfDay.Ticks,
             };
         }
     }

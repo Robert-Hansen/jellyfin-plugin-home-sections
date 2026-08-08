@@ -26,15 +26,15 @@ public class ScheduledTasksTests
         Directory.CreateDirectory(chunkDir);
         await File.WriteAllTextAsync(
             Path.Combine(chunkDir, "main.abc123.chunk.js"),
-            "var x=1,loadSections:oldFn,otherStuff;");
-        await File.WriteAllTextAsync(
-            Path.Combine(chunkDir, "vendor.def456.chunk.js"),
-            "console.log('nothing here');");
+            "var x=1,loadSections:oldFn,otherStuff;"
+        );
+        await File.WriteAllTextAsync(Path.Combine(chunkDir, "vendor.def456.chunk.js"), "console.log('nothing here');");
 
         StartupService task = new StartupService(
             new Mock<IServerApplicationHost>().Object,
             _fixture.Paths,
-            NullLogger<HomeScreenSectionsPlugin>.Instance);
+            NullLogger<HomeScreenSectionsPlugin>.Instance
+        );
 
         // The FileTransformation plugin is not loaded in tests, so registration is skipped; the
         // scan still runs. Only the task metadata is observable here, hence the assertions below.
@@ -52,11 +52,10 @@ public class ScheduledTasksTests
         StartupService task = new StartupService(
             new Mock<IServerApplicationHost>().Object,
             _fixture.Paths,
-            NullLogger<HomeScreenSectionsPlugin>.Instance);
+            NullLogger<HomeScreenSectionsPlugin>.Instance
+        );
 
-        Assert.Equal(
-            TaskTriggerInfoType.StartupTrigger,
-            Assert.Single(task.GetDefaultTriggers()).Type);
+        Assert.Equal(TaskTriggerInfoType.StartupTrigger, Assert.Single(task.GetDefaultTriggers()).Type);
     }
 
     [Fact]
@@ -65,11 +64,13 @@ public class ScheduledTasksTests
         ImageCacheService imageCacheService = new ImageCacheService(
             NullLogger<ImageCacheService>.Instance,
             _fixture.Paths,
-            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound)));
+            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound))
+        );
 
         ImageCacheCleanupTask task = new ImageCacheCleanupTask(
             imageCacheService,
-            NullLogger<ImageCacheCleanupTask>.Instance);
+            NullLogger<ImageCacheCleanupTask>.Instance
+        );
 
         await task.ExecuteAsync(new Progress<double>(), CancellationToken.None);
 
@@ -84,11 +85,13 @@ public class ScheduledTasksTests
         ImageCacheService imageCacheService = new ImageCacheService(
             NullLogger<ImageCacheService>.Instance,
             _fixture.Paths,
-            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound)));
+            new HttpClient(FakeHttpMessageHandler.RespondingWithStatus(System.Net.HttpStatusCode.NotFound))
+        );
 
         ImageCacheCleanupTask task = new ImageCacheCleanupTask(
             imageCacheService,
-            NullLogger<ImageCacheCleanupTask>.Instance);
+            NullLogger<ImageCacheCleanupTask>.Instance
+        );
 
         TaskTriggerInfo trigger = Assert.Single(task.GetDefaultTriggers());
         Assert.Equal(TaskTriggerInfoType.DailyTrigger, trigger.Type);
@@ -98,8 +101,7 @@ public class ScheduledTasksTests
     [Fact]
     public void DailyTranslationCacheService_metadata_and_triggers()
     {
-        DailyTranslationCacheService task = new DailyTranslationCacheService(
-            _fixture.TranslationManagerMock.Object);
+        DailyTranslationCacheService task = new DailyTranslationCacheService(_fixture.TranslationManagerMock.Object);
 
         Assert.Equal("HSS Daily Translation Cache", task.Name);
         Assert.Equal("Jellyfin.Plugin.HomeScreenSections.DailyTranslationCache", task.Key);

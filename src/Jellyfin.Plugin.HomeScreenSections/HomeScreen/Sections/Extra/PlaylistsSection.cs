@@ -38,7 +38,8 @@ public class PlaylistsSection : IHomeScreenSection
         IUserManager userManager,
         IDtoService dtoService,
         IPlaylistManager playlistManager,
-        ILibraryManager libraryManager)
+        ILibraryManager libraryManager
+    )
     {
         _userManager = userManager;
         _dtoService = dtoService;
@@ -49,8 +50,11 @@ public class PlaylistsSection : IHomeScreenSection
     public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
     {
         User? user = _userManager.GetUserById(payload.UserId);
-        if (user == null || string.IsNullOrWhiteSpace(payload.AdditionalData)
-            || !Guid.TryParse(payload.AdditionalData, out Guid playlistId))
+        if (
+            user == null
+            || string.IsNullOrWhiteSpace(payload.AdditionalData)
+            || !Guid.TryParse(payload.AdditionalData, out Guid playlistId)
+        )
         {
             return new QueryResult<BaseItemDto>();
         }
@@ -62,9 +66,7 @@ public class PlaylistsSection : IHomeScreenSection
         }
 
         DtoOptions dtoOptions = SectionDtoHelper.CreateDefaultDtoOptions();
-        List<BaseItem> children = playlist.GetChildren(user, true, new InternalItemsQuery(user))
-            .Take(24)
-            .ToList();
+        List<BaseItem> children = playlist.GetChildren(user, true, new InternalItemsQuery(user)).Take(24).ToList();
         return new QueryResult<BaseItemDto>(_dtoService.GetBaseItemDtos(children, dtoOptions, user));
     }
 
@@ -83,11 +85,11 @@ public class PlaylistsSection : IHomeScreenSection
 
         DtoOptions linkDto = new DtoOptions
         {
-            Fields = [ItemFields.PrimaryImageAspectRatio,
-                ItemFields.DisplayPreferencesId]
+            Fields = [ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId],
         };
 
-        IEnumerable<Playlist> playlists = _playlistManager.GetPlaylists(user.Id)
+        IEnumerable<Playlist> playlists = _playlistManager
+            .GetPlaylists(user.Id)
             .Where(p => !string.Equals(p.Name, "My List", StringComparison.OrdinalIgnoreCase))
             .Where(p => p.GetChildren(user, true, new InternalItemsQuery(user)).Count > 0)
             .Take(instanceCount);
@@ -98,10 +100,10 @@ public class PlaylistsSection : IHomeScreenSection
             {
                 AdditionalData = playlist.Id.ToString("N"),
                 DisplayText = playlist.Name,
-                OriginalPayload = _dtoService.GetBaseItemDto(playlist, linkDto, user)
+                OriginalPayload = _dtoService.GetBaseItemDto(playlist, linkDto, user),
             };
         }
     }
 
-public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
+    public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
 }

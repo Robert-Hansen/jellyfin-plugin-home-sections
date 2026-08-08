@@ -5,10 +5,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Model.Dto;
 
 public class CalendarDtoTests
 {
-    private static readonly JsonSerializerOptions s_arrOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
+    private static readonly JsonSerializerOptions s_arrOptions = new() { PropertyNameCaseInsensitive = true };
 
     [Fact]
     public void LidarrCalendarDto_HasFile_is_false_without_statistics()
@@ -25,7 +22,7 @@ public class CalendarDtoTests
     {
         LidarrCalendarDto dto = new LidarrCalendarDto
         {
-            Statistics = new LidarrStatisticsDto { SizeOnDisk = sizeOnDisk }
+            Statistics = new LidarrStatisticsDto { SizeOnDisk = sizeOnDisk },
         };
 
         Assert.Equal(expected, dto.HasFile);
@@ -45,7 +42,7 @@ public class CalendarDtoTests
     {
         ReadarrCalendarDto dto = new ReadarrCalendarDto
         {
-            Statistics = new ReadarrStatisticsDto { SizeOnDisk = sizeOnDisk }
+            Statistics = new ReadarrStatisticsDto { SizeOnDisk = sizeOnDisk },
         };
 
         Assert.Equal(expected, dto.HasFile);

@@ -29,7 +29,8 @@ public class ModularHomeViewsControllerTests
         return new ModularHomeViewsController(
             NullLogger<ModularHomeViewsController>.Instance,
             _homeScreenManager.Object,
-            _translationManager.Object);
+            _translationManager.Object
+        );
     }
 
     [Fact]
@@ -37,7 +38,7 @@ public class ModularHomeViewsControllerTests
     {
         PluginDefinedSection section = new PluginDefinedSection("MySection", "My Section")
         {
-            OnGetResults = _ => new QueryResult<BaseItemDto>()
+            OnGetResults = _ => new QueryResult<BaseItemDto>(),
         };
         NullViewModeSection nullViewModeSection = new NullViewModeSection();
         _homeScreenManager
@@ -50,8 +51,15 @@ public class ModularHomeViewsControllerTests
         Assert.Equal(2, result.Items.Count);
         Assert.All(result.Items, item => Assert.Equal(SectionViewMode.Landscape, item.ViewMode));
         _translationManager.Verify(
-            manager => manager.Translate(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TranslationMetadata?>()),
-            Times.Never());
+            manager =>
+                manager.Translate(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<TranslationMetadata?>()
+                ),
+            Times.Never()
+        );
     }
 
     [Fact]
@@ -59,11 +67,9 @@ public class ModularHomeViewsControllerTests
     {
         PluginDefinedSection section = new PluginDefinedSection("ContinueWatching", "Continue Watching")
         {
-            OnGetResults = _ => new QueryResult<BaseItemDto>()
+            OnGetResults = _ => new QueryResult<BaseItemDto>(),
         };
-        _homeScreenManager
-            .Setup(manager => manager.GetSectionTypes())
-            .Returns(new IHomeScreenSection[] { section });
+        _homeScreenManager.Setup(manager => manager.GetSectionTypes()).Returns(new IHomeScreenSection[] { section });
         _translationManager
             .Setup(manager => manager.Translate("ContinueWatching", "de", "Continue Watching", null))
             .Returns("Weiter schauen");
@@ -96,9 +102,7 @@ public class ModularHomeViewsControllerTests
     {
         Guid userId = Guid.NewGuid();
         ModularHomeUserSettings stored = new ModularHomeUserSettings { UserId = userId };
-        _homeScreenManager
-            .Setup(manager => manager.GetUserSettings(userId))
-            .Returns(stored);
+        _homeScreenManager.Setup(manager => manager.GetUserSettings(userId)).Returns(stored);
 
         ActionResult<ModularHomeUserSettings> result = MakeController().GetUserSettings(userId);
 
@@ -109,17 +113,30 @@ public class ModularHomeViewsControllerTests
     public void GetUserSettings_builds_defaults_from_admin_section_settings()
     {
         Guid userId = Guid.NewGuid();
-        _homeScreenManager
-            .Setup(manager => manager.GetUserSettings(userId))
-            .Returns((ModularHomeUserSettings?)null);
+        _homeScreenManager.Setup(manager => manager.GetUserSettings(userId)).Returns((ModularHomeUserSettings?)null);
 
         PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
         SectionSettings[] original = config.SectionSettings;
         config.SectionSettings =
         [
-            new SectionSettings { SectionId = "EnabledOverridable", Enabled = true, AllowUserOverride = true },
-            new SectionSettings { SectionId = "EnabledLocked", Enabled = true, AllowUserOverride = false },
-            new SectionSettings { SectionId = "DisabledOverridable", Enabled = false, AllowUserOverride = true }
+            new SectionSettings
+            {
+                SectionId = "EnabledOverridable",
+                Enabled = true,
+                AllowUserOverride = true,
+            },
+            new SectionSettings
+            {
+                SectionId = "EnabledLocked",
+                Enabled = true,
+                AllowUserOverride = false,
+            },
+            new SectionSettings
+            {
+                SectionId = "DisabledOverridable",
+                Enabled = false,
+                AllowUserOverride = true,
+            },
         ];
         try
         {
@@ -146,11 +163,9 @@ public class ModularHomeViewsControllerTests
     {
         Dictionary<string, string> pack = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            ["AdminSave"] = "Gemmer"
+            ["AdminSave"] = "Gemmer",
         };
-        _translationManager
-            .Setup(manager => manager.GetTranslationPack("da"))
-            .Returns(pack);
+        _translationManager.Setup(manager => manager.GetTranslationPack("da")).Returns(pack);
 
         ActionResult<IDictionary<string, string>> result = MakeController().GetTranslations(" da ");
 
@@ -213,7 +228,7 @@ public class ModularHomeViewsControllerTests
             {
                 Section = Section,
                 DisplayText = DisplayText,
-                ViewMode = null
+                ViewMode = null,
             };
         }
     }

@@ -37,7 +37,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public string? AdditionalData { get; set; }
 
         public object? OriginalPayload => null;
-        
+
         private readonly IUserViewManager _userViewManager;
         private readonly IUserManager _userManager;
         private readonly IDtoService _dtoService;
@@ -52,11 +52,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         /// <param name="dtoService">Instance of <see href="IDtoService" /> interface.</param>
         /// <param name="libraryManager">Instance of <see href="ILibraryManager" /> interface.</param>
         /// <param name="sessionManager">Instance of <see href="ISessionManager" /> interface.</param>
-        public ContinueWatchingSection(IUserViewManager userViewManager,
+        public ContinueWatchingSection(
+            IUserViewManager userViewManager,
             IUserManager userManager,
             IDtoService dtoService,
             ILibraryManager libraryManager,
-            ISessionManager sessionManager)
+            ISessionManager sessionManager
+        )
         {
             _userViewManager = userViewManager;
             _userManager = userManager;
@@ -73,9 +75,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             {
                 Fields = [ItemFields.PrimaryImageAspectRatio],
                 ImageTypeLimit = 1,
-                ImageTypes = [ImageType.Thumb,
-                    ImageType.Backdrop,
-                    ImageType.Primary,]
+                ImageTypes = [ImageType.Thumb, ImageType.Backdrop, ImageType.Primary],
             };
 
             Guid[]? ancestorIds = [];
@@ -83,36 +83,34 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             Guid[]? excludeFolderIds = user!.GetPreferenceValues<Guid>(PreferenceKind.LatestItemExcludes);
             if (excludeFolderIds.Length > 0)
             {
-                ancestorIds = _libraryManager.GetUserRootFolder().GetChildren(user, true)
+                ancestorIds = _libraryManager
+                    .GetUserRootFolder()
+                    .GetChildren(user, true)
                     .Where(i => i is Folder)
                     .Where(i => !excludeFolderIds.Contains(i.Id))
                     .Select(i => i.Id)
                     .ToArray();
             }
 
-            QueryResult<BaseItem>? itemsResult = _libraryManager.GetItemsResult(new InternalItemsQuery(user)
-            {
-                OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Descending)],
-                IsResumable = true,
-                Limit = 12,
-                Recursive = true,
-                DtoOptions = dtoOptions,
-                MediaTypes = new MediaType[]
+            QueryResult<BaseItem>? itemsResult = _libraryManager.GetItemsResult(
+                new InternalItemsQuery(user)
                 {
-                    MediaType.Video
-                },
-                IsVirtualItem = false,
-                CollapseBoxSetItems = false,
-                EnableTotalRecordCount = false,
-                AncestorIds = ancestorIds
-            });
+                    OrderBy = [(ItemSortBy.DatePlayed, SortOrder.Descending)],
+                    IsResumable = true,
+                    Limit = 12,
+                    Recursive = true,
+                    DtoOptions = dtoOptions,
+                    MediaTypes = new MediaType[] { MediaType.Video },
+                    IsVirtualItem = false,
+                    CollapseBoxSetItems = false,
+                    EnableTotalRecordCount = false,
+                    AncestorIds = ancestorIds,
+                }
+            );
 
             IReadOnlyList<BaseItemDto>? returnItems = _dtoService.GetBaseItemDtos(itemsResult.Items, dtoOptions, user);
 
-            return new QueryResult<BaseItemDto>(
-                null,
-                itemsResult.TotalRecordCount,
-                returnItems);
+            return new QueryResult<BaseItemDto>(null, itemsResult.TotalRecordCount, returnItems);
         }
 
         /// <inheritdoc/>
@@ -120,7 +118,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         {
             yield return this;
         }
-        
+
         public HomeScreenSectionInfo GetInfo()
         {
             return new HomeScreenSectionInfo
@@ -132,7 +130,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 Limit = Limit ?? 1,
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Landscape,
-                AllowViewModeChange = false
+                AllowViewModeChange = false,
             };
         }
     }

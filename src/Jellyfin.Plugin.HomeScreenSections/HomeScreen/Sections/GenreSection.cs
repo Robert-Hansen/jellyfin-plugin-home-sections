@@ -38,8 +38,14 @@ public class GenreSection : IHomeScreenSection
 
     private readonly IUserViewManager _userViewManager;
 
-    public GenreSection(IUserManager userManager, ILibraryManager libraryManager, CollectionManagerProxy collectionManagerProxy,
-        IUserDataManager userDataManager, IDtoService dtoService, IUserViewManager userViewManager)
+    public GenreSection(
+        IUserManager userManager,
+        ILibraryManager libraryManager,
+        CollectionManagerProxy collectionManagerProxy,
+        IUserDataManager userDataManager,
+        IDtoService dtoService,
+        IUserViewManager userViewManager
+    )
     {
         _userManager = userManager;
         _libraryManager = libraryManager;
@@ -61,7 +67,9 @@ public class GenreSection : IHomeScreenSection
         DtoOptions dtoOptions = CreateDtoOptions();
 
         var config = HomeScreenSectionsPlugin.Instance?.Configuration;
-        var sectionSettings = config?.SectionSettings.FirstOrDefault(x => string.Equals(x.SectionId, Section, StringComparison.Ordinal));
+        var sectionSettings = config?.SectionSettings.FirstOrDefault(x =>
+            string.Equals(x.SectionId, Section, StringComparison.Ordinal)
+        );
         // If HideWatchedItems is enabled for this section, set isPlayed to false to hide watched items; otherwise, include all.
         bool? isPlayed = sectionSettings?.HideWatchedItems == true ? false : null;
 
@@ -73,9 +81,8 @@ public class GenreSection : IHomeScreenSection
 
     public IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
     {
-        User user = (userId is null || userId.Value.Equals(default)
-            ? null
-            : _userManager.GetUserById(userId.Value))
+        User user =
+            (userId is null || userId.Value.Equals(default) ? null : _userManager.GetUserById(userId.Value))
             ?? throw new InvalidOperationException("User not found for genre section.");
 
         // Do the heavy lifting before we add into the cache
@@ -88,26 +95,31 @@ public class GenreSection : IHomeScreenSection
 
         DtoOptions linkDtoOptions = new DtoOptions
         {
-            Fields = [ItemFields.PrimaryImageAspectRatio,
-                ItemFields.DisplayPreferencesId]
+            Fields = [ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId],
         };
 
         foreach (string selectedGenre in PickWeightedGenres(userGenreScores, instanceCount))
         {
             Genre? genreItem = _libraryManager.GetGenre(selectedGenre);
-            yield return new GenreSection(_userManager, _libraryManager, _collectionManagerProxy, _userDataManager, _dtoService, _userViewManager)
+            yield return new GenreSection(
+                _userManager,
+                _libraryManager,
+                _collectionManagerProxy,
+                _userDataManager,
+                _dtoService,
+                _userViewManager
+            )
             {
                 AdditionalData = selectedGenre,
                 DisplayText = $"{selectedGenre} Movies",
-                OriginalPayload = genreItem != null
-                    ? _dtoService.GetBaseItemDto(genreItem, linkDtoOptions, user)
-                    : null,
+                OriginalPayload =
+                    genreItem != null ? _dtoService.GetBaseItemDto(genreItem, linkDtoOptions, user) : null,
                 TranslationMetadata = new TranslationMetadata()
                 {
                     Type = TranslationType.Pattern,
                     AdditionalContent = selectedGenre,
-                    TranslateAdditionalContent = true
-                }
+                    TranslateAdditionalContent = true,
+                },
             };
         }
     }
@@ -128,7 +140,11 @@ public class GenreSection : IHomeScreenSection
         Dictionary<Guid, UserItemData?> userDataCache = BuildUserDataCache(user, allPlayedMovies);
 
         Dictionary<string, int> playCountByGenre = BuildPlayCountScores(allPlayedMovies, userDataCache, scorePerPlay);
-        Dictionary<string, int> recentlyWatchedByGenre = BuildRecentlyWatchedScores(allPlayedMovies, userDataCache, recentlyWatchedScore);
+        Dictionary<string, int> recentlyWatchedByGenre = BuildRecentlyWatchedScores(
+            allPlayedMovies,
+            userDataCache,
+            recentlyWatchedScore
+        );
         Dictionary<string, int> likedByGenre = BuildLikedScores(user, folderIds, likedOrFavouriteScore);
 
         return CombineGenreScores(playCountByGenre, recentlyWatchedByGenre, likedByGenre);
@@ -145,55 +161,57 @@ public class GenreSection : IHomeScreenSection
             Limit = Limit ?? 1,
             OriginalPayload = OriginalPayload,
             ViewMode = SectionViewMode.Landscape,
-            AllowHideWatched = true
+            AllowHideWatched = true,
         };
     }
 
     private static DtoOptions CreateDtoOptions()
     {
-        return new DtoOptions
-        {
-            Fields = new[]
-            {
-                ItemFields.PrimaryImageAspectRatio,
-                ItemFields.MediaSourceCount
-            }
-        };
+        return new DtoOptions { Fields = new[] { ItemFields.PrimaryImageAspectRatio, ItemFields.MediaSourceCount } };
     }
 
     private List<BaseItem> GetMoviesForGenre(User? user, Genre genre, DtoOptions dtoOptions, bool? isPlayed)
     {
-        VirtualFolderInfo[] folders = _libraryManager.GetVirtualFolders()
+        VirtualFolderInfo[] folders = _libraryManager
+            .GetVirtualFolders()
             .Where(x => x.CollectionType == CollectionTypeOptions.movies)
             .FilterToUserPermitted(_libraryManager, user);
 
-        return folders.SelectMany(x =>
-        {
-            var item = _libraryManager.GetParentItem(Guid.Parse(x.ItemId), user?.Id);
-
-            if (item is not Folder folder)
+        return folders
+            .SelectMany(x =>
             {
-                folder = _libraryManager.GetUserRootFolder();
-            }
+                var item = _libraryManager.GetParentItem(Guid.Parse(x.ItemId), user?.Id);
 
-            return folder.GetItems(new InternalItemsQuery(user)
-            {
-                IncludeItemTypes = new[]
+                if (item is not Folder folder)
                 {
-                    BaseItemKind.Movie
-                },
-                OrderBy = [(ItemSortBy.Random, SortOrder.Descending)],
-                ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
-                Recursive = true,
-                Limit = 24,
-                IsPlayed = isPlayed,
-                DtoOptions = dtoOptions,
-                Genres = [genre.Name]
-            }).Items;
-        }).GroupBy(x => x.Id).Select(x => x.First()).ToList();
+                    folder = _libraryManager.GetUserRootFolder();
+                }
+
+                return folder
+                    .GetItems(
+                        new InternalItemsQuery(user)
+                        {
+                            IncludeItemTypes = new[] { BaseItemKind.Movie },
+                            OrderBy = [(ItemSortBy.Random, SortOrder.Descending)],
+                            ParentId = Guid.Parse(x.ItemId ?? Guid.Empty.ToString()),
+                            Recursive = true,
+                            Limit = 24,
+                            IsPlayed = isPlayed,
+                            DtoOptions = dtoOptions,
+                            Genres = [genre.Name],
+                        }
+                    )
+                    .Items;
+            })
+            .GroupBy(x => x.Id)
+            .Select(x => x.First())
+            .ToList();
     }
 
-    private static IEnumerable<string> PickWeightedGenres((string Genre, int Score)[] userGenreScores, int instanceCount)
+    private static IEnumerable<string> PickWeightedGenres(
+        (string Genre, int Score)[] userGenreScores,
+        int instanceCount
+    )
     {
         Random rnd = new Random();
         List<string> pickedGenres = [];
@@ -219,7 +237,8 @@ public class GenreSection : IHomeScreenSection
     private static string? SelectGenreByWeight(
         (string Genre, int Score)[] userGenreScores,
         (string Genre, int Score)[] availableGenres,
-        Random rnd)
+        Random rnd
+    )
     {
         string? selectedGenre = null;
         int totalScore = availableGenres.Sum(x => x.Score);
@@ -259,35 +278,40 @@ public class GenreSection : IHomeScreenSection
 
     private Guid[] GetMovieFolderIds(User user)
     {
-        VirtualFolderInfo[] folders = _libraryManager.GetVirtualFolders()
+        VirtualFolderInfo[] folders = _libraryManager
+            .GetVirtualFolders()
             .Where(x => x.CollectionType == CollectionTypeOptions.movies)
             .FilterToUserPermitted(_libraryManager, user);
 
-        return folders
-            .Select(x => Guid.Parse(x.ItemId ?? Guid.Empty.ToString()))
-            .Where(x => x != Guid.Empty)
-            .ToArray();
+        return folders.Select(x => Guid.Parse(x.ItemId ?? Guid.Empty.ToString())).Where(x => x != Guid.Empty).ToArray();
     }
 
     private List<Movie> GetPlayedMovies(User user, Guid[] folderIds)
     {
-        return folderIds.SelectMany(folderId =>
-        {
-            var item = _libraryManager.GetParentItem(folderId, user?.Id);
-
-            if (item is not Folder folder)
+        return folderIds
+            .SelectMany(folderId =>
             {
-                folder = _libraryManager.GetUserRootFolder();
-            }
+                var item = _libraryManager.GetParentItem(folderId, user?.Id);
 
-            return folder.GetItems(new InternalItemsQuery(user)
-            {
-                IncludeItemTypes = [BaseItemKind.Movie],
-                Recursive = true,
-                IsPlayed = true,
-                ParentId = folderId,
-            }).Items;
-        }).OfType<Movie>().ToList();
+                if (item is not Folder folder)
+                {
+                    folder = _libraryManager.GetUserRootFolder();
+                }
+
+                return folder
+                    .GetItems(
+                        new InternalItemsQuery(user)
+                        {
+                            IncludeItemTypes = [BaseItemKind.Movie],
+                            Recursive = true,
+                            IsPlayed = true,
+                            ParentId = folderId,
+                        }
+                    )
+                    .Items;
+            })
+            .OfType<Movie>()
+            .ToList();
     }
 
     private Dictionary<Guid, UserItemData?> BuildUserDataCache(User user, List<Movie> allPlayedMovies)
@@ -304,26 +328,26 @@ public class GenreSection : IHomeScreenSection
     private static Dictionary<string, int> BuildPlayCountScores(
         List<Movie> allPlayedMovies,
         Dictionary<Guid, UserItemData?> userDataCache,
-        int scorePerPlay)
+        int scorePerPlay
+    )
     {
         return allPlayedMovies
-            .SelectMany(movie => movie.Genres.Select(genre => new
-            {
-                Genre = genre,
-                PlayCount = userDataCache.TryGetValue(movie.Id, out var ud) ? ud?.PlayCount ?? 0 : 0
-            }))
+            .SelectMany(movie =>
+                movie.Genres.Select(genre => new
+                {
+                    Genre = genre,
+                    PlayCount = userDataCache.TryGetValue(movie.Id, out var ud) ? ud?.PlayCount ?? 0 : 0,
+                })
+            )
             .GroupBy(x => x.Genre, StringComparer.Ordinal)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Sum(x => x.PlayCount) * scorePerPlay,
-                StringComparer.Ordinal
-            );
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.PlayCount) * scorePerPlay, StringComparer.Ordinal);
     }
 
     private static Dictionary<string, int> BuildRecentlyWatchedScores(
         List<Movie> allPlayedMovies,
         Dictionary<Guid, UserItemData?> userDataCache,
-        int recentlyWatchedScore)
+        int recentlyWatchedScore
+    )
     {
         var cutoffDate = DateTime.Today.Subtract(TimeSpan.FromDays(14));
         return allPlayedMovies
@@ -337,71 +361,73 @@ public class GenreSection : IHomeScreenSection
             })
             .SelectMany(movie => movie.Genres)
             .GroupBy(genre => genre, StringComparer.Ordinal)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Count() * recentlyWatchedScore,
-                StringComparer.Ordinal
-            );
+            .ToDictionary(g => g.Key, g => g.Count() * recentlyWatchedScore, StringComparer.Ordinal);
     }
 
     private Dictionary<string, int> BuildLikedScores(User user, Guid[] folderIds, int likedOrFavouriteScore)
     {
-        List<Movie> likedOrFavoritedMovies = folderIds.SelectMany(folderId =>
-        {
-            var item = _libraryManager.GetParentItem(folderId, user?.Id);
-
-            if (item is not Folder folder)
+        List<Movie> likedOrFavoritedMovies = folderIds
+            .SelectMany(folderId =>
             {
-                folder = _libraryManager.GetUserRootFolder();
-            }
+                var item = _libraryManager.GetParentItem(folderId, user?.Id);
 
-            return folder.GetItems(new InternalItemsQuery(user)
-            {
-                IncludeItemTypes = [BaseItemKind.Movie],
-                Recursive = true,
-                IsFavoriteOrLiked = true,
-                User = user,
-                ParentId = folderId,
-            }).Items;
-        }).OfType<Movie>().ToList();
+                if (item is not Folder folder)
+                {
+                    folder = _libraryManager.GetUserRootFolder();
+                }
+
+                return folder
+                    .GetItems(
+                        new InternalItemsQuery(user)
+                        {
+                            IncludeItemTypes = [BaseItemKind.Movie],
+                            Recursive = true,
+                            IsFavoriteOrLiked = true,
+                            User = user,
+                            ParentId = folderId,
+                        }
+                    )
+                    .Items;
+            })
+            .OfType<Movie>()
+            .ToList();
 
         return likedOrFavoritedMovies
             .SelectMany(movie => movie.Genres)
             .GroupBy(genre => genre, StringComparer.Ordinal)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Count() * likedOrFavouriteScore,
-                StringComparer.Ordinal
-            );
+            .ToDictionary(g => g.Key, g => g.Count() * likedOrFavouriteScore, StringComparer.Ordinal);
     }
 
     private static (string Genre, int Score)[] CombineGenreScores(
         Dictionary<string, int> playCountByGenre,
         Dictionary<string, int> recentlyWatchedByGenre,
-        Dictionary<string, int> likedByGenre)
+        Dictionary<string, int> likedByGenre
+    )
     {
-        var allGenreNames = playCountByGenre.Keys
-            .Concat(recentlyWatchedByGenre.Keys)
+        var allGenreNames = playCountByGenre
+            .Keys.Concat(recentlyWatchedByGenre.Keys)
             .Concat(likedByGenre.Keys)
             .Distinct(StringComparer.Ordinal);
 
-        return allGenreNames.Select(genre =>
-        {
-            int score = 0;
-            if (playCountByGenre.TryGetValue(genre, out var playScore))
+        return allGenreNames
+            .Select(genre =>
             {
-                score += playScore;
-            }
-            if (recentlyWatchedByGenre.TryGetValue(genre, out var recentScore))
-            {
-                score += recentScore;
-            }
-            if (likedByGenre.TryGetValue(genre, out var likedScore))
-            {
-                score += likedScore;
-            }
+                int score = 0;
+                if (playCountByGenre.TryGetValue(genre, out var playScore))
+                {
+                    score += playScore;
+                }
+                if (recentlyWatchedByGenre.TryGetValue(genre, out var recentScore))
+                {
+                    score += recentScore;
+                }
+                if (likedByGenre.TryGetValue(genre, out var likedScore))
+                {
+                    score += likedScore;
+                }
 
-            return (Genre: genre, Score: score);
-        }).ToArray();
+                return (Genre: genre, Score: score);
+            })
+            .ToArray();
     }
 }

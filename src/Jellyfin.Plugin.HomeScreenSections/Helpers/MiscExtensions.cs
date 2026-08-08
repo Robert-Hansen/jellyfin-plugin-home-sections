@@ -12,15 +12,18 @@ public static class MiscExtensions
 {
     public static IEnumerable<BoxSet> GetCollections(this ICollectionManager collectionManager, User user)
     {
-        return collectionManager.GetType()
-            .GetMethod("GetCollections", BindingFlags.Instance | BindingFlags.NonPublic)?
-            .Invoke(collectionManager, new object?[]
-            {
-                user
-            }) as IEnumerable<BoxSet> ?? Enumerable.Empty<BoxSet>();
+        return collectionManager
+                .GetType()
+                .GetMethod("GetCollections", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.Invoke(collectionManager, new object?[] { user }) as IEnumerable<BoxSet>
+            ?? Enumerable.Empty<BoxSet>();
     }
 
-    public static VirtualFolderInfo[] FilterToUserPermitted(this IEnumerable<VirtualFolderInfo> folders, ILibraryManager libraryManager, User? user)
+    public static VirtualFolderInfo[] FilterToUserPermitted(
+        this IEnumerable<VirtualFolderInfo> folders,
+        ILibraryManager libraryManager,
+        User? user
+    )
     {
         // Virtual folders can have a null/invalid ItemId; Guid.Parse would throw
         // ArgumentNullException('input') and take down every section that filters folders
@@ -36,10 +39,9 @@ public static class MiscExtensions
         return filtered
             .Where(x =>
             {
-                IEnumerable<BaseItem> items = libraryManager.GetItemList(new InternalItemsQuery(user)
-                {
-                    ItemIds = [Guid.Parse(x.ItemId)]
-                });
+                IEnumerable<BaseItem> items = libraryManager.GetItemList(
+                    new InternalItemsQuery(user) { ItemIds = [Guid.Parse(x.ItemId)] }
+                );
 
                 return items.Any();
             })

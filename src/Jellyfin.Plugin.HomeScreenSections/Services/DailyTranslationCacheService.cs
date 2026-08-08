@@ -23,7 +23,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         private static HttpClient CreateHttpClient()
         {
             HttpClient c = new();
-            c.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36");
+            c.DefaultRequestHeaders.Add(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+            );
             return c;
         }
 
@@ -31,50 +34,70 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         {
             _translationManager = translationManager;
         }
-        
-        public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() => StartupServiceHelper.GetStartupTrigger()
-            .Concat(StartupServiceHelper.GetDailyTrigger(TimeSpan.FromHours(3)));
+
+        public IEnumerable<TaskTriggerInfo> GetDefaultTriggers() =>
+            StartupServiceHelper
+                .GetStartupTrigger()
+                .Concat(StartupServiceHelper.GetDailyTrigger(TimeSpan.FromHours(3)));
 
         public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
         {
-            string? gitBranch = Assembly.GetExecutingAssembly()
+            string? gitBranch = Assembly
+                .GetExecutingAssembly()
                 .GetCustomAttributes<AssemblyMetadataAttribute>()
-                .FirstOrDefault(x => string.Equals(x.Key, "GitBranch", StringComparison.Ordinal))?.Value;
+                .FirstOrDefault(x => string.Equals(x.Key, "GitBranch", StringComparison.Ordinal))
+                ?.Value;
 
             if (!string.IsNullOrEmpty(gitBranch))
             {
-                HttpResponseMessage treesResponse = await s_httpClient.GetAsync(new Uri($"https://api.github.com/repos/IAmParadox27/jellyfin-plugin-home-sections/git/trees/{gitBranch}?recursive=1"), cancellationToken);
+                HttpResponseMessage treesResponse = await s_httpClient.GetAsync(
+                    new Uri(
+                        $"https://api.github.com/repos/IAmParadox27/jellyfin-plugin-home-sections/git/trees/{gitBranch}?recursive=1"
+                    ),
+                    cancellationToken
+                );
 
                 // After getting the trees we say we're 10% just to signify something has happened
                 double currentProgress = 0.1;
                 progress.Report(currentProgress);
-                
+
                 string treesJsonRaw = await treesResponse.Content.ReadAsStringAsync(cancellationToken);
 
                 JObject treesObj = JObject.Parse(treesJsonRaw);
-                IEnumerable<JObject>? data = treesObj.Value<JArray>("tree")?.OfType<JObject>().Where(x => x.Value<string>("path")?.StartsWith(LocPath, StringComparison.Ordinal) ?? false);
+                IEnumerable<JObject>? data = treesObj
+                    .Value<JArray>("tree")
+                    ?.OfType<JObject>()
+                    .Where(x => x.Value<string>("path")?.StartsWith(LocPath, StringComparison.Ordinal) ?? false);
                 if (data != null)
                 {
-                    string[] blobUrls = data.Select(x => x.Value<string>("path")).Where(x => x != null).Select(x => x!).ToArray();
-                    
+                    string[] blobUrls = data.Select(x => x.Value<string>("path"))
+                        .Where(x => x != null)
+                        .Select(x => x!)
+                        .ToArray();
+
                     double progressIncrement = 0.9 / blobUrls.Length;
-                    
+
                     foreach (string blobUrl in blobUrls)
                     {
-                        HttpResponseMessage blobResponse = await s_httpClient.GetAsync(new Uri($"https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-home-sections/refs/heads/{gitBranch}/{blobUrl}"), cancellationToken);
+                        HttpResponseMessage blobResponse = await s_httpClient.GetAsync(
+                            new Uri(
+                                $"https://raw.githubusercontent.com/IAmParadox27/jellyfin-plugin-home-sections/refs/heads/{gitBranch}/{blobUrl}"
+                            ),
+                            cancellationToken
+                        );
                         string blobJsonRaw = await blobResponse.Content.ReadAsStringAsync(cancellationToken);
-                        
+
                         string languageCode = Path.GetFileNameWithoutExtension(blobUrl);
                         JObject languagePack = JObject.Parse(blobJsonRaw);
-                        
+
                         _translationManager.UpdateTranslationPack(languageCode, languagePack);
-                        
+
                         currentProgress += progressIncrement;
                         progress.Report(currentProgress);
                     }
                 }
             }
-            
+
             progress.Report(1);
         }
     }

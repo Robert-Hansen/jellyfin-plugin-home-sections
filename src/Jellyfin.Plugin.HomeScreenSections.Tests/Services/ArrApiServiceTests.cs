@@ -105,10 +105,26 @@ public class ArrApiServiceTests
 
         object? result = serviceType switch
         {
-            ArrServiceType.Sonarr => await service.GetArrCalendarAsync<SonarrCalendarDto>(serviceType, s_referenceDate, s_referenceDate.AddDays(7)),
-            ArrServiceType.Radarr => await service.GetArrCalendarAsync<RadarrCalendarDto>(serviceType, s_referenceDate, s_referenceDate.AddDays(7)),
-            ArrServiceType.Lidarr => await service.GetArrCalendarAsync<LidarrCalendarDto>(serviceType, s_referenceDate, s_referenceDate.AddDays(7)),
-            _ => await service.GetArrCalendarAsync<ReadarrCalendarDto>(serviceType, s_referenceDate, s_referenceDate.AddDays(7))
+            ArrServiceType.Sonarr => await service.GetArrCalendarAsync<SonarrCalendarDto>(
+                serviceType,
+                s_referenceDate,
+                s_referenceDate.AddDays(7)
+            ),
+            ArrServiceType.Radarr => await service.GetArrCalendarAsync<RadarrCalendarDto>(
+                serviceType,
+                s_referenceDate,
+                s_referenceDate.AddDays(7)
+            ),
+            ArrServiceType.Lidarr => await service.GetArrCalendarAsync<LidarrCalendarDto>(
+                serviceType,
+                s_referenceDate,
+                s_referenceDate.AddDays(7)
+            ),
+            _ => await service.GetArrCalendarAsync<ReadarrCalendarDto>(
+                serviceType,
+                s_referenceDate,
+                s_referenceDate.AddDays(7)
+            ),
         };
 
         Assert.Null(result);

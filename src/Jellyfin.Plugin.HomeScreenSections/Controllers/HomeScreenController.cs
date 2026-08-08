@@ -45,10 +45,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         public HomeScreenController(
             IHomeScreenManager homeScreenManager,
             IDisplayPreferencesManager displayPreferencesManager,
-            IServerApplicationHost serverApplicationHost, 
+            IServerApplicationHost serverApplicationHost,
             IApplicationPaths applicationPaths,
             HomeScreenSectionService homeScreenSectionService,
-            ImageCacheService imageCacheService)
+            ImageCacheService imageCacheService
+        )
         {
             _homeScreenManager = homeScreenManager;
             _displayPreferencesManager = displayPreferencesManager;
@@ -85,15 +86,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         [Produces("application/javascript")]
         public ActionResult GetPluginScript()
         {
-            Stream? stream = Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream(typeof(HomeScreenSectionsPlugin).Namespace +
-                                           ".Inject.HomeScreenSections.js");
+            Stream? stream = Assembly
+                .GetExecutingAssembly()
+                .GetManifestResourceStream(
+                    typeof(HomeScreenSectionsPlugin).Namespace + ".Inject.HomeScreenSections.js"
+                );
 
             if (stream == null)
             {
                 return NotFound();
             }
-            
+
             SetCacheHeaders();
 
             return File(stream, "application/javascript");
@@ -103,15 +106,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         [Produces("text/css")]
         public ActionResult GetPluginStylesheet()
         {
-            Stream? stream = Assembly.GetExecutingAssembly()
-                .GetManifestResourceStream(typeof(HomeScreenSectionsPlugin).Namespace +
-                                           ".Inject.HomeScreenSections.css");
+            Stream? stream = Assembly
+                .GetExecutingAssembly()
+                .GetManifestResourceStream(
+                    typeof(HomeScreenSectionsPlugin).Namespace + ".Inject.HomeScreenSections.css"
+                );
 
             if (stream == null)
             {
                 return NotFound();
             }
-            
+
             SetCacheHeaders();
 
             return File(stream, "text/css");
@@ -124,7 +129,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         {
             return HomeScreenSectionsPlugin.Instance.Configuration;
         }
-        
+
         [HttpPost("BustCache")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [Authorize(Roles = "Administrator")]
@@ -148,74 +153,131 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
             AppendPluginAndSectionChecks(config, checks);
             AppendIntegrationChecks(config, checks);
             AppendLibraryChecks(config, checks);
-            checks.Add(new
-            {
-                id = "registered-types",
-                severity = "info",
-                message = $"{_homeScreenManager.GetSectionTypes().Count()} section types are registered (built-in + plugins)."
-            });
+            checks.Add(
+                new
+                {
+                    id = "registered-types",
+                    severity = "info",
+                    message = $"{_homeScreenManager.GetSectionTypes().Count()} section types are registered (built-in + plugins).",
+                }
+            );
 
-            return Ok(new
-            {
-                generatedAt = DateTime.UtcNow,
-                pluginEnabled = config.Enabled,
-                checks
-            });
+            return Ok(
+                new
+                {
+                    generatedAt = DateTime.UtcNow,
+                    pluginEnabled = config.Enabled,
+                    checks,
+                }
+            );
         }
 
         private static void AppendPluginAndSectionChecks(PluginConfiguration config, List<object> checks)
         {
             if (!config.Enabled)
             {
-                checks.Add(new { id = "plugin-disabled", severity = "warning", message = "Home Screen Sections is disabled globally." });
+                checks.Add(
+                    new
+                    {
+                        id = "plugin-disabled",
+                        severity = "warning",
+                        message = "Home Screen Sections is disabled globally.",
+                    }
+                );
             }
 
             if (config.SectionSettings == null || config.SectionSettings.Length == 0)
             {
-                checks.Add(new
-                {
-                    id = "no-section-settings",
-                    severity = "info",
-                    message = "No section settings are stored yet; defaults will be used until you save the Section Settings tab."
-                });
+                checks.Add(
+                    new
+                    {
+                        id = "no-section-settings",
+                        severity = "info",
+                        message = "No section settings are stored yet; defaults will be used until you save the Section Settings tab.",
+                    }
+                );
                 return;
             }
 
             int enabledCount = config.SectionSettings.Count(s => s.Enabled);
             if (enabledCount == 0)
             {
-                checks.Add(new { id = "all-sections-disabled", severity = "warning", message = "All configured sections are disabled in admin settings." });
+                checks.Add(
+                    new
+                    {
+                        id = "all-sections-disabled",
+                        severity = "warning",
+                        message = "All configured sections are disabled in admin settings.",
+                    }
+                );
             }
 
-            checks.Add(new
-            {
-                id = "enabled-count",
-                severity = "info",
-                message = $"{enabledCount} of {config.SectionSettings.Length} configured sections are enabled."
-            });
+            checks.Add(
+                new
+                {
+                    id = "enabled-count",
+                    severity = "info",
+                    message = $"{enabledCount} of {config.SectionSettings.Length} configured sections are enabled.",
+                }
+            );
         }
 
         private static void AppendIntegrationChecks(PluginConfiguration config, List<object> checks)
         {
             if (string.IsNullOrWhiteSpace(config.Sonarr?.Url) || string.IsNullOrWhiteSpace(config.Sonarr?.ApiKey))
             {
-                checks.Add(new { id = "sonarr", severity = "info", message = "Sonarr URL/API key not configured — Upcoming Shows will be empty." });
+                checks.Add(
+                    new
+                    {
+                        id = "sonarr",
+                        severity = "info",
+                        message = "Sonarr URL/API key not configured — Upcoming Shows will be empty.",
+                    }
+                );
             }
             if (string.IsNullOrWhiteSpace(config.Radarr?.Url) || string.IsNullOrWhiteSpace(config.Radarr?.ApiKey))
             {
-                checks.Add(new { id = "radarr", severity = "info", message = "Radarr URL/API key not configured — Upcoming Movies will be empty." });
+                checks.Add(
+                    new
+                    {
+                        id = "radarr",
+                        severity = "info",
+                        message = "Radarr URL/API key not configured — Upcoming Movies will be empty.",
+                    }
+                );
             }
             if (string.IsNullOrWhiteSpace(config.Lidarr?.Url) || string.IsNullOrWhiteSpace(config.Lidarr?.ApiKey))
             {
-                checks.Add(new { id = "lidarr", severity = "info", message = "Lidarr URL/API key not configured — Upcoming Music will be empty." });
+                checks.Add(
+                    new
+                    {
+                        id = "lidarr",
+                        severity = "info",
+                        message = "Lidarr URL/API key not configured — Upcoming Music will be empty.",
+                    }
+                );
             }
             if (string.IsNullOrWhiteSpace(config.Readarr?.Url) || string.IsNullOrWhiteSpace(config.Readarr?.ApiKey))
             {
-                checks.Add(new { id = "readarr", severity = "info", message = "Readarr URL/API key not configured — Upcoming Books will be empty." });
+                checks.Add(
+                    new
+                    {
+                        id = "readarr",
+                        severity = "info",
+                        message = "Readarr URL/API key not configured — Upcoming Books will be empty.",
+                    }
+                );
             }
             if (string.IsNullOrWhiteSpace(config.JellyseerrUrl) || string.IsNullOrWhiteSpace(config.JellyseerrApiKey))
             {
-                checks.Add(new { id = "jellyseerr", severity = "info", message = "Jellyseerr not configured — Discover / My Requests sections will be empty." });
+                checks.Add(
+                    new
+                    {
+                        id = "jellyseerr",
+                        severity = "info",
+                        message = "Jellyseerr not configured — Discover / My Requests sections will be empty.",
+                    }
+                );
             }
         }
 
@@ -223,21 +285,25 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
         {
             if (string.IsNullOrWhiteSpace(config.DefaultMoviesLibraryId))
             {
-                checks.Add(new
-                {
-                    id = "movies-library",
-                    severity = "info",
-                    message = "No default movies library selected — movie section navigation may use the first available library."
-                });
+                checks.Add(
+                    new
+                    {
+                        id = "movies-library",
+                        severity = "info",
+                        message = "No default movies library selected — movie section navigation may use the first available library.",
+                    }
+                );
             }
             if (string.IsNullOrWhiteSpace(config.DefaultTVShowsLibraryId))
             {
-                checks.Add(new
-                {
-                    id = "tv-library",
-                    severity = "info",
-                    message = "No default TV shows library selected — TV section navigation may use the first available library."
-                });
+                checks.Add(
+                    new
+                    {
+                        id = "tv-library",
+                        severity = "info",
+                        message = "No default TV shows library selected — TV section navigation may use the first available library.",
+                    }
+                );
             }
         }
 
@@ -290,13 +356,15 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
                 return Ok(new { Enabled = false, AllowUserOverride = false });
             }
 
-            return Ok(new
-            {
-                Enabled = cfg.Enabled, 
-                AllowUserOverride = cfg.AllowUserOverride, 
-                PaginationEnabled = cfg.LazyLoadEnabled, 
-                NumResultsPerPage = cfg.NumSectionsPerPage
-            });
+            return Ok(
+                new
+                {
+                    Enabled = cfg.Enabled,
+                    AllowUserOverride = cfg.AllowUserOverride,
+                    PaginationEnabled = cfg.LazyLoadEnabled,
+                    NumResultsPerPage = cfg.NumSectionsPerPage,
+                }
+            );
         }
 
         [HttpGet("Ready")]
@@ -335,15 +403,19 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
             [FromQuery] string? language,
             [FromQuery] int? page = null,
             [FromQuery] int? numResultsPerPage = null,
-            [FromQuery] Guid? pageHash = null)
+            [FromQuery] Guid? pageHash = null
+        )
         {
-            IReadOnlyList<HomeScreenSectionInfo> sections = _homeScreenSectionService.MonitorLiveUpdatedSectionsForUser(userId ?? Guid.Empty, language, 
-                page ?? 1, numResultsPerPage, pageHash) ?? [];
+            IReadOnlyList<HomeScreenSectionInfo> sections =
+                _homeScreenSectionService.MonitorLiveUpdatedSectionsForUser(
+                    userId ?? Guid.Empty,
+                    language,
+                    page ?? 1,
+                    numResultsPerPage,
+                    pageHash
+                ) ?? [];
 
-            return new QueryResult<HomeScreenSectionInfo>(
-                0,
-                sections.Count,
-                sections);
+            return new QueryResult<HomeScreenSectionInfo>(0, sections.Count, sections);
         }
 
         [HttpGet("Section/{sectionType}")]
@@ -352,12 +424,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
             [FromRoute] string sectionType,
             [FromQuery, Required] Guid userId,
             [FromQuery] string? additionalData,
-            [FromQuery] string? language)
+            [FromQuery] string? language
+        )
         {
             HomeScreenSectionPayload payload = new HomeScreenSectionPayload
             {
                 UserId = userId,
-                AdditionalData = additionalData
+                AdditionalData = additionalData,
             };
 
             return _homeScreenManager.InvokeResultsDelegate(sectionType, payload, Request.Query);
@@ -380,40 +453,66 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
                 return Conflict();
             }
 
-            _homeScreenManager.RegisterResultsDelegate(new PluginDefinedSection(payload.Id, payload.DisplayText!, payload.Route, payload.AdditionalData)
-            {
-                OnGetResults = sectionPayload =>
+            _homeScreenManager.RegisterResultsDelegate(
+                new PluginDefinedSection(payload.Id, payload.DisplayText!, payload.Route, payload.AdditionalData)
                 {
-                    JObject jsonPayload = JObject.FromObject(sectionPayload);
+                    OnGetResults = sectionPayload =>
+                    {
+                        JObject jsonPayload = JObject.FromObject(sectionPayload);
 
-                    string? publishedServerUrl = _serverApplicationHost.GetType()
-                        .GetProperty("PublishedServerUrl", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(_serverApplicationHost) as string;
+                        string? publishedServerUrl =
+                            _serverApplicationHost
+                                .GetType()
+                                .GetProperty("PublishedServerUrl", BindingFlags.Instance | BindingFlags.NonPublic)
+                                ?.GetValue(_serverApplicationHost) as string;
 
-                    HttpClient client = HomeScreenSectionsPlugin.Instance.ServiceProvider.GetService<IHttpClientFactory>()?.CreateClient() ?? new HttpClient();
-                    client.BaseAddress = new Uri(publishedServerUrl ?? $"http://localhost:{_serverApplicationHost.HttpPort}");
-                    
-                    HttpResponseMessage responseMessage = client.PostAsync(payload.ResultsEndpoint, 
-                        new StringContent(jsonPayload.ToString(Formatting.None), MediaTypeHeaderValue.Parse("application/json"))).GetAwaiter().GetResult();
+                        HttpClient client =
+                            HomeScreenSectionsPlugin
+                                .Instance.ServiceProvider.GetService<IHttpClientFactory>()
+                                ?.CreateClient()
+                            ?? new HttpClient();
+                        client.BaseAddress = new Uri(
+                            publishedServerUrl ?? $"http://localhost:{_serverApplicationHost.HttpPort}"
+                        );
 
-                    return JsonConvert.DeserializeObject<QueryResult<BaseItemDto>>(responseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult()) ?? new QueryResult<BaseItemDto>();
+                        HttpResponseMessage responseMessage = client
+                            .PostAsync(
+                                payload.ResultsEndpoint,
+                                new StringContent(
+                                    jsonPayload.ToString(Formatting.None),
+                                    MediaTypeHeaderValue.Parse("application/json")
+                                )
+                            )
+                            .GetAwaiter()
+                            .GetResult();
+
+                        return JsonConvert.DeserializeObject<QueryResult<BaseItemDto>>(
+                                responseMessage.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                            ) ?? new QueryResult<BaseItemDto>();
+                    },
                 }
-            });
-            
+            );
+
             return Ok();
         }
 
         [HttpPost("DiscoverRequest")]
         [Authorize]
-        public async Task<ActionResult> MakeDiscoverRequest([FromServices] IUserManager userManager, [FromBody] DiscoverRequestPayload payload)
+        public async Task<ActionResult> MakeDiscoverRequest(
+            [FromServices] IUserManager userManager,
+            [FromBody] DiscoverRequestPayload payload
+        )
         {
-            string? userIdString = User.Claims.FirstOrDefault(x => x.Type.Equals("Jellyfin-UserId", StringComparison.OrdinalIgnoreCase))?.Value;
+            string? userIdString = User
+                .Claims.FirstOrDefault(x => x.Type.Equals("Jellyfin-UserId", StringComparison.OrdinalIgnoreCase))
+                ?.Value;
             Guid userId = string.IsNullOrEmpty(userIdString) ? Guid.Empty : Guid.Parse(userIdString);
 
             if (userId == Guid.Empty)
             {
                 return Forbid();
             }
-            
+
             User? user = userManager.GetUserById(userId);
             if (user == null)
             {
@@ -427,43 +526,67 @@ namespace Jellyfin.Plugin.HomeScreenSections.Controllers
                 return BadRequest();
             }
 
-            HttpClient client = HomeScreenSectionsPlugin.Instance.ServiceProvider.GetService<IHttpClientFactory>()?.CreateClient() ?? new HttpClient();
+            HttpClient client =
+                HomeScreenSectionsPlugin.Instance.ServiceProvider.GetService<IHttpClientFactory>()?.CreateClient()
+                ?? new HttpClient();
             client.BaseAddress = new Uri(jellyseerrUrl);
-            client.DefaultRequestHeaders.Add("X-Api-Key", HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrApiKey);
-            
-            HttpResponseMessage usersResponse = client.GetAsync($"/api/v1/user?q={Uri.EscapeDataString(user.Username)}").GetAwaiter().GetResult();
+            client.DefaultRequestHeaders.Add(
+                "X-Api-Key",
+                HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrApiKey
+            );
+
+            HttpResponseMessage usersResponse = client
+                .GetAsync($"/api/v1/user?q={Uri.EscapeDataString(user.Username)}")
+                .GetAwaiter()
+                .GetResult();
             string userResponseRaw = usersResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-            int? jellyseerrUserId = JObject.Parse(userResponseRaw).Value<JArray>("results")!.OfType<JObject>().FirstOrDefault(x => string.Equals(x.Value<string>("jellyfinUsername"), user.Username, StringComparison.Ordinal))?.Value<int>("id");
+            int? jellyseerrUserId = JObject
+                .Parse(userResponseRaw)
+                .Value<JArray>("results")!
+                .OfType<JObject>()
+                .FirstOrDefault(x =>
+                    string.Equals(x.Value<string>("jellyfinUsername"), user.Username, StringComparison.Ordinal)
+                )
+                ?.Value<int>("id");
 
             if (jellyseerrUserId == null)
             {
                 return BadRequest();
             }
-            
-            client.DefaultRequestHeaders.Add("X-Api-User", jellyseerrUserId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+            client.DefaultRequestHeaders.Add(
+                "X-Api-User",
+                jellyseerrUserId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            );
 
             HttpResponseMessage requestResponse;
             if (string.Equals(payload.MediaType, "tv", StringComparison.Ordinal))
             {
-                requestResponse = await client.PostAsync("/api/v1/request", JsonContent.Create(new JellyseerrTvShowRequestPayload
-                {
-                    MediaId = payload.MediaId,
-                    MediaType = payload.MediaType,
-                    Seasons = "all"
-                }));
+                requestResponse = await client.PostAsync(
+                    "/api/v1/request",
+                    JsonContent.Create(
+                        new JellyseerrTvShowRequestPayload
+                        {
+                            MediaId = payload.MediaId,
+                            MediaType = payload.MediaType,
+                            Seasons = "all",
+                        }
+                    )
+                );
             }
             else
             {
-                requestResponse = await client.PostAsync("/api/v1/request", JsonContent.Create(new JellyseerrRequestPayload
-                {
-                    MediaId = payload.MediaId,
-                    MediaType = payload.MediaType
-                }));
+                requestResponse = await client.PostAsync(
+                    "/api/v1/request",
+                    JsonContent.Create(
+                        new JellyseerrRequestPayload { MediaId = payload.MediaId, MediaType = payload.MediaType }
+                    )
+                );
             }
-            
+
             string responseContent = await requestResponse.Content.ReadAsStringAsync();
             string contentType = requestResponse.Content.Headers.ContentType?.MediaType ?? "application/json";
-            
+
             return Content(responseContent, contentType);
         }
     }

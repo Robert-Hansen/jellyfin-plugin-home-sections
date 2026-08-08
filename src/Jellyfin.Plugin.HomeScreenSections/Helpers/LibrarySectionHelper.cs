@@ -18,11 +18,13 @@ internal static class LibrarySectionHelper
         IDtoService dtoService,
         Guid? userId,
         CollectionType collectionType,
-        string? libraryId)
+        string? libraryId
+    )
     {
         User? user = userManager.GetUserById(userId ?? Guid.Empty);
 
-        Folder[] libraryFolders = libraryManager.GetUserRootFolder()
+        Folder[] libraryFolders = libraryManager
+            .GetUserRootFolder()
             .GetChildren(user, true)
             .OfType<Folder>()
             .Where(x => (x as ICollectionFolder)?.CollectionType == collectionType)
@@ -41,7 +43,7 @@ internal static class LibrarySectionHelper
 
         DtoOptions dtoOptions = new()
         {
-            Fields = [ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId]
+            Fields = [ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId],
         };
 
         return dtoService.GetBaseItemDto(folder, dtoOptions, user);

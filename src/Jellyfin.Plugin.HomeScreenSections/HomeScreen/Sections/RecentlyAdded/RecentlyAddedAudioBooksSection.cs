@@ -21,12 +21,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.RecentlyAdded
         protected override string? LibraryId => HomeScreenSectionsPlugin.Instance?.Configuration?.DefaultBooksLibraryId;
         protected override SectionViewMode DefaultViewMode => SectionViewMode.Portrait;
 
-        public RecentlyAddedAudioBooksSection(IUserViewManager userViewManager,
+        public RecentlyAddedAudioBooksSection(
+            IUserViewManager userViewManager,
             IUserManager userManager,
             ILibraryManager libraryManager,
             IDtoService dtoService,
-            IServiceProvider serviceProvider) : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider)
-        {
-        }
+            IServiceProvider serviceProvider
+        )
+            : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider) { }
     }
 }

@@ -41,7 +41,8 @@ public class UnwatchedCollectionsSection : IHomeScreenSection
         IDtoService dtoService,
         CollectionManagerProxy collectionManagerProxy,
         ILibraryManager libraryManager,
-        IUserDataManager userDataManager)
+        IUserDataManager userDataManager
+    )
     {
         _userManager = userManager;
         _dtoService = dtoService;
@@ -53,8 +54,11 @@ public class UnwatchedCollectionsSection : IHomeScreenSection
     public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
     {
         User? user = _userManager.GetUserById(payload.UserId);
-        if (user == null || string.IsNullOrWhiteSpace(payload.AdditionalData)
-            || !Guid.TryParse(payload.AdditionalData, out Guid collectionId))
+        if (
+            user == null
+            || string.IsNullOrWhiteSpace(payload.AdditionalData)
+            || !Guid.TryParse(payload.AdditionalData, out Guid collectionId)
+        )
         {
             return new QueryResult<BaseItemDto>();
         }
@@ -66,7 +70,8 @@ public class UnwatchedCollectionsSection : IHomeScreenSection
         }
 
         DtoOptions dtoOptions = SectionDtoHelper.CreateDefaultDtoOptions();
-        List<BaseItem> unwatched = boxSet.GetChildren(user, true, new InternalItemsQuery(user))
+        List<BaseItem> unwatched = boxSet
+            .GetChildren(user, true, new InternalItemsQuery(user))
             .Where(child =>
             {
                 UserItemData? data = _userDataManager.GetUserData(user, child);
@@ -93,8 +98,7 @@ public class UnwatchedCollectionsSection : IHomeScreenSection
 
         DtoOptions linkDto = new DtoOptions
         {
-            Fields = [ItemFields.PrimaryImageAspectRatio,
-                ItemFields.DisplayPreferencesId]
+            Fields = [ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId],
         };
 
         foreach (BoxSet boxSet in FindPartialCollections(user).Take(instanceCount))
@@ -104,16 +108,17 @@ public class UnwatchedCollectionsSection : IHomeScreenSection
                 _dtoService,
                 _collectionManagerProxy,
                 _libraryManager,
-                _userDataManager)
+                _userDataManager
+            )
             {
                 AdditionalData = boxSet.Id.ToString("N"),
                 DisplayText = $"Continue: {boxSet.Name}",
-                OriginalPayload = _dtoService.GetBaseItemDto(boxSet, linkDto, user)
+                OriginalPayload = _dtoService.GetBaseItemDto(boxSet, linkDto, user),
             };
         }
     }
 
-public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
+    public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this);
 
     private List<BoxSet> FindPartialCollections(User user)
     {

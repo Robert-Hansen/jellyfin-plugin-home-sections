@@ -9,16 +9,22 @@ namespace Jellyfin.Plugin.HomeScreenSections.Library
     public interface IHomeScreenManager
     {
         void RegisterBuiltInResultsDelegates();
-        
-        void RegisterResultsDelegate<T>() where T : IHomeScreenSection;
 
-        void RegisterResultsDelegate<T>(T handler) where T : IHomeScreenSection;
-        
+        void RegisterResultsDelegate<T>()
+            where T : IHomeScreenSection;
+
+        void RegisterResultsDelegate<T>(T handler)
+            where T : IHomeScreenSection;
+
         IEnumerable<IHomeScreenSection> GetSectionTypes();
-        
+
         IHomeScreenSection? GetSection(string sectionName);
 
-        QueryResult<BaseItemDto> InvokeResultsDelegate(string key, HomeScreenSectionPayload payload, IQueryCollection queryCollection);
+        QueryResult<BaseItemDto> InvokeResultsDelegate(
+            string key,
+            HomeScreenSectionPayload payload,
+            IQueryCollection queryCollection
+        );
 
         bool GetUserFeatureEnabled(Guid userId);
 
@@ -44,7 +50,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Library
         public object? OriginalPayload { get; }
 
         public TranslationMetadata? TranslationMetadata => null;
-        
+
         public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection);
 
         public IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount);
@@ -57,7 +63,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Library
         FullText,
         Prefix,
         Suffix,
-        Pattern
+        Pattern,
     }
 
     public class TranslationMetadata
@@ -65,7 +71,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Library
         public TranslationType Type { get; set; } = TranslationType.FullText;
 
         public string? AdditionalContent { get; set; }
-        
+
         public bool TranslateAdditionalContent { get; set; }
     }
 
@@ -80,21 +86,21 @@ namespace Jellyfin.Plugin.HomeScreenSections.Library
         public string? Route { get; set; }
 
         public string? AdditionalData { get; set; }
-        
+
         public string? ContainerClass { get; set; }
 
         public SectionViewMode? ViewMode { get; set; }
 
         public bool DisplayTitleText { get; set; } = true;
-        
+
         public bool ShowDetailsMenu { get; set; } = true;
 
         public object? OriginalPayload { get; set; }
-        
+
         public bool AllowViewModeChange { get; set; } = true;
 
         public bool AllowHideWatched { get; set; }
-        
+
         public int OrderIndex { get; set; }
     }
 
@@ -103,9 +109,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.Library
         public Guid UserId { get; set; }
 
         public IList<string> EnabledSections { get; set; } = [];
-        
+
         public IList<string> LockedSections { get; set; } = [];
-        
+
         public IList<string> DefaultEnabledSections { get; set; } = [];
 
         /// <summary>

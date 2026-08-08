@@ -14,7 +14,6 @@ namespace Jellyfin.Plugin.HomeScreenSections.Tests.Services;
 [Collection("Plugin Instance")]
 public class ArrApiServiceCalendarTests
 {
-
     public ArrApiServiceCalendarTests(PluginFixture fixture)
     {
         _ = fixture;
@@ -31,7 +30,11 @@ public class ArrApiServiceCalendarTests
             DateTime start = new DateTime(2026, 8, 7, 0, 0, 0, DateTimeKind.Utc);
             DateTime end = start.AddDays(7);
 
-            RadarrCalendarDto[]? result = await service.GetArrCalendarAsync<RadarrCalendarDto>(ArrServiceType.Radarr, start, end);
+            RadarrCalendarDto[]? result = await service.GetArrCalendarAsync<RadarrCalendarDto>(
+                ArrServiceType.Radarr,
+                start,
+                end
+            );
 
             Assert.NotNull(result);
             Assert.Empty(result!);
@@ -52,7 +55,11 @@ public class ArrApiServiceCalendarTests
     [InlineData(ArrServiceType.Sonarr, "v3", "includeSeries=true")]
     [InlineData(ArrServiceType.Lidarr, "v1", null)]
     [InlineData(ArrServiceType.Readarr, "v1", "includeAuthor=true")]
-    public async Task GetArrCalendarAsync_uses_service_specific_api_paths(ArrServiceType serviceType, string apiVersion, string? extraParam)
+    public async Task GetArrCalendarAsync_uses_service_specific_api_paths(
+        ArrServiceType serviceType,
+        string apiVersion,
+        string? extraParam
+    )
     {
         PluginConfiguration config = Configure(serviceType, $"http://{serviceType}.test");
         try
@@ -62,9 +69,21 @@ public class ArrApiServiceCalendarTests
 
             object? result = serviceType switch
             {
-                ArrServiceType.Sonarr => await service.GetArrCalendarAsync<SonarrCalendarDto>(serviceType, DateTime.UtcNow, DateTime.UtcNow.AddDays(1)),
-                ArrServiceType.Lidarr => await service.GetArrCalendarAsync<LidarrCalendarDto>(serviceType, DateTime.UtcNow, DateTime.UtcNow.AddDays(1)),
-                _ => await service.GetArrCalendarAsync<ReadarrCalendarDto>(serviceType, DateTime.UtcNow, DateTime.UtcNow.AddDays(1))
+                ArrServiceType.Sonarr => await service.GetArrCalendarAsync<SonarrCalendarDto>(
+                    serviceType,
+                    DateTime.UtcNow,
+                    DateTime.UtcNow.AddDays(1)
+                ),
+                ArrServiceType.Lidarr => await service.GetArrCalendarAsync<LidarrCalendarDto>(
+                    serviceType,
+                    DateTime.UtcNow,
+                    DateTime.UtcNow.AddDays(1)
+                ),
+                _ => await service.GetArrCalendarAsync<ReadarrCalendarDto>(
+                    serviceType,
+                    DateTime.UtcNow,
+                    DateTime.UtcNow.AddDays(1)
+                ),
             };
 
             Assert.NotNull(result);
@@ -87,16 +106,21 @@ public class ArrApiServiceCalendarTests
         PluginConfiguration config = Configure(ArrServiceType.Radarr, "http://radarr.test");
         try
         {
-            FakeHttpMessageHandler handler = FakeHttpMessageHandler.RespondingWithJson("""
+            FakeHttpMessageHandler handler = FakeHttpMessageHandler.RespondingWithJson(
+                """
                 [
                     { "id": 1, "title": "First Movie", "monitored": true },
                     { "id": 2, "title": "Second Movie", "monitored": false }
                 ]
-                """);
+                """
+            );
             ArrApiService service = MakeService(handler);
 
             RadarrCalendarDto[]? result = await service.GetArrCalendarAsync<RadarrCalendarDto>(
-                ArrServiceType.Radarr, DateTime.UtcNow, DateTime.UtcNow.AddDays(30));
+                ArrServiceType.Radarr,
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddDays(30)
+            );
 
             Assert.NotNull(result);
             Assert.Equal(2, result!.Length);
@@ -116,10 +140,15 @@ public class ArrApiServiceCalendarTests
         PluginConfiguration config = Configure(ArrServiceType.Radarr, "http://radarr.test");
         try
         {
-            ArrApiService service = MakeService(FakeHttpMessageHandler.RespondingWithStatus(HttpStatusCode.InternalServerError));
+            ArrApiService service = MakeService(
+                FakeHttpMessageHandler.RespondingWithStatus(HttpStatusCode.InternalServerError)
+            );
 
             RadarrCalendarDto[]? result = await service.GetArrCalendarAsync<RadarrCalendarDto>(
-                ArrServiceType.Radarr, DateTime.UtcNow, DateTime.UtcNow.AddDays(30));
+                ArrServiceType.Radarr,
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddDays(30)
+            );
 
             Assert.Null(result);
         }
@@ -138,7 +167,10 @@ public class ArrApiServiceCalendarTests
             ArrApiService service = MakeService(FakeHttpMessageHandler.RespondingWithJson(string.Empty));
 
             RadarrCalendarDto[]? result = await service.GetArrCalendarAsync<RadarrCalendarDto>(
-                ArrServiceType.Radarr, DateTime.UtcNow, DateTime.UtcNow.AddDays(30));
+                ArrServiceType.Radarr,
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddDays(30)
+            );
 
             Assert.NotNull(result);
             Assert.Empty(result!);
@@ -158,7 +190,10 @@ public class ArrApiServiceCalendarTests
             ArrApiService service = MakeService(FakeHttpMessageHandler.RespondingWithJson("this is not json"));
 
             RadarrCalendarDto[]? result = await service.GetArrCalendarAsync<RadarrCalendarDto>(
-                ArrServiceType.Radarr, DateTime.UtcNow, DateTime.UtcNow.AddDays(30));
+                ArrServiceType.Radarr,
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddDays(30)
+            );
 
             Assert.Null(result);
         }
@@ -181,7 +216,7 @@ public class ArrApiServiceCalendarTests
             ArrServiceType.Sonarr => config.Sonarr,
             ArrServiceType.Radarr => config.Radarr,
             ArrServiceType.Lidarr => config.Lidarr,
-            _ => config.Readarr
+            _ => config.Readarr,
         };
         arrConfig.Url = url;
         arrConfig.ApiKey = "test-key";
@@ -195,7 +230,7 @@ public class ArrApiServiceCalendarTests
             ArrServiceType.Sonarr => config.Sonarr,
             ArrServiceType.Radarr => config.Radarr,
             ArrServiceType.Lidarr => config.Lidarr,
-            _ => config.Readarr
+            _ => config.Readarr,
         };
         arrConfig.Url = string.Empty;
         arrConfig.ApiKey = string.Empty;

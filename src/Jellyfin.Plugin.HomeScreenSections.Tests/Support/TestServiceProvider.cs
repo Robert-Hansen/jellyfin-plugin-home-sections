@@ -24,7 +24,8 @@ internal sealed class TestServiceProvider : IServiceProvider
         _applicationPaths = applicationPaths;
     }
 
-    public T Resolve<T>() where T : class
+    public T Resolve<T>()
+        where T : class
     {
         return (T)GetService(typeof(T))!;
     }

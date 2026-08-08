@@ -15,7 +15,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
     {
         private readonly IUserManager _userManager;
         private readonly ImageCacheService _imageCacheService;
-        
+
         public virtual string? Section => "Discover";
 
         public virtual string? DisplayText { get; set; } = "Discover";
@@ -25,24 +25,26 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public object? OriginalPayload { get; }
 
         protected virtual string JellyseerEndpoint => "/api/v1/discover/trending";
-        
+
         public DiscoverSection(IUserManager userManager, ImageCacheService imageCacheService)
         {
             _userManager = userManager;
             _imageCacheService = imageCacheService;
         }
-        
+
         public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
         {
             string? jellyseerrUrl = HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrUrl;
             string? jellyseerrExternalUrl = HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrExternalUrl;
-            string? jellyseerrDisplayUrl = !string.IsNullOrEmpty(jellyseerrExternalUrl) ? jellyseerrExternalUrl : jellyseerrUrl;
+            string? jellyseerrDisplayUrl = !string.IsNullOrEmpty(jellyseerrExternalUrl)
+                ? jellyseerrExternalUrl
+                : jellyseerrUrl;
 
             if (string.IsNullOrEmpty(jellyseerrUrl))
             {
                 return new QueryResult<BaseItemDto>();
             }
-            
+
             User? user = _userManager.GetUserById(payload.UserId);
             if (user == null)
             {
@@ -55,20 +57,20 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             {
                 return new QueryResult<BaseItemDto>();
             }
-            
+
             client.DefaultRequestHeaders.Add(
                 "X-Api-User",
-                jellyseerrUserId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                jellyseerrUserId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            );
 
             List<BaseItemDto> returnItems = FetchDiscoverItems(client, jellyseerrDisplayUrl ?? jellyseerrUrl);
             return new QueryResult<BaseItemDto>()
             {
                 Items = returnItems,
                 StartIndex = 0,
-                TotalRecordCount = returnItems.Count
+                TotalRecordCount = returnItems.Count,
             };
         }
-
 
         private List<BaseItemDto> FetchDiscoverItems(HttpClient client, string jellyseerrDisplayUrl)
         {
@@ -76,14 +78,22 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
             int page = 1;
             do
             {
-                HttpResponseMessage discoverResponse = client.GetAsync($"{JellyseerEndpoint}?page={page}").GetAwaiter().GetResult();
+                HttpResponseMessage discoverResponse = client
+                    .GetAsync($"{JellyseerEndpoint}?page={page}")
+                    .GetAwaiter()
+                    .GetResult();
                 if (discoverResponse.IsSuccessStatusCode)
                 {
                     string jsonRaw = discoverResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult();
                     JObject? jsonResponse = JObject.Parse(jsonRaw);
                     if (jsonResponse != null)
                     {
-                        foreach (JObject item in jsonResponse.Value<JArray>("results")!.OfType<JObject>().Where(x => !x.Value<bool>("adult")))
+                        foreach (
+                            JObject item in jsonResponse
+                                .Value<JArray>("results")!
+                                .OfType<JObject>()
+                                .Where(x => !x.Value<bool>("adult"))
+                        )
                         {
                             BaseItemDto? dto = TryMapDiscoverItem(item, jellyseerrDisplayUrl);
                             if (dto != null)
@@ -103,9 +113,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         private BaseItemDto? TryMapDiscoverItem(JObject item, string jellyseerrDisplayUrl)
         {
             string? preferredLanguages = HomeScreenSectionsPlugin.Instance.Configuration.JellyseerrPreferredLanguages;
-            if (!string.IsNullOrEmpty(preferredLanguages) &&
-                !preferredLanguages.Split(',').Select(x => x.Trim())
-                    .Contains(item.Value<string>("originalLanguage"), StringComparer.Ordinal))
+            if (
+                !string.IsNullOrEmpty(preferredLanguages)
+                && !preferredLanguages
+                    .Split(',')
+                    .Select(x => x.Trim())
+                    .Contains(item.Value<string>("originalLanguage"), StringComparer.Ordinal)
+            )
             {
                 return null;
             }
@@ -115,8 +129,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 return null;
             }
 
-            string dateTimeString = item.Value<string>("firstAirDate") ??
-                                    item.Value<string>("releaseDate") ?? "1970-01-01";
+            string dateTimeString =
+                item.Value<string>("firstAirDate") ?? item.Value<string>("releaseDate") ?? "1970-01-01";
             if (string.IsNullOrWhiteSpace(dateTimeString))
             {
                 dateTimeString = "1970-01-01";
@@ -136,9 +150,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 {
                     { "JellyseerrRoot", jellyseerrDisplayUrl },
                     { "Jellyseerr", item.Value<int>("id").ToString(System.Globalization.CultureInfo.InvariantCulture) },
-                    { "JellyseerrPoster", cachedImageUrl }
+                    { "JellyseerrPoster", cachedImageUrl },
                 },
-                PremiereDate = DateTime.Parse(dateTimeString, System.Globalization.CultureInfo.InvariantCulture)
+                PremiereDate = DateTime.Parse(dateTimeString, System.Globalization.CultureInfo.InvariantCulture),
             };
         }
 
@@ -163,7 +177,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
                 Limit = Limit ?? 1,
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Portrait,
-                AllowViewModeChange = false
+                AllowViewModeChange = false,
             };
         }
     }

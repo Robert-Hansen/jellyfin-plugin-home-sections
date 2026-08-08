@@ -36,10 +36,7 @@ public sealed class JellyseerrFakeServer : IDisposable
         }
         _listener.Start();
 
-        _worker = new Thread(AcceptLoop)
-        {
-            IsBackground = true
-        };
+        _worker = new Thread(AcceptLoop) { IsBackground = true };
         _worker.Start();
     }
 
@@ -125,8 +122,6 @@ public sealed class JellyseerrFakeServer : IDisposable
             _listener.Stop();
             _listener.Close();
         }
-        catch (ObjectDisposedException)
-        {
-        }
+        catch (ObjectDisposedException) { }
     }
 }

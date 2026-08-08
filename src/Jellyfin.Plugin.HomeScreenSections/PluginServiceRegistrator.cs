@@ -33,21 +33,27 @@ namespace Jellyfin.Plugin.HomeScreenSections
             serviceCollection.AddSingleton<IHomeScreenManager, HomeScreenManager>(services =>
             {
                 IApplicationPaths appPaths = services.GetRequiredService<IApplicationPaths>();
-                
+
                 HomeScreenManager homeScreenManager = ActivatorUtilities.CreateInstance<HomeScreenManager>(services);
-                
-                string pluginLocation = Path.Combine(appPaths.PluginConfigurationsPath, typeof(HomeScreenSectionsPlugin).Namespace!);
+
+                string pluginLocation = Path.Combine(
+                    appPaths.PluginConfigurationsPath,
+                    typeof(HomeScreenSectionsPlugin).Namespace!
+                );
 
                 DirectoryInfo pluginDir = new DirectoryInfo(pluginLocation);
                 pluginDir.Create();
-                
+
                 string[] extraDlls = Directory.GetFiles(pluginLocation, "*.dll", SearchOption.AllDirectories).ToArray();
 
                 foreach (string extraDll in extraDlls)
                 {
                     Assembly extraPluginAssembly = Assembly.LoadFrom(extraDll);
 
-                    Type[] homeScreenSectionTypes = extraPluginAssembly.GetTypes().Where(x => x.IsAssignableTo(typeof(IHomeScreenSection))).ToArray();
+                    Type[] homeScreenSectionTypes = extraPluginAssembly
+                        .GetTypes()
+                        .Where(x => x.IsAssignableTo(typeof(IHomeScreenSection)))
+                        .ToArray();
 
                     foreach (Type homeScreenSectionType in homeScreenSectionTypes)
                     {

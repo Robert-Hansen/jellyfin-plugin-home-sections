@@ -48,7 +48,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             ILibraryManager libraryManager,
             IDtoService dtoService,
             CollectionManagerProxy collectionManagerProxy,
-            IPlaylistManager playlistManager)
+            IPlaylistManager playlistManager
+        )
         {
             _homeScreenManager = homeScreenManager;
             _logger = logger;
@@ -62,22 +63,32 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             _playlistManager = playlistManager;
         }
 
-        public IReadOnlyList<HomeScreenSectionInfo>? GetCachedSectionsForUser(Guid userId, string? language, int page, int pageSize, Guid pageHash)
+        public IReadOnlyList<HomeScreenSectionInfo>? GetCachedSectionsForUser(
+            Guid userId,
+            string? language,
+            int page,
+            int pageSize,
+            Guid pageHash
+        )
         {
             if (!_dataCache.Cache.TryGetValue(pageHash, out UserSectionsData? userSectionsData))
             {
                 return null;
             }
-            
+
             // Make sure that it's flagged as being used, even if we don't return anything here the page is still active
             // as we've received a request for it.
             userSectionsData.LastAccessed = DateTime.UtcNow;
-            
+
             // Check if the userSectionsData has the data we're after
             int[] orderedKeys = userSectionsData.OrderedSections.Keys.OrderBy(x => x).ToArray();
 
-            List<(IHomeScreenSection Section, int ConfiguredOrder)> sectionsToReturn = CollectCohesiveSections(userSectionsData, orderedKeys, out bool isComplete);
-            
+            List<(IHomeScreenSection Section, int ConfiguredOrder)> sectionsToReturn = CollectCohesiveSections(
+                userSectionsData,
+                orderedKeys,
+                out bool isComplete
+            );
+
             sectionsToReturn = sectionsToReturn.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             if ((isComplete && userSectionsData.SectionsInProgress.IsEmpty) || sectionsToReturn.Count == pageSize)
             {
@@ -90,15 +101,24 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             return null;
         }
 
-        public IReadOnlyList<HomeScreenSectionInfo>? MonitorLiveUpdatedSectionsForUser(Guid userId, string? language, int page, int? pageSize = null, Guid? pageHash = null)
+        public IReadOnlyList<HomeScreenSectionInfo>? MonitorLiveUpdatedSectionsForUser(
+            Guid userId,
+            string? language,
+            int page,
+            int? pageSize = null,
+            Guid? pageHash = null
+        )
         {
             if (pageHash == null)
             {
                 pageHash = Guid.NewGuid();
-                
+
                 CacheSectionsForUser(userId, pageHash.Value);
 
-                int totalSectionCount = _dataCache.Cache[pageHash.Value].OrderedSections.SelectMany(x => x.Value).Count();
+                int totalSectionCount = _dataCache
+                    .Cache[pageHash.Value]
+                    .OrderedSections.SelectMany(x => x.Value)
+                    .Count();
                 return GetCachedSectionsForUser(userId, language, 1, totalSectionCount, pageHash.Value);
             }
 
@@ -112,28 +132,33 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
             return WaitForPageSections(userId, language, page, pageSize, pageHash.Value);
         }
-    
+
         public void CacheSectionsForUser(Guid userId, Guid? pageHash = null)
         {
             if (_dataCache.Cache.ContainsKey(pageHash ?? Guid.Empty))
             {
                 return;
             }
-            
+
             ModularHomeUserSettings? settings = _homeScreenManager.GetUserSettings(userId);
 
-            List<IHomeScreenSection> sectionTypes = _homeScreenManager.GetSectionTypes().Where(x => settings?.EnabledSections.Contains(x.Section ?? string.Empty) ?? false).ToList();
+            List<IHomeScreenSection> sectionTypes = _homeScreenManager
+                .GetSectionTypes()
+                .Where(x => settings?.EnabledSections.Contains(x.Section ?? string.Empty) ?? false)
+                .ToList();
 
             IGrouping<int, SectionSettings>[] groupedOrderedSections = BuildOrderedSectionGroups(settings);
 
-            UserSectionsData? userSectionsData = pageHash != null
-                ? InitializeUserSectionsData(userId, pageHash.Value, groupedOrderedSections)
-                : null;
-            
-            Parallel.ForEach(groupedOrderedSections, orderedSections =>
-            {
-                PopulateOrderGroup(userId, sectionTypes, orderedSections, userSectionsData);
-            });
+            UserSectionsData? userSectionsData =
+                pageHash != null ? InitializeUserSectionsData(userId, pageHash.Value, groupedOrderedSections) : null;
+
+            Parallel.ForEach(
+                groupedOrderedSections,
+                orderedSections =>
+                {
+                    PopulateOrderGroup(userId, sectionTypes, orderedSections, userSectionsData);
+                }
+            );
         }
 
         /// <summary>
@@ -142,7 +167,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         /// </summary>
         private static IGrouping<int, SectionSettings>[] BuildOrderedSectionGroups(ModularHomeUserSettings? settings)
         {
-            List<SectionSettings> adminSettings = HomeScreenSectionsPlugin.Instance.Configuration.SectionSettings.ToList();
+            List<SectionSettings> adminSettings =
+                HomeScreenSectionsPlugin.Instance.Configuration.SectionSettings.ToList();
 
             if (settings?.SectionOrder is { Count: > 0 } userOrder)
             {
@@ -165,16 +191,14 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     .ToArray();
             }
 
-            return adminSettings
-                .OrderBy(x => x.OrderIndex)
-                .GroupBy(x => x.OrderIndex)
-                .ToArray();
+            return adminSettings.OrderBy(x => x.OrderIndex).GroupBy(x => x.OrderIndex).ToArray();
         }
 
         private static List<(IHomeScreenSection Section, int ConfiguredOrder)> CollectCohesiveSections(
             UserSectionsData userSectionsData,
             int[] orderedKeys,
-            out bool isComplete)
+            out bool isComplete
+        )
         {
             List<(IHomeScreenSection Section, int ConfiguredOrder)> sectionsToReturn = [];
             isComplete = true;
@@ -188,7 +212,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 if (prevKey > 0 && key - prevKey > 1)
                 {
                     // If any of the ranges contain both the "key before" and "key after" then we can safely know this is cohesive.
-                    if (userSectionsData.OrderIndicesWithoutSections.Any(x => x.Contains(key - 1) && x.Contains(prevKey + 1)))
+                    if (
+                        userSectionsData.OrderIndicesWithoutSections.Any(x =>
+                            x.Contains(key - 1) && x.Contains(prevKey + 1)
+                        )
+                    )
                     {
                         cohesive = true;
                     }
@@ -242,24 +270,34 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         private void WaitUntilCacheHasStartedWork(Guid pageHash)
         {
             // If there's no data at all then we wait until its started.
-            while (_dataCache.Cache[pageHash].SectionsInProgress.IsEmpty && _dataCache.Cache[pageHash].OrderedSections.IsEmpty)
+            while (
+                _dataCache.Cache[pageHash].SectionsInProgress.IsEmpty
+                && _dataCache.Cache[pageHash].OrderedSections.IsEmpty
+            )
             {
                 Thread.Sleep(10);
             }
         }
 
-        private IReadOnlyList<HomeScreenSectionInfo>? WaitForPageSections(Guid userId, string? language, int page, int? pageSize, Guid pageHash)
+        private IReadOnlyList<HomeScreenSectionInfo>? WaitForPageSections(
+            Guid userId,
+            string? language,
+            int page,
+            int? pageSize,
+            Guid pageHash
+        )
         {
             // We always wait from the start, if we hit a page that's already cached then we'll just return immediately.
             // If its still in progress then we'll wait for it to finish.
             UserSectionsData cache = _dataCache.Cache[pageHash];
             int lowestSectionIndex = Math.Min(
                 !_dataCache.Cache[pageHash].OrderedSections.IsEmpty
-                    ? _dataCache.Cache[pageHash].OrderedSections.Min(x => x.Key) 
+                    ? _dataCache.Cache[pageHash].OrderedSections.Min(x => x.Key)
                     : int.MaxValue,
                 !_dataCache.Cache[pageHash].SectionsInProgress.IsEmpty
-                    ? _dataCache.Cache[pageHash].SectionsInProgress.Min(x => x.Key) 
-                    : int.MaxValue);
+                    ? _dataCache.Cache[pageHash].SectionsInProgress.Min(x => x.Key)
+                    : int.MaxValue
+            );
 
             for (int i = lowestSectionIndex; i <= cache.MaxOrderIndex; i++)
             {
@@ -272,25 +310,35 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 {
                     Thread.Sleep(10);
                 }
-                
-                IReadOnlyList<HomeScreenSectionInfo>? sections = GetCachedSectionsForUser(userId, language, page, pageSize ?? cache.OrderedSections.SelectMany(x => x.Value).Count(), pageHash);
+
+                IReadOnlyList<HomeScreenSectionInfo>? sections = GetCachedSectionsForUser(
+                    userId,
+                    language,
+                    page,
+                    pageSize ?? cache.OrderedSections.SelectMany(x => x.Value).Count(),
+                    pageHash
+                );
                 if (sections != null)
                 {
                     return sections;
                 }
             }
-            
+
             return null;
         }
 
-        private UserSectionsData InitializeUserSectionsData(Guid userId, Guid pageHash, IGrouping<int, SectionSettings>[] groupedOrderedSections)
+        private UserSectionsData InitializeUserSectionsData(
+            Guid userId,
+            Guid pageHash,
+            IGrouping<int, SectionSettings>[] groupedOrderedSections
+        )
         {
             UserSectionsData userSectionsData = new UserSectionsData()
             {
                 UserId = userId,
                 // Enumerable.Max throws on an empty sequence; a fresh install has no
                 // SectionSettings yet (upstream #247).
-                MaxOrderIndex = groupedOrderedSections.Select(x => x.Key).DefaultIfEmpty(0).Max()
+                MaxOrderIndex = groupedOrderedSections.Select(x => x.Key).DefaultIfEmpty(0).Max(),
             };
 
             _dataCache.Cache.TryAdd(pageHash, userSectionsData);
@@ -321,11 +369,9 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
                 if (currentIndex - prevIndex > 1)
                 {
-                    userSectionsData.OrderIndicesWithoutSections.Add(new IntRange()
-                    {
-                        Start = prevIndex + 1, 
-                        End = currentIndex - 1
-                    });
+                    userSectionsData.OrderIndicesWithoutSections.Add(
+                        new IntRange() { Start = prevIndex + 1, End = currentIndex - 1 }
+                    );
                 }
             }
         }
@@ -334,14 +380,18 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             Guid userId,
             List<IHomeScreenSection> sectionTypes,
             IGrouping<int, SectionSettings> orderedSections,
-            UserSectionsData? userSectionsData)
+            UserSectionsData? userSectionsData
+        )
         {
             ConcurrentBag<IHomeScreenSection?> tmpPluginSections = new ConcurrentBag<IHomeScreenSection?>(); // we want these randomly distributed among each other.
 
-            Parallel.ForEach(orderedSections, sectionSettings =>
-            {
-                CreateSectionInstances(userId, sectionTypes, sectionSettings, tmpPluginSections);
-            });
+            Parallel.ForEach(
+                orderedSections,
+                sectionSettings =>
+                {
+                    CreateSectionInstances(userId, sectionTypes, sectionSettings, tmpPluginSections);
+                }
+            );
 
             List<IHomeScreenSection> sectionList = tmpPluginSections.Where(x => x != null).Select(x => x!).ToList();
             sectionList.Shuffle();
@@ -357,10 +407,12 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             Guid userId,
             List<IHomeScreenSection> sectionTypes,
             SectionSettings sectionSettings,
-            ConcurrentBag<IHomeScreenSection?> tmpPluginSections)
+            ConcurrentBag<IHomeScreenSection?> tmpPluginSections
+        )
         {
-            IHomeScreenSection? sectionType =
-                sectionTypes.FirstOrDefault(x => string.Equals(x.Section, sectionSettings.SectionId, StringComparison.Ordinal));
+            IHomeScreenSection? sectionType = sectionTypes.FirstOrDefault(x =>
+                string.Equals(x.Section, sectionSettings.SectionId, StringComparison.Ordinal)
+            );
 
             if (sectionType == null)
             {
@@ -379,20 +431,22 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 }
             }
             // Isolate section failures so one bad section cannot take down the whole home screen (#128).
-            catch (Exception e) when (
-                e is InvalidOperationException
-                or ArgumentException
-                or NullReferenceException
-                or KeyNotFoundException
-                or NotSupportedException
-                or NotImplementedException
-                or FormatException
-                or TimeoutException
-                or IOException
-                or HttpRequestException
-                or System.Reflection.TargetInvocationException
-                or System.Text.Json.JsonException
-                or Newtonsoft.Json.JsonException)
+            catch (Exception e)
+                when (e
+                        is InvalidOperationException
+                            or ArgumentException
+                            or NullReferenceException
+                            or KeyNotFoundException
+                            or NotSupportedException
+                            or NotImplementedException
+                            or FormatException
+                            or TimeoutException
+                            or IOException
+                            or HttpRequestException
+                            or System.Reflection.TargetInvocationException
+                            or System.Text.Json.JsonException
+                            or Newtonsoft.Json.JsonException
+                )
             {
                 PluginLog.SectionInstanceError(_logger, e, userId, sectionType.Section);
             }
@@ -417,12 +471,24 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             return Random.Shared.Next(lowerLimit, upperLimit + 1);
         }
 
-        private HomeScreenSectionInfo SectionToInfo(IHomeScreenSection section, int configuredOrder, string? language, Guid userId)
+        private HomeScreenSectionInfo SectionToInfo(
+            IHomeScreenSection section,
+            int configuredOrder,
+            string? language,
+            Guid userId
+        )
         {
             HomeScreenSectionInfo info = section.AsInfo();
 
             info.OrderIndex = configuredOrder;
-            info.ViewMode = HomeScreenSectionsPlugin.Instance.Configuration.SectionSettings.FirstOrDefault(y => string.Equals(y.SectionId, info.Section, StringComparison.Ordinal))?.ViewMode ?? info.ViewMode ?? SectionViewMode.Landscape;
+            info.ViewMode =
+                HomeScreenSectionsPlugin
+                    .Instance.Configuration.SectionSettings.FirstOrDefault(y =>
+                        string.Equals(y.SectionId, info.Section, StringComparison.Ordinal)
+                    )
+                    ?.ViewMode
+                ?? info.ViewMode
+                ?? SectionViewMode.Landscape;
 
             // When a section has no explicit title target, try resolving AdditionalData
             // as an item id, collection/playlist name, or genre name so the web client
@@ -431,15 +497,20 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 info.OriginalPayload = TryResolveTitleLinkTarget(info.AdditionalData, userId);
             }
-            
+
             if (info.DisplayText != null)
             {
                 // Fallback to system default language if there's no language provided.
-                string? translatedResult = _translationManager.Translate(info.Section!, language?.Trim() ?? _configurationManager.Configuration.UICulture, info.DisplayText, section.TranslationMetadata);
+                string? translatedResult = _translationManager.Translate(
+                    info.Section!,
+                    language?.Trim() ?? _configurationManager.Configuration.UICulture,
+                    info.DisplayText,
+                    section.TranslationMetadata
+                );
 
                 info.DisplayText = translatedResult;
             }
-            
+
             return info;
         }
 
@@ -461,17 +532,19 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 return ResolveTitleLinkById(additionalData, user, dtoOptions)
                     ?? ResolveTitleLinkByName(additionalData, userId, user, dtoOptions);
             }
-            catch (Exception ex) when (
-                ex is InvalidOperationException
-                or ArgumentException
-                or NullReferenceException
-                or KeyNotFoundException
-                or NotSupportedException
-                or FormatException
-                or TimeoutException
-                or IOException
-                or HttpRequestException
-                or System.Reflection.TargetInvocationException)
+            catch (Exception ex)
+                when (ex
+                        is InvalidOperationException
+                            or ArgumentException
+                            or NullReferenceException
+                            or KeyNotFoundException
+                            or NotSupportedException
+                            or FormatException
+                            or TimeoutException
+                            or IOException
+                            or HttpRequestException
+                            or System.Reflection.TargetInvocationException
+                )
             {
                 PluginLog.SectionTitleLinkResolveFailed(_logger, ex, additionalData, userId);
             }
@@ -481,11 +554,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
         private static DtoOptions CreateTitleLinkDtoOptions()
         {
-            return new DtoOptions
-            {
-                Fields = [ItemFields.PrimaryImageAspectRatio,
-                    ItemFields.DisplayPreferencesId]
-            };
+            return new DtoOptions { Fields = [ItemFields.PrimaryImageAspectRatio, ItemFields.DisplayPreferencesId] };
         }
 
         private BaseItemDto? ResolveTitleLinkById(string additionalData, User user, DtoOptions dtoOptions)
@@ -499,16 +568,23 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             return byId != null ? _dtoService.GetBaseItemDto(byId, dtoOptions, user) : null;
         }
 
-        private BaseItemDto? ResolveTitleLinkByName(string additionalData, Guid userId, User user, DtoOptions dtoOptions)
+        private BaseItemDto? ResolveTitleLinkByName(
+            string additionalData,
+            Guid userId,
+            User user,
+            DtoOptions dtoOptions
+        )
         {
-            BoxSet? collection = _collectionManagerProxy.GetCollections(user)
+            BoxSet? collection = _collectionManagerProxy
+                .GetCollections(user)
                 .FirstOrDefault(x => string.Equals(x.Name, additionalData, StringComparison.OrdinalIgnoreCase));
             if (collection != null)
             {
                 return _dtoService.GetBaseItemDto(collection, dtoOptions, user);
             }
 
-            Playlist? playlist = _playlistManager.GetPlaylists(userId)
+            Playlist? playlist = _playlistManager
+                .GetPlaylists(userId)
                 .FirstOrDefault(x => string.Equals(x.Name, additionalData, StringComparison.OrdinalIgnoreCase));
             if (playlist != null)
             {

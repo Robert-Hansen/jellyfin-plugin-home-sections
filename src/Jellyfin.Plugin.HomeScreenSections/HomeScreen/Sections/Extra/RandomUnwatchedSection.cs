@@ -48,17 +48,19 @@ public class RandomUnwatchedSection : IHomeScreenSection
         }
 
         DtoOptions dtoOptions = SectionDtoHelper.CreateDefaultDtoOptions();
-        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(new InternalItemsQuery(user)
-        {
-            IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
-            Recursive = true,
-            IsPlayed = false,
-            Limit = 16,
-            OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
-            DtoOptions = dtoOptions,
-            EnableTotalRecordCount = false,
-            IsVirtualItem = false
-        });
+        QueryResult<BaseItem> items = _libraryManager.GetItemsResult(
+            new InternalItemsQuery(user)
+            {
+                IncludeItemTypes = SectionDtoHelper.MovieAndSeriesKinds,
+                Recursive = true,
+                IsPlayed = false,
+                Limit = 16,
+                OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
+                DtoOptions = dtoOptions,
+                EnableTotalRecordCount = false,
+                IsVirtualItem = false,
+            }
+        );
 
         return new QueryResult<BaseItemDto>(_dtoService.GetBaseItemDtos(items.Items, dtoOptions, user));
     }
@@ -68,5 +70,5 @@ public class RandomUnwatchedSection : IHomeScreenSection
         yield return this;
     }
 
-public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this, allowHideWatched: false);
+    public HomeScreenSectionInfo GetInfo() => SectionDtoHelper.CreateInfo(this, allowHideWatched: false);
 }

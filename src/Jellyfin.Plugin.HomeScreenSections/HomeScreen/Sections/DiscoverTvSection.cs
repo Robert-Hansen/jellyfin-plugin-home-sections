@@ -16,12 +16,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections
         public override string? Section => "DiscoverTV";
 
         public override string? DisplayText { get; set; } = "Discover TV Shows";
-        
+
         protected override string JellyseerEndpoint => "/api/v1/discover/tv";
-        
-        public DiscoverTvSection(IUserManager userManager, ImageCacheService imageCacheService) 
-            : base(userManager, imageCacheService)
-        {
-        }
+
+        public DiscoverTvSection(IUserManager userManager, ImageCacheService imageCacheService)
+            : base(userManager, imageCacheService) { }
     }
 }

@@ -17,26 +17,26 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
     public abstract class PersonsSectionBase : IHomeScreenSection
     {
         public abstract string? Section { get; }
-        
+
         public abstract string? DisplayText { get; set; }
-        
+
         public int? Limit => 5;
-        
+
         public string? Route => null;
-        
+
         public string? AdditionalData { get; set; }
 
         /// <summary>
         /// Person item used as the section title link target.
         /// </summary>
         public object? OriginalPayload { get; set; }
-        
+
         protected abstract IReadOnlyList<string> PersonTypes { get; }
 
         protected abstract int MinRequiredItems { get; }
 
         public virtual TranslationMetadata? TranslationMetadata { get; protected set; }
-        
+
         protected ILibraryManager _libraryManager { get; }
         protected IDtoService _dtoService { get; }
         protected IUserManager _userManager { get; }
@@ -47,7 +47,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
             _dtoService = dtoService;
             _userManager = userManager;
         }
-        
+
         public QueryResult<BaseItemDto> GetResults(HomeScreenSectionPayload payload, IQueryCollection queryCollection)
         {
             User? user = _userManager.GetUserById(payload.UserId);
@@ -55,34 +55,42 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
             {
                 Fields = [ItemFields.PrimaryImageAspectRatio],
                 ImageTypeLimit = 1,
-                ImageTypes = [ImageType.Thumb,
-                    ImageType.Backdrop,
-                    ImageType.Primary,]
+                ImageTypes = [ImageType.Thumb, ImageType.Backdrop, ImageType.Primary],
             };
             Guid personId = Guid.Parse(payload.AdditionalData ?? Guid.Empty.ToString());
-            
-            VirtualFolderInfo[] folders = _libraryManager.GetVirtualFolders()
+
+            VirtualFolderInfo[] folders = _libraryManager
+                .GetVirtualFolders()
                 .FilterToUserPermitted(_libraryManager, user);
 
-            List<BaseItem> personItems = folders.SelectMany(x => _libraryManager.GetItemList(new InternalItemsQuery()
-            {
-                PersonIds = [personId],
-                PersonTypes = PersonTypes.ToArray(),
-                OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
-                IncludeItemTypes = [BaseItemKind.Movie, BaseItemKind.Episode],
-                Limit = 16,
-                ParentId = Guid.Parse(x.ItemId),
-                Recursive = true
-            })).DistinctBy(x => x.Id).Select(x =>
-            {
-                if (x is Episode episode)
+            List<BaseItem> personItems = folders
+                .SelectMany(x =>
+                    _libraryManager.GetItemList(
+                        new InternalItemsQuery()
+                        {
+                            PersonIds = [personId],
+                            PersonTypes = PersonTypes.ToArray(),
+                            OrderBy = [(ItemSortBy.Random, SortOrder.Ascending)],
+                            IncludeItemTypes = [BaseItemKind.Movie, BaseItemKind.Episode],
+                            Limit = 16,
+                            ParentId = Guid.Parse(x.ItemId),
+                            Recursive = true,
+                        }
+                    )
+                )
+                .DistinctBy(x => x.Id)
+                .Select(x =>
                 {
-                    return episode.Series;
-                }
+                    if (x is Episode episode)
+                    {
+                        return episode.Series;
+                    }
 
-                return x;
-            }).DistinctBy(x => x.Id).ToList();
-            
+                    return x;
+                })
+                .DistinctBy(x => x.Id)
+                .ToList();
+
             return new QueryResult<BaseItemDto>(_dtoService.GetBaseItemDtos(personItems, dtoOptions, user));
         }
 
@@ -96,29 +104,39 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
             people.Shuffle();
 
             List<IHomeScreenSection> sections = [];
-            
-            VirtualFolderInfo[] folders = _libraryManager.GetVirtualFolders()
+
+            VirtualFolderInfo[] folders = _libraryManager
+                .GetVirtualFolders()
                 .FilterToUserPermitted(_libraryManager, user);
 
             foreach (Person person in people)
             {
-                List<BaseItem> personItems = folders.SelectMany(x => _libraryManager.GetItemList(new InternalItemsQuery()
-                {
-                    PersonIds = [person.Id],
-                    PersonTypes = PersonTypes.ToArray(),
-                    IncludeItemTypes = [BaseItemKind.Movie, BaseItemKind.Episode],
-                    ParentId = Guid.Parse(x.ItemId),
-                    Recursive = true,
-                    Limit = 16
-                })).DistinctBy(x => x.Id).Select(x =>
-                {
-                    if (x is Episode episode)
+                List<BaseItem> personItems = folders
+                    .SelectMany(x =>
+                        _libraryManager.GetItemList(
+                            new InternalItemsQuery()
+                            {
+                                PersonIds = [person.Id],
+                                PersonTypes = PersonTypes.ToArray(),
+                                IncludeItemTypes = [BaseItemKind.Movie, BaseItemKind.Episode],
+                                ParentId = Guid.Parse(x.ItemId),
+                                Recursive = true,
+                                Limit = 16,
+                            }
+                        )
+                    )
+                    .DistinctBy(x => x.Id)
+                    .Select(x =>
                     {
-                        return episode.Series;
-                    }
+                        if (x is Episode episode)
+                        {
+                            return episode.Series;
+                        }
 
-                    return x;
-                }).DistinctBy(x => x.Id).ToList();
+                        return x;
+                    })
+                    .DistinctBy(x => x.Id)
+                    .ToList();
 
                 if (personItems.Count >= MinRequiredItems)
                 {
@@ -130,7 +148,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
                     break;
                 }
             }
-            
+
             return sections;
         }
 
@@ -147,7 +165,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Persons
                 Limit = Limit ?? 1,
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Landscape,
-                AllowHideWatched = true
+                AllowHideWatched = true,
             };
         }
     }

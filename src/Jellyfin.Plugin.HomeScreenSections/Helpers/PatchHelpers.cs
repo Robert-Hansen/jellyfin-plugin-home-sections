@@ -23,20 +23,25 @@ public class PatchHelpers
         {
             return;
         }
-        
-        HarmonyMethod streamyfinConfigurationPatch = new HarmonyMethod(typeof(PatchHelpers).GetMethod(nameof(PatchHelpers.Patch_Streamyfin_Configuration), BindingFlags.NonPublic | BindingFlags.Static));
 
-        Type? streamyfinControllerType = AssemblyLoadContext.All.SelectMany(x => x.Assemblies)
-            .FirstOrDefault(x => x.FullName?.Contains("Jellyfin.Plugin.Streamyfin", StringComparison.Ordinal) ?? false)?
-            .GetTypes()
+        HarmonyMethod streamyfinConfigurationPatch = new HarmonyMethod(
+            typeof(PatchHelpers).GetMethod(
+                nameof(PatchHelpers.Patch_Streamyfin_Configuration),
+                BindingFlags.NonPublic | BindingFlags.Static
+            )
+        );
+
+        Type? streamyfinControllerType = AssemblyLoadContext
+            .All.SelectMany(x => x.Assemblies)
+            .FirstOrDefault(x => x.FullName?.Contains("Jellyfin.Plugin.Streamyfin", StringComparison.Ordinal) ?? false)
+            ?.GetTypes()
             .FirstOrDefault(x => string.Equals(x.Name, "StreamyfinController", StringComparison.Ordinal));
 
         // If the type couldn't be found the user probably doesn't have Streamyfin plugin, so there's nothing
         // we can do about that.
         if (streamyfinControllerType != null)
         {
-            s_harmony.Patch(streamyfinControllerType.GetMethod("getConfig"),
-                postfix: streamyfinConfigurationPatch);
+            s_harmony.Patch(streamyfinControllerType.GetMethod("getConfig"), postfix: streamyfinConfigurationPatch);
             s_patched = true;
         }
     }
@@ -48,8 +53,11 @@ public class PatchHelpers
             return;
         }
 
-        if (__result is not ContentResult contentResult || contentResult.Content == null ||
-            __instance is not ControllerBase controller)
+        if (
+            __result is not ContentResult contentResult
+            || contentResult.Content == null
+            || __instance is not ControllerBase controller
+        )
         {
             return;
         }
@@ -60,17 +68,18 @@ public class PatchHelpers
     private static string RewriteStreamyfinHomeSections(string content, ControllerBase controller)
     {
         JObject parsedOutput = JObject.Parse(content);
-        string? userIdString = controller.User.Claims
-            .FirstOrDefault(x => x.Type.Equals("Jellyfin-UserId", StringComparison.OrdinalIgnoreCase))
+        string? userIdString = controller
+            .User.Claims.FirstOrDefault(x => x.Type.Equals("Jellyfin-UserId", StringComparison.OrdinalIgnoreCase))
             ?.Value;
         Guid userId = string.IsNullOrEmpty(userIdString) ? Guid.Empty : Guid.Parse(userIdString);
 
-        HomeScreenSectionService hssService = HomeScreenSectionsPlugin.Instance.ServiceProvider
-            .GetRequiredService<HomeScreenSectionService>();
+        HomeScreenSectionService hssService =
+            HomeScreenSectionsPlugin.Instance.ServiceProvider.GetRequiredService<HomeScreenSectionService>();
         IReadOnlyList<HomeScreenSectionInfo> sections =
             hssService.MonitorLiveUpdatedSectionsForUser(userId, "en", 1) ?? [];
 
-        JArray? sectionsArr = parsedOutput.Value<JObject>("settings")
+        JArray? sectionsArr = parsedOutput
+            .Value<JObject>("settings")
             ?.Value<JObject>("home")
             ?.Value<JObject>("value")
             ?.Value<JArray>("sections");
@@ -90,20 +99,19 @@ public class PatchHelpers
             { "title", "" },
             { "orientation", "horizontal" },
             {
-                "custom", new JObject()
-                {
-                    { "endpoint", "" },
-                    { "query", new JObject() }
-                }
-            }
+                "custom",
+                new JObject() { { "endpoint", "" }, { "query", new JObject() } }
+            },
         };
 
         sectionsArr.Clear();
         foreach (HomeScreenSectionInfo info in sections)
         {
-            if ((info.Section?.StartsWith("Discover", StringComparison.Ordinal) ?? false) ||
-                (info.Section?.StartsWith("Upcoming", StringComparison.Ordinal) ?? false) ||
-                string.Equals(info.Section, "MyMedia", StringComparison.Ordinal))
+            if (
+                (info.Section?.StartsWith("Discover", StringComparison.Ordinal) ?? false)
+                || (info.Section?.StartsWith("Upcoming", StringComparison.Ordinal) ?? false)
+                || string.Equals(info.Section, "MyMedia", StringComparison.Ordinal)
+            )
             {
                 continue;
             }
@@ -115,7 +123,7 @@ public class PatchHelpers
             sectionObj["custom"]!["query"] = new JObject()
             {
                 { "additionalData", info.AdditionalData },
-                { "language", "en" }
+                { "language", "en" },
             };
             sectionsArr.Add(sectionObj);
         }

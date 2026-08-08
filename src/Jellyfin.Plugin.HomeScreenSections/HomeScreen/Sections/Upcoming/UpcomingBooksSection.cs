@@ -12,13 +12,18 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
     public class UpcomingBooksSection : UpcomingSectionBase<ReadarrCalendarDto>
     {
         public override string? Section => "UpcomingBooks";
-        
+
         public override string? DisplayText { get; set; } = "Upcoming Books";
 
-        public UpcomingBooksSection(IUserManager userManager, ILibraryManager libraryManager, IDtoService dtoService, ArrApiService arrApiService, ImageCacheService imageCacheService, ILogger<UpcomingBooksSection> logger)
-            : base(userManager, libraryManager, dtoService, arrApiService, imageCacheService, logger)
-        {
-        }
+        public UpcomingBooksSection(
+            IUserManager userManager,
+            ILibraryManager libraryManager,
+            IDtoService dtoService,
+            ArrApiService arrApiService,
+            ImageCacheService imageCacheService,
+            ILogger<UpcomingBooksSection> logger
+        )
+            : base(userManager, libraryManager, dtoService, arrApiService, imageCacheService, logger) { }
 
         protected override (string? url, string? apiKey) GetServiceConfiguration(PluginConfiguration config)
         {
@@ -54,23 +59,27 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
             DateTime releaseDate = calendarItem.ReleaseDate ?? DateTime.Now;
             string countdownText = CalculateCountdown(releaseDate, config);
 
-            ArrImageDto? posterImage = calendarItem.Images?.FirstOrDefault(img => 
-                string.Equals(img.CoverType, "cover", StringComparison.OrdinalIgnoreCase));
+            ArrImageDto? posterImage = calendarItem.Images?.FirstOrDefault(img =>
+                string.Equals(img.CoverType, "cover", StringComparison.OrdinalIgnoreCase)
+            );
 
             string sourceImageUrl = posterImage?.RemoteUrl ?? GetFallbackCoverUrl(calendarItem);
             string cachedImageUrl = GetCachedImageUrl(sourceImageUrl);
 
-            Dictionary<string, string> providerIds = new(StringComparer.Ordinal) {
+            Dictionary<string, string> providerIds = new(StringComparer.Ordinal)
+            {
                 { "ReadarrBookId", calendarItem.Id.ToString(System.Globalization.CultureInfo.InvariantCulture) },
                 { "FormattedDate", countdownText },
-                { "ReadarrPoster", cachedImageUrl }
+                { "ReadarrPoster", cachedImageUrl },
             };
 
             return new BaseItemDto
             {
                 Id = Guid.NewGuid(),
                 Name = calendarItem.Title ?? "Unknown Book",
-                Overview = (calendarItem.Author?.AuthorName ?? "Unknown Author") + (string.IsNullOrEmpty(calendarItem.SeriesTitle) ? "" : " - " + calendarItem.SeriesTitle),
+                Overview =
+                    (calendarItem.Author?.AuthorName ?? "Unknown Author")
+                    + (string.IsNullOrEmpty(calendarItem.SeriesTitle) ? "" : " - " + calendarItem.SeriesTitle),
                 PremiereDate = calendarItem.ReleaseDate,
                 Type = BaseItemKind.Book,
                 ProviderIds = providerIds,
@@ -79,20 +88,28 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
                     Key = $"upcoming-book-{calendarItem.Id}",
                     PlaybackPositionTicks = 0,
                     IsFavorite = false,
-                }
+                },
             };
         }
 
         protected override string GetServiceName() => "Readarr";
+
         protected override string GetSectionName() => "upcoming books";
 
         public override IEnumerable<IHomeScreenSection> CreateInstances(Guid? userId, int instanceCount)
         {
-            yield return new UpcomingBooksSection(UserManager, LibraryManager, DtoService, ArrApiService, ImageCacheService, (ILogger<UpcomingBooksSection>)Logger)
+            yield return new UpcomingBooksSection(
+                UserManager,
+                LibraryManager,
+                DtoService,
+                ArrApiService,
+                ImageCacheService,
+                (ILogger<UpcomingBooksSection>)Logger
+            )
             {
                 DisplayText = DisplayText,
                 AdditionalData = AdditionalData,
-                OriginalPayload = OriginalPayload
+                OriginalPayload = OriginalPayload,
             };
         }
 
@@ -108,7 +125,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.Upcoming
                 OriginalPayload = OriginalPayload,
                 ViewMode = SectionViewMode.Portrait,
                 AllowViewModeChange = false,
-                ContainerClass = "upcoming-books-section"
+                ContainerClass = "upcoming-books-section",
             };
         }
     }

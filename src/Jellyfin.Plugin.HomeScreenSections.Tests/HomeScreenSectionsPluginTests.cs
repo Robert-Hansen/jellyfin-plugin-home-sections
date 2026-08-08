@@ -35,7 +35,8 @@ public class HomeScreenSectionsPluginTests
         string pluginPagesConfig = Path.Combine(
             _fixture.Paths.PluginConfigurationsPath,
             "Jellyfin.Plugin.PluginPages",
-            "config.json");
+            "config.json"
+        );
 
         Assert.True(File.Exists(pluginPagesConfig), $"Expected PluginPages config at {pluginPagesConfig}");
         string contents = File.ReadAllText(pluginPagesConfig);
@@ -141,7 +142,7 @@ public class HomeScreenSectionsPluginTests
         _fixture.SectionsCache.Cache[Guid.NewGuid()] = new UserSectionsData
         {
             UserId = Guid.NewGuid(),
-            MaxOrderIndex = 1
+            MaxOrderIndex = 1,
         };
         try
         {
@@ -164,7 +165,7 @@ public class HomeScreenSectionsPluginTests
         _fixture.SectionsCache.Cache[Guid.NewGuid()] = new UserSectionsData
         {
             UserId = Guid.NewGuid(),
-            MaxOrderIndex = 1
+            MaxOrderIndex = 1,
         };
         try
         {
@@ -184,7 +185,7 @@ public class HomeScreenSectionsPluginTests
         _fixture.SectionsCache.Cache[Guid.NewGuid()] = new UserSectionsData
         {
             UserId = Guid.NewGuid(),
-            MaxOrderIndex = 1
+            MaxOrderIndex = 1,
         };
 
         _fixture.Plugin.ClearUserSectionsDataCache();
@@ -197,7 +198,8 @@ public class HomeScreenSectionsPluginTests
     {
         Assembly pluginAssembly = typeof(HomeScreenSectionsPlugin).Assembly;
 
-        string[] localizationResources = pluginAssembly.GetManifestResourceNames()
+        string[] localizationResources = pluginAssembly
+            .GetManifestResourceNames()
             .Where(name => name.Contains("_Localization.", StringComparison.Ordinal))
             .Where(name => name.EndsWith(".json", StringComparison.Ordinal))
             .ToArray();
@@ -205,6 +207,7 @@ public class HomeScreenSectionsPluginTests
         Assert.NotEmpty(localizationResources);
         Assert.Contains(
             localizationResources,
-            name => name.EndsWith("_Localization.en.json", StringComparison.Ordinal));
+            name => name.EndsWith("_Localization.en.json", StringComparison.Ordinal)
+        );
     }
 }

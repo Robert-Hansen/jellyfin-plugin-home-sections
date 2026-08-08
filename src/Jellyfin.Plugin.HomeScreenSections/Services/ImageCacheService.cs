@@ -15,6 +15,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         private readonly IApplicationPaths _applicationPaths;
         private readonly HttpClient _httpClient;
         private readonly string _cacheDirectory;
+
         // In-memory cache for quick lookups
         private readonly ConcurrentDictionary<string, CachedImageDto> _imageCache = new(StringComparer.Ordinal);
         private bool _indexLoaded;
@@ -25,7 +26,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         public ImageCacheService(
             ILogger<ImageCacheService> logger,
             IApplicationPaths applicationPaths,
-            HttpClient httpClient)
+            HttpClient httpClient
+        )
         {
             _logger = logger;
             _applicationPaths = applicationPaths;
@@ -99,14 +101,15 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 BestEffortIO.TryDeleteFile(
                     cachedInfo.FilePath,
-                    ex => PluginLog.FailedDeleteExpiredCacheFile(_logger, ex, cachedInfo.FilePath));
+                    ex => PluginLog.FailedDeleteExpiredCacheFile(_logger, ex, cachedInfo.FilePath)
+                );
             }
         }
 
         private void EvictOldEntries()
         {
-            List<string> oldestKeys = _imageCache.Values
-                .OrderBy(x => x.CachedAt)
+            List<string> oldestKeys = _imageCache
+                .Values.OrderBy(x => x.CachedAt)
                 .Take(HomeScreenSectionsPlugin.Instance.Configuration.MaxImageCacheEntries / 10)
                 .Select(x => x.CacheKey)
                 .ToList();
@@ -115,7 +118,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 CleanupCacheEntry(key);
             }
-            
+
             if (oldestKeys.Count > 0)
             {
                 SaveCacheIndex();
@@ -144,13 +147,20 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     imageData = processedImageData;
                     contentType = "image/jpeg";
                 }
-                
+
                 string filePath = SaveImageToDisk(cacheKey, imageData, contentType);
                 StoreCacheInfo(cacheKey, sourceUrl, filePath, contentType, cacheTimeoutSeconds);
                 PluginLog.CachedImage(_logger, cacheKey, sourceUrl);
                 return cacheKey;
             }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or IOException or UnauthorizedAccessException or InvalidOperationException)
+            catch (Exception ex)
+                when (ex
+                        is HttpRequestException
+                            or TaskCanceledException
+                            or IOException
+                            or UnauthorizedAccessException
+                            or InvalidOperationException
+                )
             {
                 PluginLog.ImageCacheError(_logger, ex, sourceUrl);
                 return null;
@@ -165,7 +175,13 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             return filePath;
         }
 
-        private void StoreCacheInfo(string cacheKey, string sourceUrl, string filePath, string contentType, int cacheTimeoutSeconds)
+        private void StoreCacheInfo(
+            string cacheKey,
+            string sourceUrl,
+            string filePath,
+            string contentType,
+            int cacheTimeoutSeconds
+        )
         {
             CachedImageDto newCacheInfo = new()
             {
@@ -174,7 +190,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 FilePath = filePath,
                 ContentType = contentType,
                 CachedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddSeconds(cacheTimeoutSeconds)
+                ExpiresAt = DateTime.UtcNow.AddSeconds(cacheTimeoutSeconds),
             };
             _imageCache[cacheKey] = newCacheInfo;
             SaveCacheIndex();
@@ -203,7 +219,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
             byte[]? data = BestEffortIO.TryReadAllBytes(
                 cachedInfo.FilePath,
-                ex => PluginLog.CacheReadError(_logger, ex, cacheKey));
+                ex => PluginLog.CacheReadError(_logger, ex, cacheKey)
+            );
             return data == null ? (null, null) : (data, cachedInfo.ContentType);
         }
 
@@ -223,7 +240,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                     {
                         BestEffortIO.TryDeleteFile(
                             cachedInfo.FilePath,
-                            ex => PluginLog.FailedDeleteExpiredCacheFile(_logger, ex, cachedInfo.FilePath));
+                            ex => PluginLog.FailedDeleteExpiredCacheFile(_logger, ex, cachedInfo.FilePath)
+                        );
                         if (!File.Exists(cachedInfo.FilePath))
                         {
                             PluginLog.DeletedExpiredCacheFile(_logger, cachedInfo.FilePath);
@@ -248,7 +266,8 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 {
                     BestEffortIO.TryDeleteFile(
                         cachedInfo.FilePath,
-                        ex => PluginLog.FailedDeleteCacheFile(_logger, ex, cachedInfo.FilePath));
+                        ex => PluginLog.FailedDeleteCacheFile(_logger, ex, cachedInfo.FilePath)
+                    );
                 }
             }
 
@@ -262,6 +281,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(sourceUrl));
             return Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
+
         private byte[] ProcessImage(byte[] imageData)
         {
             try
@@ -278,7 +298,10 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
                 if (originalBitmap.Width > HomeScreenSectionsPlugin.Instance.Configuration.MaxImageWidth)
                 {
-                    SKBitmap? resizedBitmap = ResizeImage(originalBitmap, HomeScreenSectionsPlugin.Instance.Configuration.MaxImageWidth);
+                    SKBitmap? resizedBitmap = ResizeImage(
+                        originalBitmap,
+                        HomeScreenSectionsPlugin.Instance.Configuration.MaxImageWidth
+                    );
                     if (resizedBitmap != null)
                     {
                         bitmapToCompress = resizedBitmap;
@@ -314,15 +337,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 return [];
             }
         }
+
         private SKBitmap? ResizeImage(SKBitmap originalBitmap, int maxWidth)
         {
             int newWidth = maxWidth;
             int newHeight = (int)((float)originalBitmap.Height / originalBitmap.Width * newWidth);
-            
+
             SKBitmap? resizedBitmap = originalBitmap.Resize(
-                new SKImageInfo(newWidth, newHeight), 
-                SKSamplingOptions.Default);
-            
+                new SKImageInfo(newWidth, newHeight),
+                SKSamplingOptions.Default
+            );
+
             if (resizedBitmap == null)
             {
                 PluginLog.ImageResizeFailed(_logger, originalBitmap.Width, originalBitmap.Height);
@@ -330,14 +355,17 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
 
             PluginLog.ImageResized(_logger, originalBitmap.Width, originalBitmap.Height, newWidth, newHeight);
-            
+
             return resizedBitmap;
         }
 
         private static byte[] CompressImage(SKBitmap bitmap)
         {
             using SKImage image = SKImage.FromBitmap(bitmap);
-            using SKData data = image.Encode(SKEncodedImageFormat.Jpeg, HomeScreenSectionsPlugin.Instance.Configuration.ImageJpegQuality);
+            using SKData data = image.Encode(
+                SKEncodedImageFormat.Jpeg,
+                HomeScreenSectionsPlugin.Instance.Configuration.ImageJpegQuality
+            );
             return data.ToArray();
         }
 
@@ -350,7 +378,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 "image/gif" => ".gif",
                 "image/webp" => ".webp",
                 "image/svg+xml" => ".svg",
-                _ => ".jpg"
+                _ => ".jpg",
             };
         }
 
@@ -363,9 +391,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 return;
             }
 
-            string? json = BestEffortIO.TryReadAllText(
-                indexPath,
-                ex => PluginLog.CacheIndexLoadError(_logger, ex));
+            string? json = BestEffortIO.TryReadAllText(indexPath, ex => PluginLog.CacheIndexLoadError(_logger, ex));
             if (json == null)
             {
                 return;
@@ -374,7 +400,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             try
             {
                 CachedImageDto[]? entries = System.Text.Json.JsonSerializer.Deserialize<CachedImageDto[]>(json);
-                
+
                 if (entries != null)
                 {
                     foreach (CachedImageDto entry in entries)
@@ -403,21 +429,18 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
 
         private static readonly System.Text.Json.JsonSerializerOptions s_cacheIndexJsonOptions = new()
         {
-            WriteIndented = true
+            WriteIndented = true,
         };
 
         private void SaveCacheIndex()
         {
             string indexPath = Path.Combine(_cacheDirectory, "cache-index.json");
-            
+
             try
             {
                 CachedImageDto[] entries = _imageCache.Values.ToArray();
                 string json = System.Text.Json.JsonSerializer.Serialize(entries, s_cacheIndexJsonOptions);
-                BestEffortIO.TryWriteAllText(
-                    indexPath,
-                    json,
-                    ex => PluginLog.CacheIndexSaveError(_logger, ex));
+                BestEffortIO.TryWriteAllText(indexPath, json, ex => PluginLog.CacheIndexSaveError(_logger, ex));
             }
             catch (System.Text.Json.JsonException ex)
             {

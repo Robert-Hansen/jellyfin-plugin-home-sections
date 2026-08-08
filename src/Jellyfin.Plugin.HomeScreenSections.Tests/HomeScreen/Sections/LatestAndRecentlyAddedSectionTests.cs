@@ -34,7 +34,9 @@ public class LatestAndRecentlyAddedSectionTests : IDisposable
 
     public LatestAndRecentlyAddedSectionTests()
     {
-        _paths = new FakeApplicationPaths(Path.Combine(Path.GetTempPath(), "hss-section-tests", Guid.NewGuid().ToString("N")));
+        _paths = new FakeApplicationPaths(
+            Path.Combine(Path.GetTempPath(), "hss-section-tests", Guid.NewGuid().ToString("N"))
+        );
         _serviceProvider = new TestServiceProvider(_paths);
     }
 
@@ -48,11 +50,12 @@ public class LatestAndRecentlyAddedSectionTests : IDisposable
     public void LatestMovies_GetResults_without_libraries_returns_empty()
     {
         LatestMoviesSection section = MakeLatestSection();
-        _libraryManager
-            .Setup(manager => manager.GetVirtualFolders())
-            .Returns([]);
+        _libraryManager.Setup(manager => manager.GetVirtualFolders()).Returns([]);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -61,28 +64,23 @@ public class LatestAndRecentlyAddedSectionTests : IDisposable
     public void LatestMovies_CreateInstances_links_matching_library_folder()
     {
         Guid userId = Guid.NewGuid();
-        _userManager
-            .Setup(manager => manager.GetUserById(userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(userId)).Returns(_user);
 
         Mock<Folder> moviesFolder = new();
-        moviesFolder
-            .As<ICollectionFolder>()
-            .Setup(folder => folder.CollectionType)
-            .Returns(CollectionType.movies);
+        moviesFolder.As<ICollectionFolder>().Setup(folder => folder.CollectionType).Returns(CollectionType.movies);
 
         Mock<Folder> rootFolder = new();
         rootFolder
             .Setup(folder => folder.GetChildren(It.IsAny<User>(), true, It.IsAny<InternalItemsQuery>()))
             .Returns(new BaseItem[] { moviesFolder.Object });
 
-        _libraryManager
-            .Setup(manager => manager.GetUserRootFolder())
-            .Returns(rootFolder.Object);
+        _libraryManager.Setup(manager => manager.GetUserRootFolder()).Returns(rootFolder.Object);
 
         BaseItemDto folderDto = new BaseItemDto { Id = Guid.NewGuid(), Name = "Movies Library" };
         _dtoService
-            .Setup(service => service.GetBaseItemDto(moviesFolder.Object, It.IsAny<DtoOptions>(), _user, It.IsAny<BaseItem>()))
+            .Setup(service =>
+                service.GetBaseItemDto(moviesFolder.Object, It.IsAny<DtoOptions>(), _user, It.IsAny<BaseItem>())
+            )
             .Returns(folderDto);
 
         LatestMoviesSection section = MakeLatestSection();
@@ -100,21 +98,19 @@ public class LatestAndRecentlyAddedSectionTests : IDisposable
     public void LatestMovies_CreateInstances_without_folders_has_no_payload()
     {
         Guid userId = Guid.NewGuid();
-        _userManager
-            .Setup(manager => manager.GetUserById(userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(userId)).Returns(_user);
 
         Mock<Folder> rootFolder = new();
         rootFolder
             .Setup(folder => folder.GetChildren(It.IsAny<User>(), true, It.IsAny<InternalItemsQuery>()))
             .Returns(Array.Empty<BaseItem>());
-        _libraryManager
-            .Setup(manager => manager.GetUserRootFolder())
-            .Returns(rootFolder.Object);
+        _libraryManager.Setup(manager => manager.GetUserRootFolder()).Returns(rootFolder.Object);
 
         LatestMoviesSection section = MakeLatestSection();
 
-        LatestMoviesSection instance = Assert.IsType<LatestMoviesSection>(Assert.Single(section.CreateInstances(userId, 1)));
+        LatestMoviesSection instance = Assert.IsType<LatestMoviesSection>(
+            Assert.Single(section.CreateInstances(userId, 1))
+        );
         Assert.Null(instance.OriginalPayload);
     }
 
@@ -135,11 +131,12 @@ public class LatestAndRecentlyAddedSectionTests : IDisposable
     public void RecentlyAddedMovies_GetResults_without_libraries_returns_empty()
     {
         RecentlyAddedMoviesSection section = MakeRecentlyAddedSection();
-        _libraryManager
-            .Setup(manager => manager.GetVirtualFolders())
-            .Returns([]);
+        _libraryManager.Setup(manager => manager.GetVirtualFolders()).Returns([]);
 
-        QueryResult<BaseItemDto> result = section.GetResults(new HomeScreenSectionPayload { UserId = Guid.NewGuid() }, new FakeQueryCollection());
+        QueryResult<BaseItemDto> result = section.GetResults(
+            new HomeScreenSectionPayload { UserId = Guid.NewGuid() },
+            new FakeQueryCollection()
+        );
 
         Assert.Empty(result.Items);
     }
@@ -148,27 +145,22 @@ public class LatestAndRecentlyAddedSectionTests : IDisposable
     public void RecentlyAddedMovies_CreateInstances_copies_metadata_and_payload()
     {
         Guid userId = Guid.NewGuid();
-        _userManager
-            .Setup(manager => manager.GetUserById(userId))
-            .Returns(_user);
+        _userManager.Setup(manager => manager.GetUserById(userId)).Returns(_user);
 
         Mock<Folder> moviesFolder = new();
-        moviesFolder
-            .As<ICollectionFolder>()
-            .Setup(folder => folder.CollectionType)
-            .Returns(CollectionType.movies);
+        moviesFolder.As<ICollectionFolder>().Setup(folder => folder.CollectionType).Returns(CollectionType.movies);
 
         Mock<Folder> rootFolder = new();
         rootFolder
             .Setup(folder => folder.GetChildren(It.IsAny<User>(), true, It.IsAny<InternalItemsQuery>()))
             .Returns(new BaseItem[] { moviesFolder.Object });
-        _libraryManager
-            .Setup(manager => manager.GetUserRootFolder())
-            .Returns(rootFolder.Object);
+        _libraryManager.Setup(manager => manager.GetUserRootFolder()).Returns(rootFolder.Object);
 
         BaseItemDto folderDto = new BaseItemDto { Id = Guid.NewGuid(), Name = "Movies" };
         _dtoService
-            .Setup(service => service.GetBaseItemDto(moviesFolder.Object, It.IsAny<DtoOptions>(), _user, It.IsAny<BaseItem>()))
+            .Setup(service =>
+                service.GetBaseItemDto(moviesFolder.Object, It.IsAny<DtoOptions>(), _user, It.IsAny<BaseItem>())
+            )
             .Returns(folderDto);
 
         RecentlyAddedMoviesSection section = MakeRecentlyAddedSection();
@@ -202,7 +194,8 @@ public class LatestAndRecentlyAddedSectionTests : IDisposable
             _userManager.Object,
             _libraryManager.Object,
             _dtoService.Object,
-            _serviceProvider);
+            _serviceProvider
+        );
     }
 
     private RecentlyAddedMoviesSection MakeRecentlyAddedSection()
@@ -212,6 +205,7 @@ public class LatestAndRecentlyAddedSectionTests : IDisposable
             _userManager.Object,
             _libraryManager.Object,
             _dtoService.Object,
-            _serviceProvider);
+            _serviceProvider
+        );
     }
 }

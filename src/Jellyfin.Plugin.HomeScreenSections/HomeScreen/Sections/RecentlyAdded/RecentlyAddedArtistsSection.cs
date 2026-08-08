@@ -17,19 +17,20 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen.Sections.RecentlyAdded
         protected override BaseItemKind SectionItemKind => BaseItemKind.MusicArtist;
 
         protected override CollectionType CollectionType => CollectionType.music;
-        
+
         protected override CollectionTypeOptions CollectionTypeOptions => CollectionTypeOptions.music;
 
         protected override string? LibraryId => HomeScreenSectionsPlugin.Instance?.Configuration?.DefaultMusicLibraryId;
 
         protected override SectionViewMode DefaultViewMode => SectionViewMode.Portrait;
 
-        public RecentlyAddedArtistsSection(IUserViewManager userViewManager,
+        public RecentlyAddedArtistsSection(
+            IUserViewManager userViewManager,
             IUserManager userManager,
             ILibraryManager libraryManager,
             IDtoService dtoService,
-            IServiceProvider serviceProvider) : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider)
-        {
-        }
+            IServiceProvider serviceProvider
+        )
+            : base(userViewManager, userManager, libraryManager, dtoService, serviceProvider) { }
     }
 }
