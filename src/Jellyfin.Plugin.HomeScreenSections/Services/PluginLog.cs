@@ -85,6 +85,9 @@ internal static partial class PluginLog
     [LoggerMessage(EventId = 1111, Level = LogLevel.Information, Message = "User settings updated.")]
     public static partial void UserSettingsUpdated(ILogger logger);
 
+    [LoggerMessage(EventId = 1112, Level = LogLevel.Warning, Message = "Rejected duplicate section registration for '{Section}'; already registered to '{ExistingType}'")]
+    public static partial void DuplicateSectionRegistration(ILogger logger, string section, string? existingType);
+
     // --- StartupService ---
     [LoggerMessage(EventId = 1200, Level = LogLevel.Information, Message = "Found loadSections in `{FileName}` registering transformation for it with ID '{TransformationId}'")]
     public static partial void FoundLoadSections(ILogger logger, string fileName, Guid transformationId);
@@ -95,6 +98,9 @@ internal static partial class PluginLog
 
     [LoggerMessage(EventId = 1301, Level = LogLevel.Debug, Message = "Failed to resolve section title link for AdditionalData '{AdditionalData}' and user '{UserId}'")]
     public static partial void SectionTitleLinkResolveFailed(ILogger logger, Exception exception, string additionalData, Guid userId);
+
+    [LoggerMessage(EventId = 1302, Level = LogLevel.Error, Message = "Failed to build home screen section cache for page '{PageHash}'")]
+    public static partial void SectionCacheBuildFailed(ILogger logger, Exception exception, Guid pageHash);
 
     // --- RecentlyAddedShowsSection ---
     [LoggerMessage(EventId = 1400, Level = LogLevel.Information, Message = "Season '{SeasonName}' has been sorted based on an episode having a date created of: {DateCreated}.")]

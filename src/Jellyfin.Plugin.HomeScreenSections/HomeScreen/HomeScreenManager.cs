@@ -106,7 +106,12 @@ namespace Jellyfin.Plugin.HomeScreenSections.HomeScreen
         {
             if (handler.Section != null)
             {
-                _delegates[handler.Section] = handler;
+                // Refuse duplicates: an overwrite would let external RegisterSection calls
+                // swap out built-in handlers (upstream #258).
+                if (!_delegates.TryAdd(handler.Section, handler))
+                {
+                    PluginLog.DuplicateSectionRegistration(_logger, handler.Section, _delegates[handler.Section].GetType().FullName);
+                }
             }
         }
 

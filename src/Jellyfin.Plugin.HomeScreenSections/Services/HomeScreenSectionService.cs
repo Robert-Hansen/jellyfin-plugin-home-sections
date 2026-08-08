@@ -33,7 +33,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         private readonly IDtoService _dtoService;
         private readonly CollectionManagerProxy _collectionManagerProxy;
         private readonly IPlaylistManager _playlistManager;
-    
+
+        // Tracks background page-build tasks so waiters can fail fast on faults instead of
+        // busy-waiting forever for a cache entry that will never appear.
+        private readonly ConcurrentDictionary<Guid, Task> _buildTasks = new();
+
         public HomeScreenSectionService(
             IHomeScreenManager homeScreenManager,
             ILogger<HomeScreenSectionsPlugin> logger,
@@ -99,7 +103,11 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             }
 
             EnsureCacheStarted(userId, pageHash.Value);
-            WaitUntilCachePresent(pageHash.Value);
+            if (!WaitUntilCachePresent(pageHash.Value))
+            {
+                return [];
+            }
+
             WaitUntilCacheHasStartedWork(pageHash.Value);
 
             return WaitForPageSections(userId, language, page, pageSize, pageHash.Value);
@@ -204,16 +212,31 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
         {
             if (!_dataCache.Cache.ContainsKey(pageHash))
             {
-                _ = Task.Run(() => CacheSectionsForUser(userId, pageHash));
+                _ = _buildTasks.GetOrAdd(pageHash, _ => Task.Run(() => CacheSectionsForUser(userId, pageHash)));
             }
         }
 
-        private void WaitUntilCachePresent(Guid pageHash)
+        private bool WaitUntilCachePresent(Guid pageHash)
         {
             while (!_dataCache.Cache.ContainsKey(pageHash))
             {
+                // A faulted build task never adds the cache entry; fail fast instead of
+                // spinning forever (upstream #247 turned this into an infinite hang).
+                if (_buildTasks.TryGetValue(pageHash, out Task? buildTask) && buildTask.IsCompleted)
+                {
+                    if (buildTask.Exception != null)
+                    {
+                        PluginLog.SectionCacheBuildFailed(_logger, buildTask.Exception.GetBaseException(), pageHash);
+                    }
+
+                    return _dataCache.Cache.ContainsKey(pageHash);
+                }
+
                 Thread.Sleep(10);
             }
+
+            _buildTasks.TryRemove(pageHash, out _);
+            return true;
         }
 
         private void WaitUntilCacheHasStartedWork(Guid pageHash)
@@ -265,10 +288,19 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             UserSectionsData userSectionsData = new UserSectionsData()
             {
                 UserId = userId,
-                MaxOrderIndex = groupedOrderedSections.Max(x => x.Key)
+                // Enumerable.Max throws on an empty sequence; a fresh install has no
+                // SectionSettings yet (upstream #247).
+                MaxOrderIndex = groupedOrderedSections.Select(x => x.Key).DefaultIfEmpty(0).Max()
             };
-            
+
             _dataCache.Cache.TryAdd(pageHash, userSectionsData);
+
+            if (groupedOrderedSections.Length == 0)
+            {
+                // Sentinel group so the wait helpers see a complete (empty) page instead of
+                // spinning until SectionsInProgress/OrderedSections fill up.
+                userSectionsData.OrderedSections.TryAdd(0, []);
+            }
 
             foreach (int orderIndex in groupedOrderedSections.Select(x => x.Key).OrderBy(x => x))
             {
@@ -335,12 +367,7 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 return;
             }
 
-            int instanceCount = 1;
-            if (sectionType.Limit > 1)
-            {
-                Random rnd = new Random();
-                instanceCount = rnd.Next(sectionSettings.LowerLimit, sectionSettings.UpperLimit);
-            }
+            int instanceCount = ResolveInstanceCount(sectionType.Limit, sectionSettings);
 
             try
             {
@@ -369,6 +396,25 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
             {
                 PluginLog.SectionInstanceError(_logger, e, userId, sectionType.Section);
             }
+        }
+
+        /// <summary>
+        /// Normalizes instance limits for multi-instance sections: unset 0/0 defaults used to
+        /// yield zero instances, the upper bound was exclusive, and inverted limits threw -
+        /// all of which silently removed the section from the home screen (upstream #153).
+        /// UpperLimit is treated as inclusive.
+        /// </summary>
+        internal static int ResolveInstanceCount(int? sectionLimit, SectionSettings sectionSettings)
+        {
+            if (sectionLimit is null || sectionLimit <= 1)
+            {
+                return 1;
+            }
+
+            int lowerLimit = Math.Max(1, sectionSettings.LowerLimit);
+            int upperLimit = Math.Max(lowerLimit, sectionSettings.UpperLimit);
+
+            return Random.Shared.Next(lowerLimit, upperLimit + 1);
         }
 
         private HomeScreenSectionInfo SectionToInfo(IHomeScreenSection section, int configuredOrder, string? language, Guid userId)

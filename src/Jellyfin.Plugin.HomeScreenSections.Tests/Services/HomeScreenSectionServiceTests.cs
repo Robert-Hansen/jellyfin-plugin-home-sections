@@ -270,6 +270,75 @@ public class HomeScreenSectionServiceTests
     }
 
     [Fact]
+    public void MonitorLiveUpdatedSectionsForUser_with_empty_section_settings_returns_empty_page()
+    {
+        // Regression for upstream #247: a fresh install has no admin SectionSettings yet.
+        // The unguarded Enumerable.Max used to throw "Sequence contains no elements" and
+        // 500 the whole endpoint; it must return an empty page instead.
+        HomeScreenSectionService service = MakeService();
+        Guid userId = Guid.NewGuid();
+
+        PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
+        SectionSettings[] original = config.SectionSettings;
+        config.SectionSettings = [];
+        try
+        {
+            _homeScreenManager
+                .Setup(manager => manager.GetUserSettings(userId))
+                .Returns(new ModularHomeUserSettings { UserId = userId, EnabledSections = ["ContinueWatching"] });
+            _homeScreenManager
+                .Setup(manager => manager.GetSectionTypes())
+                .Returns(new[] { MakeSection("ContinueWatching", "Continue Watching") });
+
+            IReadOnlyList<HomeScreenSectionInfo>? result = service.MonitorLiveUpdatedSectionsForUser(userId, "en", 1);
+
+            Assert.NotNull(result);
+            Assert.Empty(result!);
+        }
+        finally
+        {
+            config.SectionSettings = original;
+        }
+    }
+
+    [Fact]
+    public async Task MonitorLiveUpdatedSectionsForUser_with_empty_section_settings_and_page_hash_does_not_hang()
+    {
+        // Same fresh-install scenario as above, but through the paginated path where the
+        // cache is built on a background task and the request busy-waits for it.
+        HomeScreenSectionService service = MakeService();
+        Guid userId = Guid.NewGuid();
+
+        PluginConfiguration config = HomeScreenSectionsPlugin.Instance.Configuration;
+        SectionSettings[] original = config.SectionSettings;
+        config.SectionSettings = [];
+        try
+        {
+            _homeScreenManager
+                .Setup(manager => manager.GetUserSettings(userId))
+                .Returns(new ModularHomeUserSettings { UserId = userId, EnabledSections = ["ContinueWatching"] });
+            _homeScreenManager
+                .Setup(manager => manager.GetSectionTypes())
+                .Returns(new[] { MakeSection("ContinueWatching", "Continue Watching") });
+
+            // Bounded wait: if the busy-wait regression comes back this fails instead of
+            // hanging the whole test run.
+            Task<IReadOnlyList<HomeScreenSectionInfo>?> work = Task.Run(() =>
+                service.MonitorLiveUpdatedSectionsForUser(userId, "en", 1, 10, Guid.NewGuid()));
+            Task finished = await Task.WhenAny(work, Task.Delay(TimeSpan.FromSeconds(20)));
+            Assert.True(finished == work, "Home screen section request did not return in time (busy-wait regression).");
+
+            IReadOnlyList<HomeScreenSectionInfo>? result = await work;
+            Assert.NotNull(result);
+            Assert.Empty(result!);
+        }
+        finally
+        {
+            config.SectionSettings = original;
+        }
+    }
+
+    [Fact]
     public void CacheSectionsForUser_honours_user_defined_section_order()
     {
         HomeScreenSectionService service = MakeService();
@@ -312,6 +381,46 @@ public class HomeScreenSectionServiceTests
         {
             config.SectionSettings = original;
         }
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(1)]
+    public void ResolveInstanceCount_returns_one_for_single_instance_sections(int? sectionLimit)
+    {
+        SectionSettings settings = new SectionSettings { LowerLimit = 3, UpperLimit = 7 };
+
+        Assert.Equal(1, HomeScreenSectionService.ResolveInstanceCount(sectionLimit, settings));
+    }
+
+    [Fact]
+    public void ResolveInstanceCount_defaults_unset_limits_to_one_instance()
+    {
+        // Regression for upstream #153: config defaults are 0/0, which used to produce
+        // rnd.Next(0, 0) == 0 instances and silently removed the section from the home.
+        SectionSettings settings = new SectionSettings();
+
+        Assert.Equal(1, HomeScreenSectionService.ResolveInstanceCount(5, settings));
+    }
+
+    [Fact]
+    public void ResolveInstanceCount_stays_within_inclusive_configured_bounds()
+    {
+        SectionSettings settings = new SectionSettings { LowerLimit = 2, UpperLimit = 4 };
+
+        for (int i = 0; i < 200; i++)
+        {
+            int count = HomeScreenSectionService.ResolveInstanceCount(5, settings);
+            Assert.InRange(count, 2, 4);
+        }
+    }
+
+    [Fact]
+    public void ResolveInstanceCount_clamps_inverted_limits_to_the_lower_bound()
+    {
+        SectionSettings settings = new SectionSettings { LowerLimit = 4, UpperLimit = 2 };
+
+        Assert.Equal(4, HomeScreenSectionService.ResolveInstanceCount(5, settings));
     }
 
     [Fact]

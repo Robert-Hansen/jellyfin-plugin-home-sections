@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Claims;
 using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Plugin.HomeScreenSections.Configuration;
@@ -262,6 +263,48 @@ public class HomeScreenControllerEndpointsTests : IDisposable
             new FakeQueryCollection());
 
         Assert.Equal("Endpoint Section Item", Assert.Single(results.Items).Name);
+    }
+
+    [Fact]
+    public void RegisterSection_returns_conflict_when_section_id_already_registered()
+    {
+        // Regression for upstream #258: re-registering an existing section id must not
+        // silently replace the handler (e.g. a built-in like ContinueWatching).
+        _homeScreenManager
+            .Setup(manager => manager.GetSection("NextUp"))
+            .Returns(new PluginDefinedSection("NextUp", "Existing")
+            {
+                OnGetResults = _ => new QueryResult<BaseItemDto>()
+            });
+
+        HomeScreenController controller = MakeController();
+
+        ActionResult result = controller.RegisterSection(new SectionRegisterPayload
+        {
+            Id = "NextUp",
+            DisplayText = "Impostor",
+            ResultsEndpoint = "/sections/results"
+        });
+
+        Assert.IsType<ConflictResult>(result);
+        _homeScreenManager.Verify(
+            manager => manager.RegisterResultsDelegate(It.IsAny<PluginDefinedSection>()),
+            Times.Never());
+    }
+
+    [Fact]
+    public void RegisterSection_requires_administrator_authorization()
+    {
+        // Regression for upstream #258: the endpoint used to be completely unauthenticated.
+        MethodInfo method = typeof(HomeScreenController)
+            .GetMethod(nameof(HomeScreenController.RegisterSection))
+            ?? throw new InvalidOperationException("RegisterSection action not found.");
+
+        Microsoft.AspNetCore.Authorization.AuthorizeAttribute? attribute = method
+            .GetCustomAttribute<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>();
+
+        Assert.NotNull(attribute);
+        Assert.Equal("Administrator", attribute!.Roles);
     }
 
     [Fact]
