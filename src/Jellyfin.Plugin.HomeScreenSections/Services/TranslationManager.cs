@@ -82,6 +82,16 @@ namespace Jellyfin.Plugin.HomeScreenSections.Services
                 translationPack,
                 ref metadata
             );
+            // Pattern translations like "Studio":"{0}" and "Decade":"{0}s Movies"
+            // are for per-instance titles (with AdditionalContent). When called
+            // for the section *type* row in config (no instance, no metadata),
+            // the raw "{0}" would leak to the UI as "{0}" — fall back to the
+            // English fallback text instead (e.g. "Studio" / "Decade").
+            if (metadata == null && translatedText.Contains("{0}", StringComparison.Ordinal))
+            {
+                return fallbackText;
+            }
+
             if (metadata != null)
             {
                 translatedText = ApplyTranslationMetadata(translatedText, desiredLanguage, metadata);

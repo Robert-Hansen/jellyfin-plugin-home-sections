@@ -28,6 +28,8 @@ public class DecadeSection : IHomeScreenSection
 
     public object? OriginalPayload { get; set; }
 
+    public TranslationMetadata? TranslationMetadata { get; private set; }
+
     private readonly IUserManager _userManager;
     private readonly ILibraryManager _libraryManager;
     private readonly IDtoService _dtoService;
@@ -100,10 +102,16 @@ public class DecadeSection : IHomeScreenSection
         Random rnd = new Random();
         foreach (int decade in decades.OrderBy(_ => rnd.Next()).Take(instanceCount))
         {
+            string decadeStr = decade.ToString(System.Globalization.CultureInfo.InvariantCulture);
             yield return new DecadeSection(_userManager, _libraryManager, _dtoService)
             {
-                AdditionalData = decade.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                AdditionalData = decadeStr,
                 DisplayText = $"{decade}s Movies",
+                TranslationMetadata = new TranslationMetadata
+                {
+                    Type = TranslationType.Pattern,
+                    AdditionalContent = decadeStr,
+                },
             };
         }
     }

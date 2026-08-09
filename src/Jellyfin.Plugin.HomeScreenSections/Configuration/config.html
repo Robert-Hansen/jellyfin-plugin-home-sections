@@ -5,6 +5,18 @@
 </head>
 <body>
 <div data-role="page" id="homeScreenSectionsConfigurationPage" class="page type-interior pluginConfigurationPage fullWidthContent">
+    <style>
+        /* Full-width / responsive config — remove Jellyfin's default 800px constraint */
+        #homeScreenSectionsConfigurationPage .content-primary {
+            max-width: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #homeScreenSectionsConfigurationPage .verticalSection-extrabottompadding,
+        #homeScreenSectionsConfigurationPage fieldset.verticalSection-extrabottompadding {
+            max-width: none;
+        }
+    </style>
     <div class="content-primary">
         <div class="verticalSection">
             <div class="sectionTitleContainer">
@@ -362,7 +374,7 @@
                 </button>
             </div>
 
-            <div id="sections" class="jellyfin-tab-content" style="display: none; max-width: 1280px; width: 100%;">
+            <div id="sections" class="jellyfin-tab-content" style="display: none; width: 100%; max-width: none;">
                 <style>
                     #sectionList {
                         margin: 0.5em 0 1.25em;
@@ -577,7 +589,7 @@
                         /* Keep Enabled → View Mode on one row when there's room */
                         grid-template-columns: repeat(6, minmax(0, 1fr));
                         gap: 10px 10px;
-                        align-items: end;
+                        align-items: stretch;
                     }
                     #sectionList .section-field {
                         display: flex;
@@ -588,6 +600,9 @@
                         border-radius: 10px;
                         background: rgba(0, 0, 0, 0.18);
                         border: 1px solid rgba(255, 255, 255, 0.06);
+                        height: 100%;
+                        box-sizing: border-box;
+                        justify-content: space-between;
                     }
                     #sectionList .section-field-label-row {
                         display: flex;
@@ -805,7 +820,11 @@
                 <div class="section-card-header">
                     <input type="hidden" data-id="hiddenSectionId" />
                     <strong class="section-card-title" data-id="lblSectionName"></strong>
+                    <button type="button" class="section-info" data-id="sectionHelpInfo" aria-label="Section help" style="margin-left:6px;">
+                        <span class="material-icons" aria-hidden="true">help_outline</span>
+                    </button>
                 </div>
+                <div class="section-card-desc" data-id="lblSectionDesc" style="font-size:0.85em; color:#9aa0a6; line-height:1.3; margin-bottom:2px; min-height:1.2em;"></div>
                 <div class="section-card-controls">
                     <div class="section-field">
                         <div class="section-field-label-row">
@@ -921,6 +940,56 @@
 
             // UI language detected once, used by translatePage() and loadConfig()
             const uiLanguage = document.documentElement.lang || navigator.language || 'en';
+
+            // Human-readable help for each section — shown under the title in the
+            // re-order list so rows like "Studio" / "{0}" are not a mystery.
+            // Keep keys equal to SectionId. Fallback to SectionId if missing.
+            const sectionDescriptions = {
+                MyMedia: 'Your libraries (Movies, TV, Music…) — quick access to each library',
+                ContinueWatching: 'Resume what you are currently watching',
+                NextUp: 'Next episodes for shows you follow',
+                ContinueWatchingNextUp: 'Combined Continue Watching + Next Up',
+                RecentlyAddedMovies: 'Recently added movies',
+                RecentlyAddedShows: 'Recently added TV shows',
+                RecentlyAddedArtists: 'Recently added artists',
+                RecentlyAddedAlbums: 'Recently added albums',
+                RecentlyAddedBooks: 'Recently added books',
+                RecentlyAddedAudioBooks: 'Recently added audiobooks',
+                RecentlyAddedMusicVideos: 'Recently added music videos',
+                LatestMovies: 'Latest movies in your libraries',
+                LatestShows: 'Latest TV shows',
+                LatestAlbums: 'Latest albums',
+                LatestBooks: 'Latest books',
+                LatestAudioBooks: 'Latest audiobooks',
+                LatestMusicVideo: 'Latest music videos',
+                BecauseYouWatched: 'Because you watched … — similar movies/shows',
+                LiveTv: 'Live TV — on now',
+                MyList: 'My List — your Jellyfin My List',
+                WatchAgain: 'Watch again — rewatch favorites',
+                Discover: 'Discover — trending from Jellyseerr',
+                DiscoverMovies: 'Discover Movies — from Jellyseerr',
+                DiscoverTV: 'Discover TV Shows — from Jellyseerr',
+                UpcomingShows: 'Upcoming shows from Sonarr',
+                UpcomingMovies: 'Upcoming movies from Radarr',
+                UpcomingMusic: 'Upcoming music from Lidarr',
+                UpcomingBooks: 'Upcoming books from Readarr',
+                Genre: 'Genre row — e.g. “Crime Movies” picked from your history',
+                MyRequests: 'My Requests — your Jellyseerr requests',
+                MyJellyseerrRequests: 'My Requests — your Jellyseerr requests',
+                Favorites: 'Your favorited items',
+                RandomUnwatched: 'Surprise Me — random unwatched movie/show',
+                Trending: 'Most Played — most watched in your library',
+                RecentlyPlayed: 'Recently Played — what you just watched',
+                Kids: 'Kids & Family — G/PG and similar',
+                ComingSoonInLibrary: 'Coming Soon — unwatched items already in your library',
+                ComingSoon: 'Coming Soon — unwatched items already in your library',
+                Decade: 'Decade — e.g. “2010s Movies” — random decade from your movies',
+                Studio: 'Studio / Network — e.g. “Marvel Studios” — from your watch history',
+                Playlists: 'Your playlists',
+                UnwatchedCollections: 'Finish These Collections — unwatched collections',
+                DirectedBy: 'Directed by … — from a director you watch',
+                Starring: 'Starring … — from an actor you watch'
+            };
 
             // Stored after translatePage() fetches them, used by saveConfig() and applyTranslations()
             var pageTranslations = {};
@@ -1173,7 +1242,7 @@
                     return;
                 }
                 list.innerHTML = '';
-                Array.from(getSectionCards()).forEach(function (card, index) {
+                Array.from(getSectionCards()).forEach(function (card) {
                     if (card.classList.contains('is-filtered-out')) {
                         return;
                     }
@@ -1181,7 +1250,7 @@
                         || card.querySelector('[data-id=hiddenSectionId]').value;
                     const enabled = !!(card.querySelector('[data-id=chkSectionEnabled]') || {}).checked;
                     const li = document.createElement('li');
-                    li.textContent = (index + 1) + '. ' + name;
+                    li.textContent = name;
                     if (!enabled) {
                         li.classList.add('is-disabled-preview');
                         li.title = t('AdminDisabledPreview', 'Disabled — will not show on home');
@@ -1678,6 +1747,28 @@
 
                 template.querySelector('[data-id=hiddenSectionId]').value = sectionConfig.SectionId;
                 template.querySelector('[data-id=lblSectionName]').innerHTML = sectionInfo.DisplayText;
+                // Section help — show human description under title and as tooltip;
+                // also fix raw "{0}" leak (e.g. Studio) by falling back to SectionId.
+                (function () {
+                    const descEl = template.querySelector('[data-id=lblSectionDesc]');
+                    const helpInfo = template.querySelector('[data-id=sectionHelpInfo]');
+                    const desc = sectionDescriptions[sectionConfig.SectionId] || sectionDescriptions[sectionInfo.Section] || '';
+                    const displayNameEl = template.querySelector('[data-id=lblSectionName]');
+                    let displayName = (displayNameEl && displayNameEl.textContent) ? displayNameEl.textContent.trim() : (sectionInfo.DisplayText || sectionConfig.SectionId);
+                    if (displayName && displayName.indexOf('{0}') !== -1) {
+                        displayName = sectionConfig.SectionId || displayName;
+                        if (displayNameEl) displayNameEl.textContent = displayName;
+                    }
+                    if (descEl) {
+                        descEl.textContent = desc;
+                    }
+                    if (helpInfo) {
+                        const helpText = desc ? (displayName + ' — ' + desc) : displayName;
+                        helpInfo.setAttribute('data-tooltip', helpText);
+                        helpInfo.setAttribute('title', helpText);
+                        helpInfo.setAttribute('aria-label', helpText);
+                    }
+                })();
                 template.querySelector('[data-id=chkSectionEnabled]').checked = sectionConfig.Enabled;
                 template.querySelector('[data-id=chkSectionUserOverrideAllowed]').checked = sectionConfig.AllowUserOverride;
                 template.querySelector('[data-id=txtSectionMinLimit]').value = sectionConfig.LowerLimit;
@@ -2089,11 +2180,18 @@
                 });
             }
 
-            function persistConfig(config) {
+            function persistConfig(config, snapshotToSave) {
                 Dashboard.showLoadingMsg();
                 window.ApiClient.updatePluginConfiguration(pluginId, config)
                     .then(function (result) {
-                        originalSectionSnapshot = snapshotSectionsFromDom();
+                        // Use the snapshot that was just saved as the new baseline
+                        // instead of re-reading the DOM, which can race with
+                        // ongoing input events and leave the save button dirty.
+                        if (snapshotToSave) {
+                            originalSectionSnapshot = JSON.parse(JSON.stringify(snapshotToSave));
+                        } else {
+                            originalSectionSnapshot = snapshotSectionsFromDom();
+                        }
                         clearReorderUndo();
                         refreshSectionDirtyState();
                         // Refresh plugin assets so home/order changes show without a manual hard-refresh.
@@ -2128,7 +2226,7 @@
                     }
                 }
 
-                persistConfig(buildConfigPayload());
+                persistConfig(buildConfigPayload(), currentSections);
             }
 
             function loadConfig() {
