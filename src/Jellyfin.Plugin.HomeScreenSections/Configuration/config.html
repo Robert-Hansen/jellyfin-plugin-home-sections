@@ -1173,7 +1173,7 @@
                     return;
                 }
                 list.innerHTML = '';
-                Array.from(getSectionCards()).forEach(function (card, index) {
+                Array.from(getSectionCards()).forEach(function (card) {
                     if (card.classList.contains('is-filtered-out')) {
                         return;
                     }
@@ -1181,7 +1181,7 @@
                         || card.querySelector('[data-id=hiddenSectionId]').value;
                     const enabled = !!(card.querySelector('[data-id=chkSectionEnabled]') || {}).checked;
                     const li = document.createElement('li');
-                    li.textContent = (index + 1) + '. ' + name;
+                    li.textContent = name;
                     if (!enabled) {
                         li.classList.add('is-disabled-preview');
                         li.title = t('AdminDisabledPreview', 'Disabled — will not show on home');
