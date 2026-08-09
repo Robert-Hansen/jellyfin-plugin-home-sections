@@ -28,6 +28,8 @@ public class StudioSection : IHomeScreenSection
 
     public object? OriginalPayload { get; set; }
 
+    public TranslationMetadata? TranslationMetadata { get; private set; }
+
     private readonly IUserManager _userManager;
     private readonly ILibraryManager _libraryManager;
     private readonly IDtoService _dtoService;
@@ -110,6 +112,11 @@ public class StudioSection : IHomeScreenSection
             {
                 AdditionalData = studio,
                 DisplayText = studio,
+                TranslationMetadata = new TranslationMetadata
+                {
+                    Type = TranslationType.Pattern,
+                    AdditionalContent = studio,
+                },
             };
         }
     }
