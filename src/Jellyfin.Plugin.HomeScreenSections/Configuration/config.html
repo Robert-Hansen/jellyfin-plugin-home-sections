@@ -5,6 +5,18 @@
 </head>
 <body>
 <div data-role="page" id="homeScreenSectionsConfigurationPage" class="page type-interior pluginConfigurationPage fullWidthContent">
+    <style>
+        /* Full-width / responsive config — remove Jellyfin's default 800px constraint */
+        #homeScreenSectionsConfigurationPage .content-primary {
+            max-width: none;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #homeScreenSectionsConfigurationPage .verticalSection-extrabottompadding,
+        #homeScreenSectionsConfigurationPage fieldset.verticalSection-extrabottompadding {
+            max-width: none;
+        }
+    </style>
     <div class="content-primary">
         <div class="verticalSection">
             <div class="sectionTitleContainer">
@@ -362,7 +374,7 @@
                 </button>
             </div>
 
-            <div id="sections" class="jellyfin-tab-content" style="display: none; max-width: 1280px; width: 100%;">
+            <div id="sections" class="jellyfin-tab-content" style="display: none; width: 100%; max-width: none;">
                 <style>
                     #sectionList {
                         margin: 0.5em 0 1.25em;
