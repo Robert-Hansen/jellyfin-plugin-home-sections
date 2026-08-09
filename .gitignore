@@ -3,6 +3,10 @@ dist/
 TestResults/
 node_modules/
 
+# Generated web assets — source is src-web/*.ts
+src/Jellyfin.Plugin.HomeScreenSections/Inject/HomeScreenSections.js
+src/Jellyfin.Plugin.HomeScreenSections/Controllers/loadSections.js
+
 # Local analyzer helper scripts (not part of the plugin)
 scripts/fix-analyzers.py
 scripts/fix-next-wave.py
