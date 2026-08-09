@@ -2089,11 +2089,18 @@
                 });
             }
 
-            function persistConfig(config) {
+            function persistConfig(config, snapshotToSave) {
                 Dashboard.showLoadingMsg();
                 window.ApiClient.updatePluginConfiguration(pluginId, config)
                     .then(function (result) {
-                        originalSectionSnapshot = snapshotSectionsFromDom();
+                        // Use the snapshot that was just saved as the new baseline
+                        // instead of re-reading the DOM, which can race with
+                        // ongoing input events and leave the save button dirty.
+                        if (snapshotToSave) {
+                            originalSectionSnapshot = JSON.parse(JSON.stringify(snapshotToSave));
+                        } else {
+                            originalSectionSnapshot = snapshotSectionsFromDom();
+                        }
                         clearReorderUndo();
                         refreshSectionDirtyState();
                         // Refresh plugin assets so home/order changes show without a manual hard-refresh.
@@ -2128,7 +2135,7 @@
                     }
                 }
 
-                persistConfig(buildConfigPayload());
+                persistConfig(buildConfigPayload(), currentSections);
             }
 
             function loadConfig() {
